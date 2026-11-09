@@ -11,8 +11,8 @@
 |---|---|
 | Cập nhật lúc | 09/11/2026 — Antigravity: làm đẹp giao diện bảng nhiều hộp Đợt 1 (F-BC-18/19, F-QL-11) |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 17** (09/11/2026 23:13) trên link chính `…MlRA/exec` = commit `a2b738f` (Đợt 1: P0–P4, F-QL-10). Link phụ `…NIQ/exec` không đụng, còn bản cũ |
-| Mã trên Apps Script khớp repo? | **Có** (đối chiếu băm SHA-256 sau khi lưu và tải lại trang: `Code.gs`, `Index.html` khớp `a2b738f`; `appsscript.json` không đổi) |
+| Bản đang chạy | Apps Script **phiên bản 18** (09/11/2026 23:32) trên link chính `…MlRA/exec` = commit `fe49dba` (Đợt 1 + sửa mã hộp F-HT-03). Phiên bản trước: 17. Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `fe49dba` sau khi lưu và tải lại trang) |
 | Mock | `node tools/test_mock.js` → **242 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
@@ -52,7 +52,7 @@
 - **Dashboard còn người ở ca Sáng/Chiều 09/11 sau khi xóa dữ liệu thử · F-DB-03, F-DB-06 · 10/11/2026 · chủ dự án.** Nguyên nhân (Opus): "Nhân sự" và khu "Từng ca" lấy từ `PhanCa` (danh sách vào ca), không từ báo cáo; dữ liệu thử đã xóa bản ghi nhưng còn dòng `PhanCa` của người giả `TN-07..11` và của Trần Nhật Tân (ca Sáng, Chiều). **Dọn dữ liệu (chủ dự án, không cần sửa mã):** ADMIN → Dữ liệu → "Xóa dữ liệu thử nghiệm" (xóa cả `PhanCa`/`NhanSu` của `TN-xx`); Quản lý ca → ngày 09/11, ca Sáng rồi ca Chiều → "Bỏ khỏi ca" Trần Nhật Tân. **Sửa mã (Sonnet):** `dash_` loại người `TN-xx` khỏi "Nhân sự"/`caNguoi` khi không `gomThu` (cùng quy tắc với bản ghi THỬ NGHIỆM).
 - **Danh sách "Ngày có dữ liệu" dài · F-DB-01 · 10/11/2026 · chủ dự án.** Hiện tối đa 14 nút, xuống nhiều dòng. Opus chốt: chỉ **7 ngày gần nhất có dữ liệu**, một hàng, vuốt ngang trên điện thoại; ngày cũ hơn chọn bằng ô lịch / ◀ ▶ có sẵn. Giao Sonnet làm cùng việc trên (thay đổi giao diện nhỏ, không cần Antigravity).
 
-- **LỖI DỮ LIỆU F-HT-03 (mã hộp `02.01.85` bị đổi thành ngày) · 10/11/2026 · ĐÃ SỬA TRONG MÃ** (Sonnet): `appendMany_` đặt `@`; `read_` đọc đúng dữ liệu hỏng; `suaMaHopNgay()` sửa dữ liệu cũ. Mock 242/0. **Còn lại (chủ dự án):** chạy `suaMaHopNgay` một lần trong trình soạn (hướng dẫn 3 dòng ở `HUONG_DAN_TRIEN_KHAI.md` mục D) để sửa các ô đã hỏng trên Sheet thật; số Nhận/Tồn trên Dashboard đã đúng ngay sau khi triển khai nhờ `read_`.
+- **LỖI DỮ LIỆU F-HT-03 (mã hộp `02.01.85` bị đổi thành ngày) · 10/11/2026 · ĐÃ SỬA VÀ TRIỂN KHAI phiên bản 18** (Sonnet): `appendMany_` đặt `@`; `read_` đọc đúng dữ liệu hỏng; `suaMaHopNgay()` sửa dữ liệu cũ. Mock 242/0. **Còn lại (chủ dự án, chưa chạy):** chạy `suaMaHopNgay` một lần trong trình soạn (hướng dẫn 3 dòng ở `HUONG_DAN_TRIEN_KHAI.md` mục D) để sửa các ô đã hỏng trên Sheet thật; số Nhận/Tồn trên Dashboard đã đúng ngay sau khi triển khai nhờ `read_`.
 - **Không phải lỗi:** cột "Giờ" ở bảng Chi tiết là **giờ bấm gửi**, không phải giờ của ca. Nhập hộ lúc 03:49 cho "Ca Tối" là đúng (nhập bù ca đã qua).
 
 - **KHÔNG PHẢI LỖI (ghi để khỏi điều tra lại):** 09/11/2026 23:22 chủ dự án đăng nhập tổ viên không thấy "Vào ca"/form báo cáo → do ngoài giờ (ca Tối đóng nhập 22:00; ca mở sớm 15', đóng sau giờ kết thúc 60'). Opus đã thử mã repo bằng mock trong trình duyệt: bảng nhiều hộp hiện bình thường, không lỗi JS. **Thử ngoài giờ:** dùng Tổ trưởng/ADMIN → Quản lý ca → **Nhập hộ** (không giới hạn giờ, cùng bảng nhiều hộp, cùng `ghiLo`). Thử luồng tổ viên trong giờ ca thật (từ 07:15). **Không gỡ khóa giờ trên bản đang chạy.** Dữ liệu thử: ADMIN hủy ở tab Dữ liệu sau khi thử.
