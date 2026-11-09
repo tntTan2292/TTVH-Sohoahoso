@@ -40,6 +40,7 @@
 - **Còn lại (chủ dự án làm):** dán `Index.html` lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ. Có thể gộp vào lần triển khai sau khi chuẩn hóa.
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
+0. **DASHBOARD CHIA TAB CON + THỐNG KÊ NHÂN SỰ (10/11/2026, chủ dự án yêu cầu)** — phiếu `docs/prompts/PROMPT_SONNET_DASHBOARD_TAB.md`. 5 tab: Tổng quan · Theo ngày · Ca – Nhóm · Nhân sự (mới, chọn khoảng ngày, action `thongKeNhanSu`) · Nhật ký nhập. Luồng: ☐ Sonnet (chức năng, gồm luôn F-DB-01 khoảng ngày `d568321` chưa triển khai) · ☐ Sonnet viết prompt Antigravity · ☐ Antigravity làm đẹp · ☐ Opus review tổng thể · ☐ triển khai · ☐ chủ dự án thử.
 1. **Chuẩn hóa quy trình báo cáo** (mục 2a) — giao Sonnet bằng prompt trong `docs/prompts/`.
 2. Triển khai F-QL-10 lên Apps Script và thử thật (mục 2b).
 3. ~~Viết `tools/kiem_tra_giao_dien.js`~~ — xong (P0).
