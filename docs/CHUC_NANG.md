@@ -134,13 +134,15 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-DB-04 | Khu CUỐI CA: tờ scan/tách/OCR, hộp nhận/trả, "x/y nhóm đã báo cáo" + biểu đồ `c5` | `cas[].nhomDaBC`, `tongNhom` | `zone('z2')` |
 | F-DB-05 | Khu KẾT THÚC NGÀY: nhận/trả/tồn, tờ + hộp xong 3 khâu, biểu đồ 10 ngày `c2`, `c4` | `day`, `series` | `zone('z3')` |
 | F-DB-06 | Khu "Từng ca": mỗi người trong ca (nhóm, có mặt, số báo cáo, hộp, tờ 3 khâu); người thử nghiệm `TN-xx` không tính (nhân sự ca, `caNguoi`) trừ khi ADMIN bật `gomThu` | `caNguoi` | `tungCaHtml` |
-| F-DB-07 | Khu CHI TIẾT: bảng nhóm (năng suất tờ/người-giờ theo `*DVGio`) và bảng cá nhân (chia 50/50) | `nhom[]`, `canhan[]` | `zone('z4')` |
+| F-DB-07 | Khu CHI TIẾT: bảng nhóm (năng suất tờ/người-giờ theo `*DVGio`) ở tab Ca – Nhóm; bảng cá nhân (chia 50/50) nay nằm ở tab Nhân sự (F-DB-15) | `nhom[]`, `canhan[]` | `zone('z4')`, `dashTabCaNhom` |
 | F-DB-08 | Khu AI NHẬP: tổng hợp theo ca và người nhập + chi tiết từng lần báo cáo | `nguoiNhap`, `chiTiet` | `zone('z4', 'AI NHẬP')` |
 | F-DB-09 | Số đầu kỳ từng ngày 02–08/11 (bảng `DauKy`), ca "Ngày (gộp)" | `caGop`, `luyKe.dauKyDen`, `DAU_KY_CA` | thẻ ca gộp |
 | F-DB-10 | ADMIN: ô "gồm dữ liệu thử nghiệm" (mặc định loại `THỬ NGHIỆM`) | `dash_(ngay, gomThu)` | `#boxGomThu`, `#dGomThu` |
 | F-DB-11 | In dashboard | — | `#dPrint` |
-| F-DB-12 | Biểu đồ lỗi (CDN hỏng) thì số liệu vẫn hiện | — | `mk`, `try/catch` trong `loadDash` |
+| F-DB-12 | Biểu đồ lỗi (CDN hỏng) thì số liệu vẫn hiện | — | `mk`, `try/catch` trong `dashVeBieuDo` |
 | F-DB-13 | Cache dashboard, cập nhật khi có ghi | `dash_`, `cacheBump_` | — |
+| F-DB-14 | Dashboard chia 5 tab con: Tổng quan (widget tiến độ, 6 KPI, trạng thái ca, biểu đồ `c4`) · Theo ngày (ĐẦU CA, CUỐI CA, KẾT THÚC NGÀY; `c1`,`c3`,`c5`,`c2`,`c4`) · Ca – Nhóm (`tungCaHtml` + bảng nhóm) · Nhân sự · Nhật ký nhập (AI NHẬP). Nhớ tab đang xem (`localStorage` `dashTab`); một lần gọi `dashboard` dùng cho 4 tab, biểu đồ chỉ vẽ khi tab hiện; thanh chọn ngày dùng chung; in/PDF in tab đang xem | `dashboard` | `#dTabs`, `.dtab`, `DASH`, `dashChonTab`, `dashHienTab`, `dashTabTongQuan`, `dashTabNgay`, `dashTabCaNhom`, `dashTabNhatKy`, `dashVeBieuDo` |
+| F-DB-15 | Tab Nhân sự: thống kê từng người theo khoảng ngày (Hôm nay / 7 ngày / Tháng này / Từ đầu dự án / Tùy chọn từ–đến): số ca, tờ Scan/Tách/OCR, hộp xong, giờ-người, tờ/người-giờ, xếp hạng, dòng Tổng, bấm tiêu đề cột để sắp xếp; ghi chú khi khoảng chứa số đầu kỳ 02–08/11 (không có chi tiết từng người). Cùng quy tắc chia công với `canhan` của `dash_` (khoảng 1 ngày trùng khớp); loại bản hủy, THỬ NGHIỆM và người `TN-xx` (trừ ADMIN `gomThu`); chặn TOVIEN; tối đa 366 ngày | `thongKeNhanSu` → `{tu, den, soNgay, dauKyDen, nguoi[], tong}` | `thongKeNhanSu_`, `nhatKyRows_`, `congCaNhan_`, `dashTabNhanSu`, `dashNsTai`, `dashNsBang`, `#nsKhoang`, `#nsTu`, `#nsDen`, `#nsBody` |
 
 ## 10. Hạ tầng (F-HT) — sửa nhầm là hỏng toàn hệ thống
 

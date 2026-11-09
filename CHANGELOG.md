@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-DB-14, F-DB-15 · Dashboard chia 5 tab con (Tổng quan · Theo ngày · Ca – Nhóm · Nhân sự · Nhật ký nhập), nhớ tab đang xem; tab Nhân sự thống kê theo khoảng ngày bằng action đọc mới `thongKeNhanSu` (Lãnh đạo/TT/TP/ADMIN, tối đa 366 ngày). `dash_` tách hàm dùng chung `nhatKyRows_`, `zCaNhan_`, `thanhVienBanGhi_`, `congCaNhan_` (kết quả `dash_` không đổi: so JSON trước/sau). `loadDash` tách thành `dashTab*`. Mock 261/0, giao diện 381/0. Chưa triển khai (chờ Antigravity làm đẹp, Opus review).
 - Triển khai **phiên bản 20** lên `…MlRA` (commit `d568321`: F-DB-01 khoảng ngày). Bản trước: phiên bản 19 (`60189ab`). Trước khi đẩy bản trên Apps Script khớp `60189ab`; sau khi lưu và tải lại băm khớp repo. Link `/exec` mở được.
 - F-DB-01 làm lại · `dash_` trả thêm `khoangNgay {tu, den, soNgay}`; `#dNgayCo` đổi từ dãy nút ngày sang một dòng "Có dữ liệu: dd/mm/yyyy → dd/mm/yyyy · N ngày" (hai ngày đầu/cuối bấm được), `#dNgay.min = tu`; bỏ `NGAY_CO`. Mock 250/0, giao diện kiểm tra xem bên dưới. Triển khai: xem dòng kế.
 - Triển khai **phiên bản 19** lên `…MlRA` (commit `60189ab`: F-DB-01, F-DB-06). Bản trước: phiên bản 18. Bản cũ trên Apps Script khớp `fe49dba` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp repo. Link `/exec` mở được (tiêu đề đúng).

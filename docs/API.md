@@ -10,10 +10,10 @@
 ## Lớp chặn chung trong `api()`
 1. `auth_(token)` — token hết hạn → lỗi "Phiên đăng nhập đã hết hạn".
 2. Chưa đổi PIN lần đầu → chỉ được `me`, `doiPin`.
-3. `LANHDAO` → chỉ được `me`, `dashboard`, `doiPin`, `lichSu`.
+3. `LANHDAO` → chỉ được `me`, `dashboard`, `thongKeNhanSu`, `doiPin`, `lichSu`.
 4. Action không thuộc `READ_ACTIONS` chạy trong khóa (`withLock_`).
 
-`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','nhatKyHT','lichSu']`
+`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','nhatKyHT','lichSu','thongKeNhanSu']`
 
 ## Danh sách action
 
@@ -29,6 +29,7 @@
 | `huy` | TT/TP khi ca còn mở; ADMIN mọi lúc | `{id}` | — |
 | `lichSu` | mọi người | `{tu, den}` | `[{ngay, ca, buoc, hop, dv, phanCuaToi, het}]` |
 | `dashboard` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{ngay, gomThu}` (`gomThu` chỉ có tác dụng với ADMIN) | xem dưới |
+| `thongKeNhanSu` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{tu, den, gomThu}` (`den` không quá hôm nay; tối đa 366 ngày; `gomThu` chỉ có tác dụng với ADMIN) | `{ tu, den, soNgay, dauKyDen, nguoi: [{ ma, ten, soCa, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop, scanHs, tachHs, gio, dvGio }], tong: { soNguoi, soCa, gio, dvGio, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop, scanHs, tachHs } }` — cùng quy tắc `canhan` của `dash_` (dv = tờ nếu > 0 ngược lại trang; chia công theo `ThanhVien`; `gio` = Σ `CA[ca].gio` các ca đã làm; `dvGio` = tờ/giờ). Không gồm số đầu kỳ `DauKy` (không có chi tiết từng người; `dauKyDen` để giao diện ghi chú) |
 | `dsCa` | TT/TP/ADMIN | `{ngay, ca}` | nhân sự ca, nhóm, `soDaVao`, trạng thái chốt |
 | `luuNhom` | TT/TP/ADMIN | `{ngay, ca, gan:[{ma,nhom}], chiDoi}` | — |
 | `suaCa` | TT/TP/ADMIN | `{ngay, ca, ma, them}` | — |

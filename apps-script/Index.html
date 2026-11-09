@@ -1111,6 +1111,12 @@ button.btn-large {
 .ngay-nav button:disabled { opacity: .45; cursor: not-allowed; }
 .ngay-chips { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; font-size: 12.5px; white-space: nowrap; }
 .ngay-chips > * { flex: 0 0 auto; }
+.dtabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 12px; padding-bottom: 2px; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+.dtab { flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--tx-sec); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.dtab.on { background: var(--pri); border-color: var(--pri); color: #fff; }
+.ca-trangthai { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.nsort { cursor: pointer; user-select: none; }
+.ns-tong td { font-weight: 700; border-top: 2px solid var(--line); }
 .chip-ngay { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--tx-sec); font-size: 12.5px; cursor: pointer; font-variant-numeric: tabular-nums; }
 .chip-ngay:hover { border-color: var(--pri); color: var(--pri); }
 .chip-ngay.on { background: var(--pri); border-color: var(--pri); color: #fff; }
@@ -1576,6 +1582,7 @@ tbody tr:last-child td { border-bottom: none; }
         <label class="check-label"><input type="checkbox" id="dGomThu"> <span>Gồm dữ liệu thử nghiệm (dành cho Quản trị viên)</span></label>
       </div>
     </div>
+    <div class="dtabs noprint" id="dTabs" role="tablist"></div>
     <div id="dBody"></div>
   </section>
 
@@ -2622,14 +2629,49 @@ function veNgayNav(d) {
     Array.prototype.forEach.call($('dNgayCo').querySelectorAll('[data-ng]'), function (b) { b.onclick = function () { $('dNgay').value = b.dataset.ng; loadDash(); }; });
   } else if (d) { $('dNgayCo').innerHTML = ''; }
 }
-function loadDash() {
-  $('dBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải dữ liệu Dashboard điều hành…</div></div>';
-  var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
-  veNgayNav();
-  call('dashboard', { ngay: $('dNgay').value, gomThu: gomThu }).then(function (d) {
-    veNgayNav(d);
-    var D = d.day, h = widgetHtml(d);
-
+var DASH = { d: null, tab: 'tq', ns: { k: '7', tu: '', den: '', sk: 'tong', asc: false, data: null } };
+var DASH_TABS = [['tq', 'Tổng quan'], ['ngay', 'Theo ngày'], ['canhom', 'Ca – Nhóm'], ['nhansu', 'Nhân sự'], ['nhatky', 'Nhật ký nhập']];
+function dashTabNho(v) {
+  try { if (v) localStorage.setItem('dashTab', v); else return localStorage.getItem('dashTab'); } catch (e) { }
+  return null;
+}
+function dashVeTab() {
+  var h = '';
+  DASH_TABS.forEach(function (t) { h += '<button type="button" class="dtab' + (t[0] === DASH.tab ? ' on' : '') + '" role="tab" data-dtab="' + t[0] + '">' + t[1] + '</button>'; });
+  $('dTabs').innerHTML = h;
+  Array.prototype.forEach.call($('dTabs').querySelectorAll('[data-dtab]'), function (b) { b.onclick = function () { dashChonTab(b.dataset.dtab); }; });
+}
+function dashChonTab(t) {
+  DASH.tab = t; dashTabNho(t); dashVeTab(); dashHienTab();
+}
+function dashHienTab() {
+  var d = DASH.d, t = DASH.tab;
+  if (!d) return;
+  if (t === 'nhansu') { dashTabNhanSu(); return; }
+  var h = t === 'ngay' ? dashTabNgay(d) : (t === 'canhom' ? dashTabCaNhom(d) : (t === 'nhatky' ? dashTabNhatKy(d) : dashTabTongQuan(d)));
+  h += '<div class="muted" style="text-align:right;margin-top:10px;">Dữ liệu cập nhật tự động lúc ' + esc(d.capNhat) + '</div>';
+  $('dBody').innerHTML = h;
+  dashVeBieuDo(d, t);
+}
+// ----- Tab 1: Tổng quan -----
+function dashTabTongQuan(d) {
+  var D = d.day, h = widgetHtml(d);
+  h += '<div class="card"><h3>Trạng thái các ca ' + (d.ngay === ME.ngay ? 'hôm nay' : 'ngày ' + esc(d.ngay)) + '</h3><div class="ca-trangthai">' + d.cas.map(function (c) {
+    return '<div><b>Ca ' + esc(c.ca) + '</b> <span class="muted">' + esc(c.bd) + '–' + esc(c.kt) + '</span> ' + ttChip(c) + '</div>';
+  }).join('') + '</div></div>';
+    h += '<div class="kpis kpis-3">' +
+      '<div class="kpi"><span class="kpi-tag">Nhận</span><b>' + nf(D.nhanHop) + '</b><span>Hộp nhận từ TTLT</span></div>' +
+      '<div class="kpi"><span class="kpi-tag">Trả</span><b>' + nf(D.traHop) + '</b><span>Hộp đã trả TTLT</span></div>' +
+      '<div class="kpi"><span class="kpi-tag">Tồn</span><b>' + nf(D.tonCuoi) + '</b><span>Hộp tồn cuối ngày</span></div>' +
+      '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
+      '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
+      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>';
+  h += '<div class="card" style="margin-top:14px;"><h3>Kết quả – cuối ngày (tờ / ngày, 10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>';
+  return h;
+}
+// ----- Tab 2: Theo ngày (đầu ca, cuối ca, kết thúc ngày) -----
+function dashTabNgay(d) {
+  var D = d.day, h = '';
     // ===== KHU VỰC 1: ĐẦU CA =====
     h += zone('z1', 'ĐẦU CA', 'Tình trạng khi bắt đầu từng ca', 'Hộp còn tồn và khối lượng chờ xử lý lúc vào ca – nhân sự được phân công');
     h += '<div class="tiles">' + d.cas.map(function (c) {
@@ -2662,11 +2704,13 @@ function loadDash() {
     h += '<div class="grid2" style="margin-top:14px;"><div class="card"><h3>Nhận hồ sơ – cuối ngày (10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c2"></canvas></div></div>' +
       '<div class="card"><h3>Kết quả – cuối ngày (tờ / ngày)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div></div>';
 
-    // ===== TỪNG CA: ai ở nhóm nào, mỗi người làm được bao nhiêu =====
-    if (d.caNguoi && (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN')) h += tungCaHtml(d);
-
-    // ===== KHU VỰC 4: CHI TIẾT (ẩn nếu vai trò là TOVIEN) =====
-    if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
+  return h;
+}
+// ----- Tab 3: Ca – Nhóm -----
+function dashTabCaNhom(d) {
+  var h = '';
+  if (d.caNguoi && (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN')) h += tungCaHtml(d);
+  if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
       h += zone('z4', 'CHI TIẾT', 'Theo nhóm và cá nhân', 'Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Cá nhân chia đều 50/50 trong nhóm');
       h += '<div class="card"><h3>Năng suất và sản lượng theo nhóm</h3><div class="scroll"><table><tr><th>Ca – Nhóm</th><th>Thành viên</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>Giờ-người</th><th>Scan/giờ</th><th>Tách/giờ</th><th>OCR/giờ</th></tr>' +
         (d.nhom.map(function (g) {
@@ -2675,33 +2719,104 @@ function loadDash() {
           var oGio = g.ocrDVGio !== undefined ? g.ocrDVGio : (g.ocrTrangGio || 0);
           return '<tr><td><b>Ca ' + g.ca + ' – N' + esc(g.nhom) + '</b></td><td style="white-space:normal;text-align:left">' + esc(g.tv.map(function (x) { return x.ten; }).join(' + ')) + '</td><td><b>' + nf(g.scanDV) + '</b></td><td>' + g.scanHs + '</td><td><b>' + nf(g.tachDV) + '</b></td><td>' + g.tachHs + '</td><td><b>' + nf(g.ocrDV) + '</b></td><td>' + nf(g.gioNguoi) + '</td><td>' + nf(sGio) + '</td><td>' + nf(tGio) + '</td><td>' + nf(oGio) + '</td></tr>';
         }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có dữ liệu nhóm</td></tr>') + '</table></div></div>';
-      h += '<div class="card"><h3>Sản lượng chi tiết theo cá nhân</h3><div class="scroll"><table><tr><th>Họ và tên</th><th>Số ca làm</th><th>Tờ scan</th><th>Tờ tách file</th><th>Tờ OCR</th></tr>' +
-        (d.canhan.map(function (c) { return '<tr><td><b>' + esc(c.ten) + '</b></td><td>' + c.soCa + '</td><td>' + nfi(c.scanDV) + '</td><td>' + nfi(c.tachDV) + '</td><td>' + nfi(c.ocrDV) + '</td></tr>'; }).join('') || '<tr><td colspan="5" style="text-align:center;padding:16px;">Chưa có dữ liệu cá nhân</td></tr>') + '</table></div></div>';
-    }
-    // ===== AI NHẬP – NHẬP BAO NHIÊU (theo ca trong ngày) =====
-    if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
+  }
+  return h;
+}
+// ----- Tab 5: Nhật ký nhập (ai nhập, nhập bao nhiêu) -----
+function dashTabNhatKy(d) {
+  var h = '';
+  if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
       var nnRows = d.nguoiNhap || [], ctRows = d.chiTiet || [];
       h += zone('z4', 'AI NHẬP', 'Ai nhập – nhập bao nhiêu trong từng ca', 'Số liệu theo người bấm gửi báo cáo ngày ' + esc(d.ngay) + ' (nhập hộ tính cho người nhập hộ; cột "Thực hiện" là người/nhóm làm)');
       h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
         (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td style="text-align:left"><b>' + esc(r.ten) + '</b></td><td>' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td>' + r.soLan + '</td><td><b>' + nf(r.scanDV) + '</b></td><td>' + r.scanHs + '</td><td><b>' + nf(r.tachDV) + '</b></td><td>' + r.tachHs + '</td><td><b>' + nf(r.ocrDV) + '</b></td><td>' + r.ocrHs + '</td><td>' + r.nhanHop + '</td><td>' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
       h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
         (ctRows.map(function (r) { return '<tr><td>' + esc(r.gio) + '</td><td>Ca ' + esc(r.ca) + '</td><td>' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td><b>' + esc(r.hop) + '</b></td><td>' + r.hs + '</td><td>' + r.trang + '</td><td>' + r.to + '</td><td>' + (r.het ? '✔' : '') + '</td><td style="text-align:left">' + esc(r.nguoi) + '</td><td style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td>' + esc(r.loai) + '</td></tr>'; }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có bản ghi</td></tr>') + '</table></div></div>';
-    }
-    h += '<div class="muted" style="text-align:right;margin-top:10px;">Dữ liệu cập nhật tự động lúc ' + esc(d.capNhat) + '</div>';
-    $('dBody').innerHTML = h;
-
-    // Biểu đồ bọc trong try-catch: nếu lỗi chart thì số liệu vẫn hiển thị đầy đủ
-    try {
-      var cl = d.cas.map(function (c) { return 'Ca ' + c.ca; }), sl = d.series.map(function (s) { return s.ngay.slice(5); });
-      var bar = function (label, data, color) { return { label: label, data: data, backgroundColor: color, borderRadius: 5 }; };
+  }
+  return h;
+}
+function dashVeBieuDo(d, t) {
+  // Biểu đồ chỉ vẽ khi tab của nó đang hiện; bọc try-catch: lỗi chart thì số liệu vẫn hiển thị
+  try {
+    var cl = d.cas.map(function (c) { return 'Ca ' + c.ca; }), sl = d.series.map(function (s) { return s.ngay.slice(5); });
+    var bar = function (label, data, color) { return { label: label, data: data, backgroundColor: color, borderRadius: 5 }; };
+    if (t === 'ngay') {
       mk('c1', { type: 'bar', data: { labels: cl, datasets: [bar('Hộp tồn đầu ca', d.cas.map(function (c) { return c.tonDau; }), COL.scan), bar('Nhận trong ca', d.cas.map(function (c) { return c.nhanHop; }), COL.nhan), bar('Nhóm nhận từ TT/TP', d.cas.map(function (c) { return c.nhanNhomHop; }), COL.tach)] } });
       mk('c3', { type: 'bar', data: { labels: cl, datasets: [bar('Chưa scan', d.cas.map(function (c) { return c.chuaScan; }), COL.scan), bar('Chờ tách file', d.cas.map(function (c) { return c.chuaTach; }), COL.tach), bar('Chờ OCR', d.cas.map(function (c) { return c.chuaOcr; }), COL.ocr)] } });
       mk('c5', { type: 'bar', data: { labels: cl, datasets: [bar('Scan', d.cas.map(function (c) { return c.scanDV; }), COL.scan), bar('Tách file', d.cas.map(function (c) { return c.tachDV; }), COL.tach), bar('OCR', d.cas.map(function (c) { return c.ocrDV; }), COL.ocr)] } });
       mk('c2', { type: 'bar', data: { labels: sl, datasets: [bar('Nhận', d.series.map(function (s) { return s.nhanHop; }), COL.nhan), bar('Trả', d.series.map(function (s) { return s.traHop; }), COL.tra), { type: 'line', label: 'Tồn cuối ngày', data: d.series.map(function (s) { return s.tonCuoi; }), borderColor: COL.scan, backgroundColor: COL.scan, tension: 0.25, borderWidth: 2.5, pointRadius: 3 }] } });
-      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan', d.series.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file', d.series.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR', d.series.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
-    } catch (errChart) {
-      console.warn('Lỗi hiển thị biểu đồ:', errChart);
     }
+    if (t === 'ngay' || t === 'tq') {
+      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan', d.series.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file', d.series.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR', d.series.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
+    }
+  } catch (errChart) {
+    console.warn('Lỗi hiển thị biểu đồ:', errChart);
+  }
+}
+// ----- Tab 4: Nhân sự (thống kê theo khoảng ngày, action thongKeNhanSu) -----
+function nsKhoangTinh() {
+  var k = DASH.ns.k, hn = ME.ngay, tu = hn, den = hn;
+  var dt = new Date(hn + 'T00:00:00Z');
+  if (k === '7') { dt.setUTCDate(dt.getUTCDate() - 6); tu = dt.toISOString().slice(0, 10); }
+  else if (k === 'thang') tu = hn.slice(0, 8) + '01';
+  else if (k === 'dau') tu = (DASH.d && DASH.d.khoangNgay && DASH.d.khoangNgay.tu) || '2026-11-02';
+  else if (k === 'tuychon') { tu = DASH.ns.tu || hn; den = DASH.ns.den || hn; }
+  return { tu: tu, den: den };
+}
+function dashTabNhanSu() {
+  var S = DASH.ns, opt = function (v, t) { return '<option value="' + v + '"' + (S.k === v ? ' selected' : '') + '>' + t + '</option>'; };
+  var h = '<div class="card noprint"><h3>Thống kê theo nhân sự</h3><div class="row">' +
+    '<div><label>Khoảng thời gian</label><select id="nsKhoang">' + opt('homnay', 'Hôm nay') + opt('7', '7 ngày gần nhất') + opt('thang', 'Tháng này') + opt('dau', 'Từ đầu dự án') + opt('tuychon', 'Tùy chọn (từ – đến)') + '</select></div>' +
+    '<div id="nsTuyChon" class="' + (S.k === 'tuychon' ? '' : 'hide') + '"><label>Từ ngày – đến ngày</label><div style="display:flex;gap:6px;"><input type="date" id="nsTu" value="' + esc(S.tu || ME.ngay) + '" max="' + ME.ngay + '"><input type="date" id="nsDen" value="' + esc(S.den || ME.ngay) + '" max="' + ME.ngay + '"></div></div>' +
+    '</div></div><div id="nsBody"><div class="empty-state"><div class="muted">Đang tải thống kê nhân sự…</div></div></div>';
+  $('dBody').innerHTML = h;
+  $('nsKhoang').onchange = function () { S.k = $('nsKhoang').value; S.data = null; dashTabNhanSu(); };
+  if ($('nsTu')) { $('nsTu').onchange = $('nsDen').onchange = function () { S.tu = $('nsTu').value; S.den = $('nsDen').value; S.data = null; dashNsTai(); }; }
+  if (S.data) { dashNsBang(); return; }
+  dashNsTai();
+}
+function dashNsTai() {
+  var S = DASH.ns, kh = nsKhoangTinh(), gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
+  if (S.k === 'tuychon' && (!S.tu || !S.den)) { if ($('nsBody')) $('nsBody').innerHTML = '<div class="muted" style="padding:14px;">Chọn ngày bắt đầu và ngày kết thúc.</div>'; return; }
+  var tuKey = kh.tu + '|' + kh.den;
+  call('thongKeNhanSu', { tu: kh.tu, den: kh.den, gomThu: gomThu }).then(function (r) {
+    if (DASH.tab !== 'nhansu' || tuKey !== nsKhoangTinh().tu + '|' + nsKhoangTinh().den) return;   // người dùng đã đổi tab/khoảng trong lúc chờ
+    S.data = r; dashNsBang();
+  }).catch(function (e) { if ($('nsBody')) $('nsBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
+function dashNsBang() {
+  var S = DASH.ns, r = S.data; if (!r || !$('nsBody')) return;
+  var tongDV = function (x) { return (x.scanDV || 0) + (x.tachDV || 0) + (x.ocrDV || 0); };
+  var hop = function (x) { return (x.scanHop || 0) + (x.tachHop || 0) + (x.ocrHop || 0); };
+  var rank = {}; r.nguoi.slice().sort(function (a, b) { return tongDV(b) - tongDV(a); }).forEach(function (x, i) { rank[x.ma] = i + 1; });
+  var val = { ten: function (x) { return x.ten; }, soCa: function (x) { return x.soCa; }, scanDV: function (x) { return x.scanDV; }, tachDV: function (x) { return x.tachDV; }, ocrDV: function (x) { return x.ocrDV; }, hop: hop, gio: function (x) { return x.gio; }, dvGio: function (x) { return x.dvGio; }, tong: tongDV };
+  var f = val[S.sk] || tongDV, dir = S.asc ? 1 : -1;
+  var ds = r.nguoi.slice().sort(function (a, b) { var x = f(a), y = f(b); return (typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y) * dir; });
+  var th = function (k, t) { return '<th class="nsort" data-sk="' + k + '">' + t + (S.sk === k ? (S.asc ? ' ▲' : ' ▼') : '') + '</th>'; };
+  var ngayVN = function (x) { return x.split('-').reverse().join('/'); };
+  var h = '<div class="card"><h3>' + ngayVN(r.tu) + (r.tu !== r.den ? ' → ' + ngayVN(r.den) : '') + ' · ' + r.soNgay + ' ngày có dữ liệu · ' + r.tong.soNguoi + ' người</h3>' +
+    '<div class="muted" style="margin-bottom:8px;">Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
+    (r.tu <= r.dauKyDen ? '<br>Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '') + '</div>' +
+    '<div class="scroll"><table class="ns-table"><tr><th>#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ/giờ') + '</tr>' +
+    (ds.map(function (x) {
+      return '<tr><td>' + rank[x.ma] + '</td><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + x.soCa + '</td><td>' + nfi(x.scanDV) + '</td><td>' + nfi(x.tachDV) + '</td><td>' + nfi(x.ocrDV) + '</td><td>' + nf(hop(x)) + '</td><td>' + nf(x.gio) + '</td><td><b>' + nf(x.dvGio) + '</b></td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px;">Chưa có dữ liệu trong khoảng này</td></tr>') +
+    (ds.length ? '<tr class="ns-tong"><td></td><td style="text-align:left"><b>Tổng</b></td><td>' + nf(r.tong.soCa) + '</td><td>' + nfi(r.tong.scanDV) + '</td><td>' + nfi(r.tong.tachDV) + '</td><td>' + nfi(r.tong.ocrDV) + '</td><td>' + nf(r.tong.scanHop + r.tong.tachHop + r.tong.ocrHop) + '</td><td>' + nf(r.tong.gio) + '</td><td><b>' + nf(r.tong.dvGio) + '</b></td></tr>' : '') +
+    '</table></div></div>';
+  $('nsBody').innerHTML = h;
+  Array.prototype.forEach.call($('nsBody').querySelectorAll('[data-sk]'), function (c) {
+    c.onclick = function () { var k = c.dataset.sk; if (S.sk === k) S.asc = !S.asc; else { S.sk = k; S.asc = (k === 'ten'); } dashNsBang(); };
+  });
+}
+function loadDash() {
+  $('dBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải dữ liệu Dashboard điều hành…</div></div>';
+  var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
+  veNgayNav();
+  DASH.ns.data = null;
+  call('dashboard', { ngay: $('dNgay').value, gomThu: gomThu }).then(function (d) {
+    veNgayNav(d);
+    DASH.d = d;
+    dashHienTab();
   }).catch(function (e) { $('dBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
 
@@ -2723,6 +2838,8 @@ function initDash() {
       $('boxGomThu').classList.add('hide');
     }
   }
+  var tn = dashTabNho(); if (tn && DASH_TABS.some(function (x) { return x[0] === tn; })) DASH.tab = tn;
+  dashVeTab();
   $('dLoad').onclick = loadDash;
   $('dPrint').onclick = function () { window.print(); };
   // Lọc theo ngày: đổi ngày là tự tải; nút ngày trước/sau; không xem quá hôm nay

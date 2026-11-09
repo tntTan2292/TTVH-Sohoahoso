@@ -716,5 +716,42 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ctx.__active = '';
 }
 
+// ===== thongKeNhanSu: thống kê theo nhân sự trong khoảng ngày =====
+{
+  ctx.memoClear_();
+  const tk = function (tok, o) { return api(tok, 'thongKeNhanSu', o); };
+  const DAYS = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09'];
+  const F = ['scanDV', 'tachDV', 'ocrDV', 'scanHop', 'tachHop', 'ocrHop', 'scanHs', 'tachHs'];
+  const dayCN = function (n) { return api(tAdmin, 'dashboard', { ngay: n }).data.canhan; };
+  // 1) khoảng 1 ngày trùng khớp canhan của dash_ cùng ngày
+  const un = tk(tAdmin, { tu: '2026-11-09', den: '2026-11-09' });
+  const cn9 = dayCN('2026-11-09');
+  ok(un.ok && un.data.nguoi.length === cn9.length && cn9.length > 0 && cn9.every(c => { const x = un.data.nguoi.find(y => y.ma === c.ma); return x && x.soCa === c.soCa && F.every(f => x[f] === c[f]); }), 'thongKeNhanSu: khoảng 1 ngày trùng khớp canhan của dashboard', [un.data && un.data.nguoi, cn9]);
+  // 2) khoảng nhiều ngày = tổng các ngày
+  const tong = {}; DAYS.forEach(n => dayCN(n).forEach(c => { const o = tong[c.ma] = tong[c.ma] || { scanDV: 0, tachDV: 0, ocrDV: 0 }; o.scanDV += c.scanDV; o.tachDV += c.tachDV; o.ocrDV += c.ocrDV; }));
+  const nhieu = tk(tAdmin, { tu: '2026-11-02', den: '2026-11-09' }).data;
+  ok(Object.keys(tong).length > 0 && Object.keys(tong).every(ma => { const x = nhieu.nguoi.find(y => y.ma === ma); return x && ['scanDV', 'tachDV', 'ocrDV'].every(f => Math.abs(x[f] - tong[ma][f]) <= 0.5); }) && nhieu.nguoi.length === Object.keys(tong).length, 'thongKeNhanSu: nhiều ngày = tổng các ngày', [nhieu.nguoi, tong]);
+  ok(nhieu.tong.scanDV === Math.round(nhieu.nguoi.reduce((a, x) => a + x.scanDV, 0) * 10) / 10 && nhieu.tong.soNguoi === nhieu.nguoi.length && nhieu.soNgay >= 1 && nhieu.dauKyDen === '2026-11-08', 'thongKeNhanSu: dòng tổng khớp tổng cột, có soNgay và dauKyDen', nhieu.tong);
+  const x0 = nhieu.nguoi[0];
+  ok(x0 && x0.gio > 0 && x0.dvGio === Math.round((x0.scanDV + x0.tachDV + x0.ocrDV) / x0.gio * 10) / 10, 'thongKeNhanSu: năng suất = tờ / người-giờ', x0);
+  // 3) THỬ NGHIỆM / bản đã hủy / người TN-xx bị loại (trừ gomThu)
+  const nk0 = sh('NhatKy').rows.length, truoc = tk(tAdmin, { tu: '2026-11-08', den: '2026-11-08' }).data, a1t = (truoc.nguoi.find(y => y.ma === 'A1') || { scanDV: 0 }).scanDV;
+  ctx.append_('NhatKy', { ID: 'TK1', ThoiGian: NOW, Ngay: '2026-11-08', Ca: 'Chiều', Nhom: '', Buoc: 'SCAN', MaHop: 'TK-1', SoHoSo: 1, SoTrang: 10, SoTo: 100, HetHop: true, NguoiNhap: 'A1', Loai: 'BÌNH THƯỜNG', Huy: false, ThanhVien: 'A1,TN-91' });
+  ctx.append_('NhatKy', { ID: 'TK2', ThoiGian: NOW, Ngay: '2026-11-08', Ca: 'Chiều', Nhom: '', Buoc: 'SCAN', MaHop: 'TK-2', SoHoSo: 1, SoTrang: 10, SoTo: 999, HetHop: true, NguoiNhap: 'A1', Loai: 'BÌNH THƯỜNG', Huy: true, ThanhVien: 'A1' });
+  ctx.append_('NhatKy', { ID: 'TK3', ThoiGian: NOW, Ngay: '2026-11-08', Ca: 'Chiều', Nhom: '', Buoc: 'SCAN', MaHop: 'TK-3', SoHoSo: 1, SoTrang: 10, SoTo: 777, HetHop: true, NguoiNhap: 'A1', Loai: 'THỬ NGHIỆM', Huy: false, ThanhVien: 'A1' });
+  ctx.memoClear_();
+  const sau = tk(tAdmin, { tu: '2026-11-08', den: '2026-11-08' }).data;
+  ok(!sau.nguoi.some(y => y.ma === 'TN-91') && ((sau.nguoi.find(y => y.ma === 'A1') || {}).scanDV) === a1t + 50, 'thongKeNhanSu: loại bản hủy, THỬ NGHIỆM và người TN-xx (A1 chỉ nhận 50 = 100/2)', sau.nguoi);
+  const gom = tk(tAdmin, { tu: '2026-11-08', den: '2026-11-08', gomThu: true }).data;
+  ok(gom.nguoi.some(y => y.ma === 'TN-91') && (gom.nguoi.find(y => y.ma === 'A1') || {}).scanDV === a1t + 50 + 777, 'thongKeNhanSu: ADMIN gomThu thì tính cả THỬ NGHIỆM và TN-xx (vẫn bỏ bản hủy)', gom.nguoi);
+  ok(JSON.stringify(tk(tTT, { tu: '2026-11-08', den: '2026-11-08', gomThu: true }).data.nguoi) === JSON.stringify(sau.nguoi), 'thongKeNhanSu: không phải ADMIN thì gomThu không có tác dụng');
+  sh('NhatKy').rows.length = nk0; ctx.memoClear_();
+  // 4) phân quyền và kiểm tra khoảng
+  ok(!tk(tA, { tu: '2026-11-09', den: '2026-11-09' }).ok, 'thongKeNhanSu: tổ viên bị chặn');
+  ok(tk(tLD, { tu: '2026-11-09', den: '2026-11-09' }).ok && tk(tTT, {}).ok, 'thongKeNhanSu: Lãnh đạo và Tổ trưởng xem được; không truyền ngày thì lấy hôm nay');
+  ok(!tk(tAdmin, { tu: '2026-11-09', den: '2026-11-01' }).ok && !tk(tAdmin, { tu: '2025-01-01', den: '2026-11-09' }).ok, 'thongKeNhanSu: từ > đến hoặc quá 366 ngày bị từ chối');
+  ok(tk(tAdmin, { tu: '2026-10-01', den: '2030-01-01' }).data.den <= '2026-11-09', 'thongKeNhanSu: đến ngày không vượt quá hôm nay');
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

@@ -293,8 +293,8 @@ function auth_(token) {
 }
 
 /* ====================== API ====================== */
-const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'nhatKyHT', 'lichSu'];
-const LANHDAO_ACTIONS = ['me', 'dashboard', 'doiPin', 'lichSu'];
+const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
+const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu'];
 function api(token, action, p) {
   try {
     const u = auth_(token); p = p || {};
@@ -320,6 +320,10 @@ function route_(u, action, p) {
     case 'dashboard': {
       if (u.vaiTro === 'TOVIEN') throw 'Dashboard chỉ dành cho Lãnh đạo và Quản lý';     // tổ viên không xem Dashboard
       return dash_(p.ngay, !!p.gomThu && u.vaiTro === 'ADMIN');
+    }
+    case 'thongKeNhanSu': {
+      if (u.vaiTro === 'TOVIEN') throw 'Thống kê nhân sự chỉ dành cho Lãnh đạo và Quản lý';
+      return thongKeNhanSu_(p, !!p.gomThu && u.vaiTro === 'ADMIN');
     }
     case 'nhatKyHT': needSuper_(u); return nhatKyHT_(p);
     case 'khoiPhuc': needSuper_(u); return khoiPhuc_(u, p);
@@ -951,12 +955,30 @@ function chot_(u, p) {
 }
 
 /* ====================== Dashboard ====================== */
-function dash_(ngayIn, gomThu) {
-  const t = now_(), ngay = d_(ngayIn) || t.ngay;
-  const rows = read_('NhatKy').filter(function (r) { return !b_(r.Huy); }).map(function (r) {
+// Bản ghi NhatKy còn hiệu lực (không hủy), đúng ca; dữ liệu THỬ NGHIỆM không tính vào số thật (trừ khi gomThu). Dùng chung dash_ và thongKeNhanSu_.
+function nhatKyRows_(gomThu) {
+  return read_('NhatKy').filter(function (r) { return !b_(r.Huy); }).map(function (r) {
     return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), hop: s_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),
       to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), nguoi: s_(r.NguoiNhap), loai: s_(r.Loai), tv: s_(r.ThanhVien) };
-  }).filter(function (r) { return CA[r.ca] && (gomThu || r.loai !== 'THỬ NGHIỆM'); });   // dữ liệu THỬ NGHIỆM không tính vào số thật
+  }).filter(function (r) { return CA[r.ca] && (gomThu || r.loai !== 'THỬ NGHIỆM'); });
+}
+// Bộ đếm sản lượng (dùng cho nhóm và cá nhân)
+function zCaNhan_() { return { scanHop: 0, scanHs: 0, scanTrang: 0, scanTo: 0, scanDV: 0, tachHop: 0, tachHs: 0, tachTrang: 0, tachTo: 0, tachDV: 0, ocrHop: 0, ocrHs: 0, ocrTrang: 0, ocrTo: 0, ocrDV: 0 }; }
+// Thành viên chốt lúc báo cáo (ThanhVien) -> [{ma, ten}] hoặc null nếu bản ghi không ghi thành viên
+function thanhVienBanGhi_(r, ns) {
+  return r.tv ? r.tv.split(',').filter(Boolean).map(function (ma) { return { ma: ma, ten: ns[ma] || ma }; }) : null;
+}
+// Chia công 50/50 cho các thành viên tvs của một bản ghi (b = scan|tach|ocr, add = {Hs,Trang,To,Hop,DV}); caKey ghi nhận "ca đã làm" của từng người
+function congCaNhan_(canhan, tvs, caKey, b, add) {
+  tvs.forEach(function (mm) {
+    const c = canhan[mm.ma] = canhan[mm.ma] || Object.assign({ ma: mm.ma, ten: mm.ten, ca: {} }, zCaNhan_());
+    c.ca[caKey] = 1;
+    Object.keys(add).forEach(function (f) { c[b + f] += add[f] / tvs.length; });
+  });
+}
+function dash_(ngayIn, gomThu) {
+  const t = now_(), ngay = d_(ngayIn) || t.ngay;
+  const rows = nhatKyRows_(gomThu);
   const ns = {}; read_('NhanSu').forEach(function (r) { ns[s_(r.MaHRM)] = s_(r.HoTen); });
   const pn = read_('PhanNhom');
   // DauKy: dòng có Ngay = số liệu TỪNG NGÀY (02–08/11) trước khi chạy hệ thống (Ca = Sáng/Chiều/Tối hoặc "Ngày" = sáng+chiều gộp);
@@ -1040,11 +1062,11 @@ function dash_(ngayIn, gomThu) {
     const key = s_(r.Ca) + '|' + s_(r.Nhom);
     (nhoms[key] = nhoms[key] || { ca: s_(r.Ca), nhom: s_(r.Nhom), tv: [] }).tv.push({ ma: s_(r.MaHRM), ten: s_(r.HoTen) || ns[s_(r.MaHRM)] || s_(r.MaHRM) });
   });
-  const z = function () { return { scanHop: 0, scanHs: 0, scanTrang: 0, scanTo: 0, scanDV: 0, tachHop: 0, tachHs: 0, tachTrang: 0, tachTo: 0, tachDV: 0, ocrHop: 0, ocrHs: 0, ocrTrang: 0, ocrTo: 0, ocrDV: 0 }; };
+  const z = zCaNhan_;
   Object.keys(nhoms).forEach(function (k) { Object.assign(nhoms[k], z()); });
   rows.filter(function (r) { return r.ngay === ngay && (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR'); }).forEach(function (r) {
     // thành viên lấy theo lúc báo cáo (ThanhVien); đổi nhóm sau đó không làm mất số của cá nhân
-    const mem = r.tv ? r.tv.split(',').filter(Boolean).map(function (ma) { return { ma: ma, ten: ns[ma] || ma }; }) : null;
+    const mem = thanhVienBanGhi_(r, ns);
     const b = r.buoc.toLowerCase();
     const add = { Hs: r.hs, Trang: r.trang, To: r.to, Hop: r.het ? 1 : 0, DV: r.dv };
     let g = null;
@@ -1055,11 +1077,7 @@ function dash_(ngayIn, gomThu) {
       Object.keys(add).forEach(function (f) { g[b + f] += add[f]; });
     }
     const tvs = (mem && mem.length) ? mem : (g ? g.tv : []);   // báo cáo cá nhân (không nhóm): chỉ tính cho cá nhân, không vào bảng nhóm
-    tvs.forEach(function (mm) {
-      const c = canhan[mm.ma] = canhan[mm.ma] || Object.assign({ ma: mm.ma, ten: mm.ten, ca: {} }, z());
-      c.ca[r.ca] = 1;
-      Object.keys(add).forEach(function (f) { c[b + f] += add[f] / tvs.length; });
-    });
+    congCaNhan_(canhan, tvs, r.ca, b, add);
   });
   const nhomOut = Object.keys(nhoms).map(function (k) {
     const g = nhoms[k], gio = g.tv.length * CA[g.ca].gio;
@@ -1147,4 +1165,47 @@ function dash_(ngayIn, gomThu) {
   const dsAll = Object.keys(dmAll).filter(function (x) { return x <= t.ngay; }).sort();
   const khoangNgay = { tu: dsAll[0] || '', den: dsAll.length ? dsAll[dsAll.length - 1] : '', soNgay: dsAll.length };
   return { ngay: ngay, capNhat: t.ts, khoangNgay: khoangNgay, cas: cas, caGop: caGop, day: day, series: series, nhom: nhomOut, canhan: canhanOut, caNguoi: caNguoi, nguoiNhap: nguoiNhap, chiTiet: chiTiet, luyKe: all, tienDo: tienDo };
+}
+
+// Thống kê theo NHÂN SỰ trong một khoảng ngày [tu, den] (tối đa 366 ngày). Cùng quy tắc với dash_.canhan: dv = tờ nếu > 0 ngược lại trang,
+// chia công theo ThanhVien chốt lúc báo cáo (không có thì theo thành viên nhóm trong PhanNhom ngày đó), bỏ bản hủy và THỬ NGHIỆM (trừ gomThu).
+// Số đầu kỳ DauKy (02–08/11) không có chi tiết từng người nên KHÔNG cộng vào đây (dauKyDen cho giao diện ghi chú).
+function thongKeNhanSu_(p, gomThu) {
+  const t = now_(), tu = d_(p.tu) || t.ngay;
+  let den = d_(p.den) || t.ngay;
+  if (den > t.ngay) den = t.ngay;
+  if (tu > den) throw 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc';
+  if ((new Date(den + 'T00:00:00Z').getTime() - new Date(tu + 'T00:00:00Z').getTime()) / 86400000 > 365) throw 'Khoảng ngày tối đa 366 ngày';
+  const ns = {}; read_('NhanSu').forEach(function (r) { ns[s_(r.MaHRM)] = s_(r.HoTen); });
+  const tvNhom = {};
+  read_('PhanNhom').forEach(function (r) {
+    const nd = d_(r.Ngay); if (nd < tu || nd > den) return;
+    const key = nd + '|' + s_(r.Ca) + '|' + s_(r.Nhom);
+    (tvNhom[key] = tvNhom[key] || []).push({ ma: s_(r.MaHRM), ten: s_(r.HoTen) || ns[s_(r.MaHRM)] || s_(r.MaHRM) });
+  });
+  const rows = nhatKyRows_(gomThu).filter(function (r) { return r.ngay >= tu && r.ngay <= den && (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR'); });
+  const canhan = {}, ngayCo = {};
+  rows.forEach(function (r) {
+    ngayCo[r.ngay] = 1;
+    const mem = thanhVienBanGhi_(r, ns);
+    const tvs = (mem && mem.length) ? mem : (r.nhom ? (tvNhom[r.ngay + '|' + r.ca + '|' + r.nhom] || []) : []);
+    const dv = r.to > 0 ? r.to : r.trang;
+    congCaNhan_(canhan, tvs, r.ngay + '|' + r.ca, r.buoc.toLowerCase(), { Hs: r.hs, Trang: r.trang, To: r.to, Hop: r.het ? 1 : 0, DV: dv });
+  });
+  const r1 = function (v) { return Math.round(v * 10) / 10; };
+  const nguoi = Object.keys(canhan).filter(function (ma) { return gomThu || ma.indexOf('TN-') !== 0; }).map(function (ma) {
+    const c = canhan[ma], keys = Object.keys(c.ca);
+    c.soCa = keys.length;
+    c.gio = keys.reduce(function (a, k) { return a + CA[k.split('|')[1]].gio; }, 0);
+    const dvTong = c.scanDV + c.tachDV + c.ocrDV;
+    c.dvGio = c.gio ? r1(dvTong / c.gio) : 0;
+    delete c.ca;
+    Object.keys(c).forEach(function (f) { if (typeof c[f] === 'number' && f !== 'soCa' && f !== 'gio' && f !== 'dvGio') c[f] = r1(c[f]); });
+    return c;
+  }).sort(function (a, b) { return (b.scanDV + b.tachDV + b.ocrDV) - (a.scanDV + a.tachDV + a.ocrDV) || a.ten.localeCompare(b.ten, 'vi'); });
+  const tong = { soNguoi: nguoi.length, soCa: 0, gio: 0, scanDV: 0, tachDV: 0, ocrDV: 0, scanHop: 0, tachHop: 0, ocrHop: 0, scanHs: 0, tachHs: 0 };
+  nguoi.forEach(function (c) { Object.keys(tong).forEach(function (f) { if (f !== 'soNguoi') tong[f] += c[f] || 0; }); });
+  Object.keys(tong).forEach(function (f) { tong[f] = r1(tong[f]); });
+  tong.dvGio = tong.gio ? r1((tong.scanDV + tong.tachDV + tong.ocrDV) / tong.gio) : 0;
+  return { tu: tu, den: den, soNgay: Object.keys(ngayCo).length, dauKyDen: DAU_KY_DEN, nguoi: nguoi, tong: tong };
 }

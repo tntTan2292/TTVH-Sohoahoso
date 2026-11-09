@@ -13,7 +13,7 @@
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
 | Bản đang chạy | Apps Script **phiên bản 20** (10/11/2026 00:02) trên link chính `…MlRA/exec` = commit `d568321` (F-DB-01 khoảng ngày; trước đó bản 19 = Dashboard loại TN-xx). Phiên bản trước: 19 (`60189ab`). Link phụ `…NIQ/exec` không đụng |
 | Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `d568321` sau khi lưu và tải lại trang) |
-| Mock | `node tools/test_mock.js` → **250 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
+| Mock | `node tools/test_mock.js` → **261 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
@@ -40,7 +40,7 @@
 - **Còn lại (chủ dự án làm):** dán `Index.html` lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ. Có thể gộp vào lần triển khai sau khi chuẩn hóa.
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
-0. **DASHBOARD CHIA TAB CON + THỐNG KÊ NHÂN SỰ (10/11/2026, chủ dự án yêu cầu)** — phiếu `docs/prompts/PROMPT_SONNET_DASHBOARD_TAB.md`. 5 tab: Tổng quan · Theo ngày · Ca – Nhóm · Nhân sự (mới, chọn khoảng ngày, action `thongKeNhanSu`) · Nhật ký nhập. Luồng: ☐ Sonnet (chức năng, gồm luôn F-DB-01 khoảng ngày `d568321` chưa triển khai) · ☐ Sonnet viết prompt Antigravity · ☐ Antigravity làm đẹp · ☐ Opus review tổng thể · ☐ triển khai · ☐ chủ dự án thử.
+0. **[Sonnet XONG chức năng 10/11/2026, mock 261/0, giao diện 381/0, chưa triển khai; đã giao Antigravity thiết kế tự do: `docs/prompts/PROMPT_ANTIGRAVITY_DASHBOARD_TAB.md` → rồi Opus review tổng thể → triển khai] DASHBOARD CHIA TAB CON + THỐNG KÊ NHÂN SỰ (10/11/2026, chủ dự án yêu cầu)** — phiếu `docs/prompts/PROMPT_SONNET_DASHBOARD_TAB.md`. 5 tab: Tổng quan · Theo ngày · Ca – Nhóm · Nhân sự (mới, chọn khoảng ngày, action `thongKeNhanSu`) · Nhật ký nhập. Luồng: ☐ Sonnet (chức năng, gồm luôn F-DB-01 khoảng ngày `d568321` chưa triển khai) · ☐ Sonnet viết prompt Antigravity · ☐ Antigravity làm đẹp · ☐ Opus review tổng thể · ☐ triển khai · ☐ chủ dự án thử.
 1. **Chuẩn hóa quy trình báo cáo** (mục 2a) — giao Sonnet bằng prompt trong `docs/prompts/`.
 2. Triển khai F-QL-10 lên Apps Script và thử thật (mục 2b).
 3. ~~Viết `tools/kiem_tra_giao_dien.js`~~ — xong (P0).
