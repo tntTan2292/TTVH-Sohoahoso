@@ -514,16 +514,375 @@ button.btn-large {
   border: 1px solid var(--line);
 }
 
-/* Bảng báo cáo nhiều hộp (P2) – kiểu dáng tối thiểu, phần làm đẹp giao Antigravity */
-.lo-row { margin: 12px 0; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-.lo-row.lo-bad { border-color: var(--bad, #c0392b); }
-.lo-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.lo-chips { margin: 8px 0; }
-.lo-chip { margin: 2px 4px 2px 0; }
-.lo-res-i { padding: 4px 0; font-size: 14px; }
-.lo-mode { margin: 10px 0; }
-.lo-khau { margin: 8px 0; }
-.lo-khau .check-label { margin: 8px 0; }
+/* Bảng báo cáo nhiều hộp (F-BC-18, F-BC-19, F-QL-11) – chuẩn hóa một tay trên mobile 360px */
+.lo-mode {
+  display: flex;
+  gap: 6px;
+  background: var(--card-sub);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  margin: 10px 0 14px;
+}
+.lo-mode .step-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 9px 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx-sec);
+  min-height: 40px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lo-mode .step-btn.on {
+  background: var(--card);
+  color: var(--pri);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.lo-khau {
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.lo-khau-head {
+  margin-bottom: 8px;
+}
+.lo-khau-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--tx);
+}
+.lo-khau-sub {
+  font-size: 11.5px;
+  margin-top: 1px;
+}
+.lo-khau-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lo-khau-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin: 0;
+  min-height: 44px;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.lo-khau-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--pri);
+}
+.lo-khau-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.lo-khau-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--tx);
+}
+.lo-khau-item.is-on.lo-khau-scan {
+  border-color: var(--col-scan);
+  background: var(--col-scan-bg);
+}
+.lo-khau-item.is-on.lo-khau-tach {
+  border-color: var(--col-tach);
+  background: var(--col-tach-bg);
+}
+.lo-khau-item.is-on.lo-khau-ocr {
+  border-color: var(--col-ocr);
+  background: var(--col-ocr-bg);
+}
+.lo-khau-ocr {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+  padding: 10px;
+}
+.lo-khau-ocr input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--col-ocr);
+}
+.lo-ocr-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--col-ocr);
+  border: 1px solid rgba(124, 58, 237, 0.28);
+}
+.lo-ocr-tip {
+  display: block;
+  width: 100%;
+  font-size: 11.5px;
+  margin-top: 2px;
+  color: var(--mut);
+}
+.lo-row {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.lo-row.lo-bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  box-shadow: 0 0 0 1px var(--bad);
+}
+.lo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.lo-badge {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.lo-del-btn {
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 4px;
+  min-height: 32px;
+}
+.lo-row label {
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.lo-row input {
+  margin-bottom: 2px;
+}
+.lo-row .num-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin: 8px 0 !important;
+}
+.lo-row .num-row > div:nth-child(3) {
+  grid-column: 1 / -1;
+}
+.lo-het-card {
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+.lo-het-card.is-het {
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+}
+.lo-row-done {
+  margin: 8px 0 2px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+}
+.lo-row-err {
+  margin: 8px 0 2px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  color: var(--bad);
+  background: var(--card);
+  border: 1px solid var(--bad-line);
+  border-left: 4px solid var(--bad);
+}
+.lo-chips {
+  margin: 12px 0 16px;
+  padding: 10px 12px;
+  background: var(--card-sub);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+.lo-chips .helper-text {
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--tx-sec);
+}
+.lo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 3px 4px 3px 0;
+  padding: 6px 12px;
+  min-height: 38px;
+  min-width: 56px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--pri-border);
+  background: var(--pri-sub);
+  color: var(--pri);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.lo-chip:active {
+  transform: scale(0.95);
+  background: var(--pri);
+  color: #fff;
+}
+.lo-add-wrap {
+  margin: 14px 0 16px;
+  text-align: center;
+}
+.lo-btn-add {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--pri);
+  background: var(--pri-sub);
+  color: var(--pri);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.lo-btn-add:hover:not(:disabled) {
+  background: var(--pri);
+  color: #fff;
+  border-style: solid;
+}
+.lo-btn-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: var(--card-sub);
+  color: var(--mut);
+}
+.lo-add-hint {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.lo-res {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lo-res-sum {
+  margin: 12px 0 8px;
+  font-size: 14px;
+}
+.lo-res-i {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.lo-res-i.lo-res-ok {
+  border-left: 4px solid var(--ok);
+}
+.lo-res-i.lo-res-bad {
+  border-left: 4px solid var(--bad);
+  background: var(--bad-bg);
+}
+.lo-res-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lo-res-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+.lo-res-badge.ok {
+  background: var(--ok);
+  color: #fff;
+}
+.lo-res-badge.bad {
+  background: var(--bad);
+  color: #fff;
+}
+.lo-res-hop {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--tx);
+}
+.lo-res-khau {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+}
+.lo-res-khau-scan { color: var(--col-scan); border-color: var(--pri-border); }
+.lo-res-khau-tach { color: var(--col-tach); }
+.lo-res-khau-ocr { color: var(--col-ocr); }
+.lo-res-err {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bad);
+}
+.lo-res-warn {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--warn);
+}
+#fSend, #hoSend {
+  min-height: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
 
 /* Form Special Checkbox Card */
 .check-card {
@@ -1499,8 +1858,8 @@ function loKhauDoc(buoc) {      // tick khâu đã nhớ cho nút khâu này (lo
 function loKhauChon(st) { return LO_BUOC.filter(function (b) { return st.khau && st.khau[b]; }); }
 function loModeHtml(prefix) {
   return '<div class="steps lo-mode" id="' + prefix + 'Mode">' +
-    '<button type="button" data-m="LO" class="step-btn step-nhan' + (LO_MODE === 'LO' ? ' on' : '') + '">📦 Nhiều hộp</button>' +
-    '<button type="button" data-m="MOT" class="step-btn step-nhan' + (LO_MODE === 'MOT' ? ' on' : '') + '">Một hộp (form cũ)</button></div>';
+    '<button type="button" data-m="LO" class="step-btn' + (LO_MODE === 'LO' ? ' on' : '') + '">📦 Nhiều hộp</button>' +
+    '<button type="button" data-m="MOT" class="step-btn' + (LO_MODE === 'MOT' ? ' on' : '') + '">Một hộp (form cũ)</button></div>';
 }
 function loModeBind(prefix, redraw) {
   var el = $(prefix + 'Mode'); if (!el) return;
@@ -1516,28 +1875,45 @@ function loRenderBox(prefix, buoc) {
   var box = $(prefix + 'LoBox'); if (!box) return;
   var st = loSt(prefix), coScan = !!(st.khau && st.khau.SCAN);
   var h = '<datalist id="' + prefix + 'LoDl">' + st.goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>';
-  h += '<div class="check-card lo-khau"><div class="lo-khau-t"><b>Ghi cùng lúc các khâu</b> <small class="muted">(cùng số liệu cho mọi khâu được tick)</small></div>' +
-    LO_BUOC.map(function (b) { return '<label class="check-label"><input type="checkbox" data-kh="' + b + '"' + (st.khau[b] ? ' checked' : '') + '> <span>' + esc(STEP_LABEL[b] || b) + (b === 'OCR' ? ' <small class="muted">(chỉ tick khi OCR đã làm xong)</small>' : '') + '</span></label>'; }).join('') + '</div>';
+  h += '<div class="check-card lo-khau">' +
+    '<div class="lo-khau-head">' +
+      '<div class="lo-khau-title">⚡ Ghi cùng lúc các khâu</div>' +
+      '<div class="lo-khau-sub muted">Dùng chung số liệu cho mọi khâu được tick</div>' +
+    '</div>' +
+    '<div class="lo-khau-items">' +
+      LO_BUOC.map(function (b) {
+        var isOcr = b === 'OCR', chk = !!st.khau[b];
+        return '<label class="check-label lo-khau-item lo-khau-' + b.toLowerCase() + (chk ? ' is-on' : '') + (isOcr ? ' lo-khau-ocr' : '') + '">' +
+          '<input type="checkbox" data-kh="' + b + '"' + (chk ? ' checked' : '') + '>' +
+          '<span class="lo-khau-text">' +
+            '<span class="lo-khau-name">' + esc(STEP_LABEL[b] || b) + '</span>' +
+            (isOcr ? ' <span class="lo-ocr-pill">Chủ động tick</span>' : '') +
+            (isOcr ? '<small class="lo-ocr-tip muted">Chỉ tick khi đã làm xong OCR</small>' : '') +
+          '</span>' +
+        '</label>';
+      }).join('') +
+    '</div>' +
+  '</div>';
   h += st.rows.map(function (r, i) {
     var da = LO_BUOC.filter(function (b) { return r.done && r.done[b]; });
     return '<div class="lo-row' + (r.err ? ' lo-bad' : '') + '" data-i="' + i + '">' +
-      '<div class="lo-head"><b>Hộp ' + (i + 1) + '</b><button type="button" class="sm bad" data-act="del" title="Xóa dòng này">✕ Xóa</button></div>' +
+      '<div class="lo-head"><span class="lo-badge">📦 Hộp ' + (i + 1) + '</span><button type="button" class="sm bad lo-del-btn" data-act="del" title="Xóa dòng này">✕ Xóa</button></div>' +
       '<label>Mã hộp <small class="muted">(chọn gợi ý hoặc gõ tay)</small></label>' +
       '<input data-k="hop" list="' + prefix + 'LoDl" autocomplete="off" autocapitalize="characters" placeholder="VD: 208.18.17" value="' + esc(r.hop) + '">' +
-      '<label>Mã hồ sơ đã làm <small class="muted">(VD: 472-476; nên nhập để ca sau biết làm tiếp từ đâu)</small></label>' +
+      '<label>Mã hồ sơ đã làm <small class="muted">(VD: 472-476; nên nhập để ca sau biết làm tiếp)</small></label>' +
       '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
       '<div class="row num-row">' +
         '<div><label>Số hồ sơ</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
         '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.to) + '"></div>' +
         (coScan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
       '</div>' +
-      '<div class="check-card"><label class="check-label"><input type="checkbox" data-k="het"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
-      (da.length ? '<div class="msg ok">✔ Đã ghi: ' + esc(da.map(function (b) { return STEP_LABEL[b] || b; }).join(', ')) + ' – gửi lại sẽ chỉ ghi các khâu còn lại</div>' : '') +
-      (r.err ? '<div class="msg err">✕ ' + esc(r.err) + '</div>' : '') +
+      '<div class="check-card lo-het-card' + (r.het ? ' is-het' : '') + '"><label class="check-label"><input type="checkbox" data-k="het"' + (r.het ? ' checked' : '') + '> <span><b>Đã hoàn thành</b> toàn bộ hộp này</span></label></div>' +
+      (da.length ? '<div class="msg ok lo-row-done">✔ Đã ghi: <b>' + esc(da.map(function (b) { return STEP_LABEL[b] || b; }).join(', ')) + '</b> <span class="muted">(gửi lại chỉ ghi khâu còn lại)</span></div>' : '') +
+      (r.err ? '<div class="msg err lo-row-err">✕ ' + esc(r.err) + '</div>' : '') +
     '</div>';
   }).join('');
   h += '<div class="lo-chips" id="' + prefix + 'LoChips"></div>';
-  h += '<p><button type="button" class="sm" data-act="add"' + (st.rows.length >= LO_MAX_HOP ? ' disabled' : '') + '>＋ Thêm hộp</button> <span class="muted">' + st.rows.length + '/' + LO_MAX_HOP + ' hộp mỗi lần gửi</span></p>';
+  h += '<div class="lo-add-wrap"><button type="button" class="lo-btn-add" data-act="add"' + (st.rows.length >= LO_MAX_HOP ? ' disabled' : '') + '>＋ Thêm hộp</button> <div class="lo-add-hint muted">' + st.rows.length + '/' + LO_MAX_HOP + ' hộp mỗi lần gửi</div></div>';
   box.innerHTML = h;
   loRenderChips(prefix, buoc);
   box.oninput = box.onchange = function (ev) { loOnInput(prefix, buoc, ev.target); };
@@ -1648,9 +2024,17 @@ function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ng
       return true;
     });
     if (!st.rows.length) st.rows.push(loRow());
-    var h = '<div class="msg ' + (r.loi ? 'warn' : 'ok') + '">' + (r.loi ? '⚠️ ' : '✔ ') + 'Đã ghi ' + r.added + ' bản ghi' + (r.guiLai ? ' (lần gửi này đã được ghi trước đó, không ghi lại)' : '') + (r.loi ? ' – ' + r.loi + ' dòng lỗi/bỏ qua (còn lại trong bảng để sửa)' : '') + '</div>';
+    var h = '<div class="msg ' + (r.loi ? 'warn' : 'ok') + ' lo-res-sum">' + (r.loi ? '⚠️ ' : '✔ ') + '<b>Đã ghi ' + r.added + ' bản ghi</b>' + (r.guiLai ? ' (lần gửi này đã được ghi trước đó, không ghi lại)' : '') + (r.loi ? ' – ' + r.loi + ' dòng lỗi/bỏ qua (còn lại trong bảng để sửa)' : '') + '</div>';
     h += '<div class="lo-res">' + (r.ketQua || []).map(function (k) {
-      return '<div class="lo-res-i">' + (k.ok ? '<span class="chip ok">✔</span>' : '<span class="chip bad">✕</span>') + ' <b>' + esc(k.hop) + '</b> · ' + esc(STEP_LABEL[k.buoc] || k.buoc) + (k.ok ? '' : ' – ' + esc(k.err)) + (k.warnings && k.warnings.length ? '<div class="muted">⚠ ' + esc(k.warnings.join('; ')) + '</div>' : '') + '</div>';
+      return '<div class="lo-res-i ' + (k.ok ? 'lo-res-ok' : 'lo-res-bad') + '">' +
+        '<div class="lo-res-row">' +
+          '<span class="lo-res-badge ' + (k.ok ? 'ok' : 'bad') + '">' + (k.ok ? '✔' : '✕') + '</span>' +
+          '<b class="lo-res-hop">' + esc(k.hop) + '</b>' +
+          '<span class="lo-res-khau lo-res-khau-' + String(k.buoc).toLowerCase() + '">' + esc(STEP_LABEL[k.buoc] || k.buoc) + '</span>' +
+        '</div>' +
+        (!k.ok ? '<div class="lo-res-err">✕ ' + esc(k.err) + '</div>' : '') +
+        (k.warnings && k.warnings.length ? '<div class="lo-res-warn">⚠ ' + esc(k.warnings.join('; ')) + '</div>' : '') +
+      '</div>';
     }).join('') + '</div>';
     if (resEl) resEl.innerHTML = h;
     loRenderBox(prefix, buoc);
