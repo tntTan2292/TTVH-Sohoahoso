@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- Triển khai **phiên bản 19** lên `…MlRA` (commit `60189ab`: F-DB-01, F-DB-06). Bản trước: phiên bản 18. Bản cũ trên Apps Script khớp `fe49dba` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp repo. Link `/exec` mở được (tiêu đề đúng).
 - F-DB-01, F-DB-06 · `dash_`: khi không `gomThu`, bỏ người có MaHRM `TN-xx` khỏi `nguoiPhan` và `caNguoi` (ADMIN `gomThu` giữ như cũ; số tờ/hộp không đổi). `veNgayNav`: "Ngày có dữ liệu" chỉ 7 ngày gần nhất, một hàng cuộn ngang (CSS `.ngay-chips` nowrap + overflow-x). Mock 245/0, giao diện 356/0. Chưa triển khai.
 
 ## 2026-11-09
