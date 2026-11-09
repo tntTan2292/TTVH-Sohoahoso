@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
+- Tài liệu: thêm `docs/PHAN_CONG.md` — Opus (CTO điều phối, review, việc khó), Sonnet (code), Antigravity Gemini Flash 3.8 (giao diện).
 - Tài liệu: thêm `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` — giao Sonnet chuẩn hóa quy trình báo cáo, bỏ nhập trùng (2 giai đoạn: đề xuất → duyệt → làm).
 - F-QL-10 · Form "Nhập số liệu hộ thành viên" khâu Scan: thêm tick "Đồng thời ghi Tách file PDF bằng đúng số Scan" (trước chỉ có ở tab Báo cáo). Mock 190/0. **Chưa triển khai lên Apps Script.**
 - Tài liệu: thêm `AGENTS.md`, `CLAUDE.md`, `docs/CHUC_NANG.md`, `docs/API.md`, `docs/SNAPSHOT.md`, `CHANGELOG.md` để chống mất chức năng khi sửa và để phiên mới biết đang làm tới đâu.

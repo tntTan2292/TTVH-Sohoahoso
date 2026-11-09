@@ -15,6 +15,7 @@ Bạn tiếp quản dự án **Báo cáo ca Số hóa hồ sơ – Bưu điện 
 4. `docs/API.md`: hợp đồng giữa giao diện và máy chủ.
 5. `apps-script/Code.gs`: hàm `ghi_`, `hopGoiY_`, `me_`, `dash_`, `lichSu_`.
 6. `apps-script/Index.html`: hàm `buildForm`, `send`, `renderHo`, `stepsFor`.
+7. `docs/PHAN_CONG.md`: bạn là **Sonnet, lập trình viên chính**. Làm logic và giao diện **ở mức dùng được** (đúng chức năng, gọn trên điện thoại). Phần làm đẹp do Antigravity làm sau. Đề xuất nào đụng cách tính số liệu Dashboard, phân quyền hoặc thêm/đổi action thì ghi "**Cần Opus review**". Gặp việc vượt sức (đã sửa 2 lần không xong) thì dừng, ghi SNAPSHOT, đề nghị chuyển Opus.
 
 ## Quy trình hiện tại của một hộp hồ sơ
 ```

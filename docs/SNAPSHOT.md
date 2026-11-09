@@ -17,13 +17,14 @@
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
-> Ghi rõ: đang sửa gì, file nào, đã xong bước nào, còn bước nào. Nếu không có gì dở → ghi "Không".
+> Ghi rõ: đang sửa gì, **ai làm (Opus/Sonnet/Antigravity — xem `docs/PHAN_CONG.md`)**, file nào, đã xong bước nào, còn bước nào. Nếu không có gì dở → ghi "Không".
 
 ### 2a. CHUẨN HÓA QUY TRÌNH BÁO CÁO — bỏ nhập trùng (việc lớn, giao Sonnet)
 - **Vấn đề:** báo cáo có quá nhiều thao tác nhập trùng (mỗi hộp gõ lại mã + số liệu ở Scan/Tách/OCR, chỉ 1 hộp mỗi lần gửi, nhận 2 tầng, 2 ô trang/tờ, form Nhập hộ là bản sao…), tốn thời gian.
 - **Prompt giao việc:** `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` (đã liệt kê 10 điểm trùng D1–D10, ràng buộc, câu hỏi không được tự quyết).
 - **Cách làm:** 2 giai đoạn. GĐ1: viết `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` (đếm thao tác trước/sau, đề xuất P1, P2…) rồi **dừng chờ chủ dự án duyệt**. GĐ2: làm từng đề xuất đã duyệt, mỗi đề xuất một commit.
-- **Trạng thái:** ☐ GĐ1 chưa bắt đầu · ☐ đề xuất đã duyệt · ☐ GĐ2 (ghi P nào xong ở đây)
+- **Phân công** (`docs/PHAN_CONG.md`): GĐ1 đề xuất + GĐ2 code → **Sonnet**; đề xuất đụng cách tính số liệu/API → **Opus review** trước khi chủ dự án duyệt; phần đẹp giao diện của form mới → **Antigravity** sau khi Sonnet xong; trước triển khai → **Opus review GO/NO-GO**.
+- **Trạng thái:** ☐ GĐ1 chưa bắt đầu · ☐ Opus review đề xuất · ☐ chủ dự án duyệt · ☐ GĐ2 (ghi P nào xong ở đây) · ☐ Antigravity làm đẹp · ☐ Opus review trước triển khai
 - **Phiên tiếp theo:** đọc prompt trên rồi làm từ bước đang ☐ đầu tiên.
 
 ### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
@@ -51,7 +52,7 @@
 
 ## Mẫu cập nhật nhanh khi dừng giữa chừng
 ```
-Cập nhật lúc: <ngày giờ> — <người/công cụ>
+Cập nhật lúc: <ngày giờ> — <Opus | Sonnet | Antigravity | chủ dự án>
 Đang làm: <việc>, mã chức năng <F-xx>
 File đã sửa: <danh sách>   (đã commit? có/không — commit <mã>)
 Đã xong: <các bước>
