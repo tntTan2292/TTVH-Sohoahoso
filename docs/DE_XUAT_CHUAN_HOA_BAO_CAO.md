@@ -163,3 +163,26 @@ Ghi nhận khác (không chặn):
 
 **Thứ tự làm đã chốt (chờ chủ dự án duyệt Q1–Q5):** P0 → P2(+P1) → P4 → P6 → P5 → P7a → P3.
 **Câu hỏi còn lại cho chủ dự án:** Q1, Q2, Q3, Q4 (con số giới hạn), Q5. Q6 đã quyết (R4). Q7 thay bằng thứ tự trên.
+
+---
+
+## 8. Quyết định của chủ dự án (09/11/2026) — có hiệu lực, thay cho các gợi ý ở mục 3–6 nếu khác
+
+| # | Quyết định | Hệ quả cho đề xuất |
+|---|---|---|
+| Q1 | **Làm nhanh hơn (7a), KHÔNG bỏ "Nhận hộp".** Phải có **cả hai cách**: hộp có sẵn trong danh sách đã nhận thì **tick chọn**; tìm không có thì **gõ tay**. Lý do: hệ thống mới triển khai, lịch sử các hộp cũ đã nhận chưa được nhập vào hệ thống. | Mọi chỗ chọn hộp (Nhận hộp, Scan/Tách/OCR, Trả hộp) phải có **ô tìm + gõ tay mã chưa có trong danh sách**. Không được chặn hộp ngoài danh sách (máy chủ hiện chỉ cảnh báo "chưa có trong danh sách đã nhận" → **giữ nguyên**). |
+| Q2 | **Bỏ ô "Số trang"**, chỉ còn "Số tờ". | P4 theo R2: giao diện chỉ gửi `soTo`. Form sửa bản ghi của ADMIN (`editDL`) giữ nguyên hai ô. |
+| Q3 | **Không điền sẵn** số hồ sơ / số tờ ở Tách/OCR từ Scan. **Cho phép tick OCR cùng Scan.** | **Bỏ P5.** P6 vẫn hiện "đã báo" của hộp để người nhập đối chiếu, nhưng không tự điền vào ô. P3: cho tick cả Scan + Tách + OCR; mặc định tick sẵn Scan + Tách, OCR người dùng tự bật. |
+| Q4 | **Tối đa 10 hộp mỗi lần gửi (× tối đa 3 khâu); hộp lỗi bỏ qua và báo lý do, hộp đúng vẫn ghi.** | P2 như đề xuất + R1, R4. |
+| Q5 | Hộp có **nhiều hồ sơ phân biệt bằng mã hồ sơ**. Khi nhận hộp đã nhập khoảng "từ hồ sơ số … đến số …". Báo cáo phải nhập **mã hồ sơ đã làm và số tờ đã làm**; hộp làm dở thì ca sau nhập tiếp **phần hồ sơ làm thêm** (theo mã hồ sơ). | **Đảo E5:** ô "Mã hồ sơ" là thông tin chính, không phải ô thừa. Mỗi dòng của bảng nhiều hộp (P2) có: mã hộp, **mã hồ sơ đã làm (từ–đến)**, số hồ sơ, số tờ, hết hộp. P6 hiện cho mỗi hộp: khoảng mã hồ sơ lúc nhận (cột `MaHoSo` của bản ghi NHAN/NHAN_NHOM) và các mã hồ sơ đã báo ở từng khâu. |
+
+**Điểm Opus chốt kỹ thuật theo các quyết định trên (không cần hỏi lại):**
+- Mã hồ sơ báo **trùng** với mã đã báo ở cùng khâu của cùng hộp → **chỉ cảnh báo**, không chặn (đúng kiểu cảnh báo hiện có).
+- Nhập khoảng dạng "472-476" thì giao diện **gợi ý** số hồ sơ = 5 (người dùng vẫn sửa được).
+
+**Còn chờ chủ dự án xác nhận (không chặn Đợt 1):** Q8 — Mã hồ sơ có **bắt buộc** khi hộp **chưa xong** (chưa tick hết hộp) không? Mặc định trong Đợt 1: **không bắt buộc, nhưng hiển thị nổi bật** và nhắc khi để trống.
+
+**Kế hoạch đã duyệt:**
+- **Đợt 1 (Sonnet):** P0 `tools/kiem_tra_giao_dien.js` → P2 bảng nhiều hộp dùng chung Báo cáo + Nhập hộ (gồm P1, R1, R4, mã hồ sơ mỗi dòng, gõ tay mã ngoài danh sách) → P4 chỉ "Số tờ" → P3 tick nhiều khâu (Scan + Tách mặc định, OCR tự bật). Opus review L3, chủ dự án thử trên link thật (gộp triển khai F-QL-10).
+- **Đợt 2 (Sonnet):** P6 "Hộp của tôi" + hiển thị mã hồ sơ đã nhận/đã báo → P7a Nhận hộp và Trả hộp chọn bằng tick + gõ tay.
+- **Đợt 3 (Antigravity):** làm đẹp giao diện các phần mới (sau khi Đợt 1–2 được nghiệm thu).
