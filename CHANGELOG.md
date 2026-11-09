@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
+- Chủ dự án chạy `suaMaHopNgay` trên Sheet thật (23:35): sửa 2 ô mã hộp (`02.01.84`, `02.01.85`) ở NhatKy, có sao lưu SaoLuuXoa và log `SUA_MA_HOP_NGAY`. Đã kiểm lại: mã hộp đều là chuỗi đúng.
 - Triển khai **phiên bản 18** lên `…MlRA` (commit `fe49dba`: sửa mã hộp bị đổi thành ngày, F-HT-03). Bản trước: phiên bản 17. Mã khớp repo (băm). `suaMaHopNgay` chưa chạy trên Sheet thật.
 - F-HT-03 · Sửa lỗi mã hộp `02.01.85` ở dòng Nhận hộp bị Sheets đổi thành ngày: `appendMany_` đặt định dạng `@` như `append_` (chung `TEXT_COLS`, hàm `textFmt_`); `read_` đọc đúng dữ liệu đã hỏng; thêm `suaMaHopNgay()` (chỉ chủ Sheet chạy từ trình soạn, có sao lưu và log) để sửa dữ liệu cũ. Mock giả lập đúng hành vi đổi kiểu của Sheets (7 kiểm tra mới thất bại trên mã cũ, đạt trên mã mới). Mock 242/0. **Chưa chạy `suaMaHopNgay` trên Sheet thật.**
 - Sửa dữ liệu thật theo yêu cầu chủ dự án (không đổi mã): nhập hộ ngày 09/11 của 3 nhóm bị ghi nhầm ca Sáng/Tối → chuyển về **Tối**: `NhatKy` 3 dòng (hộp nhóm 3), `PhanNhom` 6 dòng, `PhanCa` 5 dòng. Số liệu không đổi. Giữ nguyên 1 dòng `PhanCa` ca Sáng của một người đã có dòng ca Tối (tránh trùng). Nguyên nhân gốc: nhập hộ chọn sai ca; lịch sử phiên bản Google Sheet còn để quay lui.
