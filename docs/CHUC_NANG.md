@@ -156,7 +156,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 
 **Tự động (máy):**
 1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 190).
-2. `node tools/kiem_tra_giao_dien.js` (nếu đã có) → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
+2. `node tools/kiem_tra_giao_dien.js` → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
 
 **Bằng tay trên link thử (sau khi triển khai), 4 tài khoản:**
 - [ ] Tổ viên: đăng nhập → Vào ca → Nhận hộp (Cá nhân/Nhóm) → Scan có tick "kèm Tách" → OCR → xem Lịch sử cá nhân. Không thấy tab Dashboard.
