@@ -1107,19 +1107,427 @@ button.btn-large {
 .z3 { --zc: #059669; --zb: rgba(5,150,105,0.08); }
 .z4 { --zc: #6366f1; --zb: rgba(99,102,241,0.08); }
 .z5 { --zc: #0891b2; --zb: rgba(8,145,178,0.08); }
-.ngay-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
-.ngay-nav button:disabled { opacity: .45; cursor: not-allowed; }
-.ngay-chips { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; font-size: 12.5px; white-space: nowrap; }
-.ngay-chips > * { flex: 0 0 auto; }
-.dtabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 12px; padding-bottom: 2px; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-.dtab { flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--tx-sec); font-size: 13.5px; font-weight: 600; cursor: pointer; }
-.dtab.on { background: var(--pri); border-color: var(--pri); color: #fff; }
-.ca-trangthai { display: flex; flex-wrap: wrap; gap: 10px 18px; }
-.nsort { cursor: pointer; user-select: none; }
-.ns-tong td { font-weight: 700; border-top: 2px solid var(--line); }
-.chip-ngay { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--tx-sec); font-size: 12.5px; cursor: pointer; font-variant-numeric: tabular-nums; }
-.chip-ngay:hover { border-color: var(--pri); color: var(--pri); }
-.chip-ngay.on { background: var(--pri); border-color: var(--pri); color: #fff; }
+/* Dashboard Control Panel & Filters */
+.dash-ctrl {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.dash-ctrl-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.dash-date-col {
+  flex: 1 1 200px;
+}
+.dash-lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--tx-sec);
+  margin-bottom: 4px;
+}
+.dash-date-input {
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 42px;
+}
+.dash-btn-col {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 240px;
+}
+.dash-load-btn {
+  flex: 2 1 auto;
+  min-height: 42px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.dash-print-btn {
+  flex: 1 1 auto;
+  min-height: 42px;
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.ngay-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.ngay-btn-group {
+  display: flex;
+  gap: 4px;
+  background: var(--card-sub);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.nav-btn {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx);
+  min-height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.nav-btn:hover:not(:disabled) {
+  background: var(--card);
+}
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.nav-btn-today {
+  font-weight: 700;
+  color: var(--pri);
+}
+.dash-day-badge {
+  font-size: 13px;
+  color: var(--tx);
+}
+.ngay-chips {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.chip-ngay {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--tx-sec);
+  font-size: 12.5px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+.chip-ngay:hover {
+  border-color: var(--pri);
+  color: var(--pri);
+}
+.chip-ngay.on {
+  background: var(--pri);
+  border-color: var(--pri);
+  color: #fff;
+}
+
+/* Dashboard Sub-Tabs Navigation (#dTabs) */
+.dtabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+}
+.dtabs::-webkit-scrollbar {
+  display: none;
+}
+.dtab {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx-sec);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.dtab:hover {
+  color: var(--tx);
+  background: var(--card-sub);
+}
+.dtab.on {
+  background: var(--pri);
+  color: #fff;
+  border-color: var(--pri);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.dtab-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Shift Status Grid in Tab 1 */
+.ca-trangthai {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.ca-tt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ca-tt-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Step Pills & Badges */
+.step-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.step-pill-scan { background: var(--col-scan-bg); color: var(--col-scan); }
+.step-pill-tach { background: var(--col-tach-bg); color: var(--col-tach); }
+.step-pill-ocr { background: var(--col-ocr-bg); color: var(--col-ocr); }
+
+/* Tab 4: Thống kê Nhân sự */
+.ns-filter-card {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+}
+.ns-filter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ns-filter-title h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.ns-filter-sub {
+  font-size: 12.5px;
+}
+.ns-filter-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.ns-filter-col {
+  flex: 1 1 200px;
+}
+.ns-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ns-range-sep {
+  color: var(--mut);
+  font-weight: 700;
+}
+.ns-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ns-kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+.ns-kpi-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--mut);
+  letter-spacing: 0.3px;
+  display: block;
+}
+.ns-kpi b {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--tx);
+  margin: 4px 0 2px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.ns-kpi b small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mut);
+}
+.ns-kpi span {
+  font-size: 11.5px;
+  color: var(--mut);
+}
+.ns-kpi-people { border-top: 4px solid #6366f1; }
+.ns-kpi-to { border-top: 4px solid var(--pri); }
+.ns-kpi-gio { border-top: 4px solid var(--col-tach); }
+.ns-kpi-speed { border-top: 4px solid var(--ok); }
+.ns-kpi-speed b { color: var(--ok); }
+
+.ns-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ns-card-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.ns-khau-mini {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Sorting & Table Design for Nhân sự */
+.ns-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ns-table th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--line);
+}
+.nsort {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.nsort:hover {
+  background: var(--card);
+  color: var(--pri);
+}
+.nsort.ns-sorted {
+  color: var(--pri);
+  background: var(--pri-sub);
+}
+.ns-badge-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 4px;
+}
+.ns-badge-rank.rank-1 {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.ns-badge-rank.rank-2 {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.ns-badge-rank.rank-3 {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.ns-badge-rank.rank-other {
+  color: var(--mut);
+  font-weight: 600;
+}
+@media (prefers-color-scheme: dark) {
+  .ns-badge-rank.rank-1 { background: rgba(245,158,11,0.2); color: #fbbf24; border-color: rgba(245,158,11,0.4); }
+  .ns-badge-rank.rank-2 { background: rgba(148,163,184,0.2); color: #e2e8f0; border-color: rgba(148,163,184,0.4); }
+  .ns-badge-rank.rank-3 { background: rgba(249,115,22,0.2); color: #fdba74; border-color: rgba(249,115,22,0.4); }
+}
+
+.ns-speed {
+  color: var(--ok);
+  font-size: 14px;
+}
+
+/* Sticky first two columns in Nhân sự table on mobile horizontal scroll */
+.ns-table th:first-child, .ns-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--card);
+  width: 44px;
+  min-width: 44px;
+  text-align: center;
+}
+.ns-table th:first-child {
+  background: var(--card-sub);
+  z-index: 3;
+}
+.ns-table th:nth-child(2), .ns-table td:nth-child(2) {
+  position: sticky;
+  left: 44px;
+  z-index: 2;
+  background: var(--card);
+  min-width: 140px;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+}
+.ns-table th:nth-child(2) {
+  background: var(--card-sub);
+  z-index: 3;
+}
+.ns-table tr:hover td:first-child, .ns-table tr:hover td:nth-child(2) {
+  background: var(--card-sub);
+}
+.ns-table .ns-tong td {
+  background: var(--card-sub);
+  font-weight: 700;
+  border-top: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+}
+.ns-table .ns-tong td:first-child, .ns-table .ns-tong td:nth-child(2) {
+  background: var(--card-sub);
+  z-index: 3;
+}
+.ns-tong td {
+  font-weight: 700;
+  border-top: 2px solid var(--line);
+}
 .ca-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--mut); margin: 0 0 10px; }
 .ca-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 .ca-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
@@ -1219,7 +1627,13 @@ input[readonly] { background: var(--card-sub); color: var(--tx-sec); cursor: not
   gap: 12px;
 }
 .kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 480px) { .kpis-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) {
+  .kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .kpi { padding: 10px 8px; border-radius: var(--radius-sm); }
+  .kpi b { font-size: 19px; margin: 2px 0 1px; }
+  .kpi span { font-size: 11px; line-height: 1.2; }
+  .kpi-tag { font-size: 10px; }
+}
 .kpi {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1563,19 +1977,24 @@ tbody tr:last-child td { border-bottom: none; }
 
   <!-- TAB 6: DASHBOARD -->
   <section id="pDash" class="hide">
-    <div class="card noprint">
-      <div class="row">
-        <div><label>Ngày xem báo cáo</label><input type="date" id="dNgay"></div>
-        <div style="align-self:end;display:flex;gap:8px;">
-          <button id="dLoad" class="pri" style="flex:1;">Xem Dashboard</button>
-          <button id="dPrint" title="In hoặc lưu file PDF">In / PDF</button>
+    <div class="card noprint dash-ctrl">
+      <div class="dash-ctrl-top">
+        <div class="dash-date-col">
+          <label class="dash-lbl">Ngày xem báo cáo</label>
+          <input type="date" id="dNgay" class="dash-date-input">
+        </div>
+        <div class="dash-btn-col">
+          <button id="dLoad" class="pri dash-load-btn" title="Tải lại số liệu">🔄 Xem Dashboard</button>
+          <button id="dPrint" class="dash-print-btn" title="In hoặc lưu file PDF">🖨️ In / PDF</button>
         </div>
       </div>
       <div class="ngay-nav">
-        <button type="button" class="sm" id="dTruoc">◀ Ngày trước</button>
-        <button type="button" class="sm" id="dHomNay">Hôm nay</button>
-        <button type="button" class="sm" id="dSau">Ngày sau ▶</button>
-        <span class="muted" id="dThu"></span>
+        <div class="ngay-btn-group">
+          <button type="button" class="sm nav-btn" id="dTruoc" title="Ngày trước">◀ Trước</button>
+          <button type="button" class="sm nav-btn nav-btn-today" id="dHomNay" title="Về hôm nay">Hôm nay</button>
+          <button type="button" class="sm nav-btn" id="dSau" title="Ngày sau">Sau ▶</button>
+        </div>
+        <div class="dash-day-badge" id="dThu"></div>
       </div>
       <div class="ngay-chips" id="dNgayCo"></div>
       <div id="boxGomThu" class="check-card hide" style="margin-top:12px;">
@@ -2630,14 +3049,17 @@ function veNgayNav(d) {
   } else if (d) { $('dNgayCo').innerHTML = ''; }
 }
 var DASH = { d: null, tab: 'tq', ns: { k: '7', tu: '', den: '', sk: 'tong', asc: false, data: null } };
-var DASH_TABS = [['tq', 'Tổng quan'], ['ngay', 'Theo ngày'], ['canhom', 'Ca – Nhóm'], ['nhansu', 'Nhân sự'], ['nhatky', 'Nhật ký nhập']];
+var DASH_TABS = [['tq', 'Tổng quan', '📊'], ['ngay', 'Theo ngày', '📅'], ['canhom', 'Ca – Nhóm', '👥'], ['nhansu', 'Nhân sự', '👤'], ['nhatky', 'Nhật ký nhập', '📝']];
 function dashTabNho(v) {
   try { if (v) localStorage.setItem('dashTab', v); else return localStorage.getItem('dashTab'); } catch (e) { }
   return null;
 }
 function dashVeTab() {
   var h = '';
-  DASH_TABS.forEach(function (t) { h += '<button type="button" class="dtab' + (t[0] === DASH.tab ? ' on' : '') + '" role="tab" data-dtab="' + t[0] + '">' + t[1] + '</button>'; });
+  DASH_TABS.forEach(function (t) {
+    h += '<button type="button" class="dtab' + (t[0] === DASH.tab ? ' on' : '') + '" role="tab" data-dtab="' + t[0] + '">' +
+      (t[2] ? '<span class="dtab-icon">' + t[2] + '</span> ' : '') + t[1] + '</button>';
+  });
   $('dTabs').innerHTML = h;
   Array.prototype.forEach.call($('dTabs').querySelectorAll('[data-dtab]'), function (b) { b.onclick = function () { dashChonTab(b.dataset.dtab); }; });
 }
@@ -2657,7 +3079,7 @@ function dashHienTab() {
 function dashTabTongQuan(d) {
   var D = d.day, h = widgetHtml(d);
   h += '<div class="card"><h3>Trạng thái các ca ' + (d.ngay === ME.ngay ? 'hôm nay' : 'ngày ' + esc(d.ngay)) + '</h3><div class="ca-trangthai">' + d.cas.map(function (c) {
-    return '<div><b>Ca ' + esc(c.ca) + '</b> <span class="muted">' + esc(c.bd) + '–' + esc(c.kt) + '</span> ' + ttChip(c) + '</div>';
+    return '<div class="ca-tt-item"><div class="ca-tt-info"><b>Ca ' + esc(c.ca) + '</b> <span class="muted">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div>' + ttChip(c) + '</div>';
   }).join('') + '</div></div>';
     h += '<div class="kpis kpis-3">' +
       '<div class="kpi"><span class="kpi-tag">Nhận</span><b>' + nf(D.nhanHop) + '</b><span>Hộp nhận từ TTLT</span></div>' +
@@ -2731,7 +3153,12 @@ function dashTabNhatKy(d) {
       h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
         (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td style="text-align:left"><b>' + esc(r.ten) + '</b></td><td>' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td>' + r.soLan + '</td><td><b>' + nf(r.scanDV) + '</b></td><td>' + r.scanHs + '</td><td><b>' + nf(r.tachDV) + '</b></td><td>' + r.tachHs + '</td><td><b>' + nf(r.ocrDV) + '</b></td><td>' + r.ocrHs + '</td><td>' + r.nhanHop + '</td><td>' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
       h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
-        (ctRows.map(function (r) { return '<tr><td>' + esc(r.gio) + '</td><td>Ca ' + esc(r.ca) + '</td><td>' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td><b>' + esc(r.hop) + '</b></td><td>' + r.hs + '</td><td>' + r.trang + '</td><td>' + r.to + '</td><td>' + (r.het ? '✔' : '') + '</td><td style="text-align:left">' + esc(r.nguoi) + '</td><td style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td>' + esc(r.loai) + '</td></tr>'; }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có bản ghi</td></tr>') + '</table></div></div>';
+        (ctRows.map(function (r) {
+          var stepHtml = '<span class="step-pill step-pill-' + String(r.buoc).toLowerCase() + '">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</span>';
+          var hetHtml = r.het ? '<span class="chip ok" style="padding:1px 6px;font-size:11px;">✔</span>' : '<span class="muted">—</span>';
+          var loaiHtml = r.loai === 'NHẬP HỘ' ? '<span class="chip warn" style="padding:1px 6px;font-size:11px;">Nhập hộ</span>' : '<span class="chip" style="padding:1px 6px;font-size:11px;">Báo cáo</span>';
+          return '<tr><td>' + esc(r.gio) + '</td><td>Ca ' + esc(r.ca) + '</td><td>' + stepHtml + '</td><td><b>' + esc(r.hop) + '</b></td><td>' + r.hs + '</td><td>' + r.trang + '</td><td><b>' + r.to + '</b></td><td>' + hetHtml + '</td><td style="text-align:left">' + esc(r.nguoi) + '</td><td style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td>' + loaiHtml + '</td></tr>';
+        }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có bản ghi</td></tr>') + '</table></div></div>';
   }
   return h;
 }
@@ -2765,9 +3192,13 @@ function nsKhoangTinh() {
 }
 function dashTabNhanSu() {
   var S = DASH.ns, opt = function (v, t) { return '<option value="' + v + '"' + (S.k === v ? ' selected' : '') + '>' + t + '</option>'; };
-  var h = '<div class="card noprint"><h3>Thống kê theo nhân sự</h3><div class="row">' +
-    '<div><label>Khoảng thời gian</label><select id="nsKhoang">' + opt('homnay', 'Hôm nay') + opt('7', '7 ngày gần nhất') + opt('thang', 'Tháng này') + opt('dau', 'Từ đầu dự án') + opt('tuychon', 'Tùy chọn (từ – đến)') + '</select></div>' +
-    '<div id="nsTuyChon" class="' + (S.k === 'tuychon' ? '' : 'hide') + '"><label>Từ ngày – đến ngày</label><div style="display:flex;gap:6px;"><input type="date" id="nsTu" value="' + esc(S.tu || ME.ngay) + '" max="' + ME.ngay + '"><input type="date" id="nsDen" value="' + esc(S.den || ME.ngay) + '" max="' + ME.ngay + '"></div></div>' +
+  var h = '<div class="card noprint ns-filter-card">' +
+    '<div class="ns-filter-head">' +
+      '<div class="ns-filter-title"><h3>👤 Thống kê theo nhân sự</h3><span class="muted ns-filter-sub">Năng suất và sản lượng từng cá nhân theo khoảng thời gian</span></div>' +
+    '</div>' +
+    '<div class="ns-filter-controls">' +
+      '<div class="ns-filter-col"><label class="dash-lbl">Khoảng thời gian</label><select id="nsKhoang" class="dash-date-input">' + opt('homnay', 'Hôm nay') + opt('7', '7 ngày gần nhất') + opt('thang', 'Tháng này') + opt('dau', 'Từ đầu dự án') + opt('tuychon', 'Tùy chọn (từ – đến)') + '</select></div>' +
+      '<div id="nsTuyChon" class="ns-filter-col ' + (S.k === 'tuychon' ? '' : 'hide') + '"><label class="dash-lbl">Từ ngày – đến ngày</label><div class="ns-range-inputs"><input type="date" id="nsTu" class="dash-date-input" value="' + esc(S.tu || ME.ngay) + '" max="' + ME.ngay + '"><span class="ns-range-sep">→</span><input type="date" id="nsDen" class="dash-date-input" value="' + esc(S.den || ME.ngay) + '" max="' + ME.ngay + '"></div></div>' +
     '</div></div><div id="nsBody"><div class="empty-state"><div class="muted">Đang tải thống kê nhân sự…</div></div></div>';
   $('dBody').innerHTML = h;
   $('nsKhoang').onchange = function () { S.k = $('nsKhoang').value; S.data = null; dashTabNhanSu(); };
@@ -2792,16 +3223,34 @@ function dashNsBang() {
   var val = { ten: function (x) { return x.ten; }, soCa: function (x) { return x.soCa; }, scanDV: function (x) { return x.scanDV; }, tachDV: function (x) { return x.tachDV; }, ocrDV: function (x) { return x.ocrDV; }, hop: hop, gio: function (x) { return x.gio; }, dvGio: function (x) { return x.dvGio; }, tong: tongDV };
   var f = val[S.sk] || tongDV, dir = S.asc ? 1 : -1;
   var ds = r.nguoi.slice().sort(function (a, b) { var x = f(a), y = f(b); return (typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y) * dir; });
-  var th = function (k, t) { return '<th class="nsort" data-sk="' + k + '">' + t + (S.sk === k ? (S.asc ? ' ▲' : ' ▼') : '') + '</th>'; };
+  var th = function (k, t) { return '<th class="nsort' + (S.sk === k ? ' ns-sorted' : '') + '" data-sk="' + k + '">' + t + (S.sk === k ? (S.asc ? ' ▲' : ' ▼') : '') + '</th>'; };
   var ngayVN = function (x) { return x.split('-').reverse().join('/'); };
-  var h = '<div class="card"><h3>' + ngayVN(r.tu) + (r.tu !== r.den ? ' → ' + ngayVN(r.den) : '') + ' · ' + r.soNgay + ' ngày có dữ liệu · ' + r.tong.soNguoi + ' người</h3>' +
-    '<div class="muted" style="margin-bottom:8px;">Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
-    (r.tu <= r.dauKyDen ? '<br>Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '') + '</div>' +
-    '<div class="scroll"><table class="ns-table"><tr><th>#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ/giờ') + '</tr>' +
+  var tongTo = (r.tong.scanDV || 0) + (r.tong.tachDV || 0) + (r.tong.ocrDV || 0);
+  var tongHop = (r.tong.scanHop || 0) + (r.tong.tachHop || 0) + (r.tong.ocrHop || 0);
+
+  var h = '<div class="ns-summary-grid">' +
+    '<div class="ns-kpi ns-kpi-people"><span class="ns-kpi-tag">Nhân sự</span><b>' + nf(r.tong.soNguoi) + ' <small>người</small></b><span>' + nf(r.tong.soCa) + ' ca làm việc</span></div>' +
+    '<div class="ns-kpi ns-kpi-to"><span class="ns-kpi-tag">Tổng sản lượng</span><b>' + nfi(tongTo) + ' <small>tờ</small></b><span>' + nf(tongHop) + ' hộp xong</span></div>' +
+    '<div class="ns-kpi ns-kpi-gio"><span class="ns-kpi-tag">Tổng giờ làm</span><b>' + nf(r.tong.gio) + ' <small>giờ</small></b><span>Giờ-người thực tế</span></div>' +
+    '<div class="ns-kpi ns-kpi-speed"><span class="ns-kpi-tag">Năng suất TB</span><b>' + nf(r.tong.dvGio) + ' <small>tờ/h</small></b><span>Toàn dự án</span></div>' +
+  '</div>';
+
+  h += '<div class="card"><div class="ns-card-head">' +
+    '<h3>' + ngayVN(r.tu) + (r.tu !== r.den ? ' → ' + ngayVN(r.den) : '') + ' · ' + r.soNgay + ' ngày có dữ liệu · ' + r.tong.soNguoi + ' người</h3>' +
+    '<div class="ns-khau-mini">' +
+      '<span class="step-pill step-pill-scan">Scan: <b>' + nfi(r.tong.scanDV) + '</b></span>' +
+      '<span class="step-pill step-pill-tach">Tách: <b>' + nfi(r.tong.tachDV) + '</b></span>' +
+      '<span class="step-pill step-pill-ocr">OCR: <b>' + nfi(r.tong.ocrDV) + '</b></span>' +
+    '</div></div>' +
+    '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
+    (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '') + '</div>' +
+    '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ/giờ') + '</tr>' +
     (ds.map(function (x) {
-      return '<tr><td>' + rank[x.ma] + '</td><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + x.soCa + '</td><td>' + nfi(x.scanDV) + '</td><td>' + nfi(x.tachDV) + '</td><td>' + nfi(x.ocrDV) + '</td><td>' + nf(hop(x)) + '</td><td>' + nf(x.gio) + '</td><td><b>' + nf(x.dvGio) + '</b></td></tr>';
+      var rk = rank[x.ma], rkCls = rk === 1 ? 'rank-1' : (rk === 2 ? 'rank-2' : (rk === 3 ? 'rank-3' : 'rank-other'));
+      var rkTxt = rk === 1 ? '🥇 1' : (rk === 2 ? '🥈 2' : (rk === 3 ? '🥉 3' : rk));
+      return '<tr><td style="text-align:center;"><span class="ns-badge-rank ' + rkCls + '">' + rkTxt + '</span></td><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + x.soCa + '</td><td>' + nfi(x.scanDV) + '</td><td>' + nfi(x.tachDV) + '</td><td>' + nfi(x.ocrDV) + '</td><td>' + nf(hop(x)) + '</td><td>' + nf(x.gio) + '</td><td><b class="ns-speed">' + nf(x.dvGio) + '</b></td></tr>';
     }).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px;">Chưa có dữ liệu trong khoảng này</td></tr>') +
-    (ds.length ? '<tr class="ns-tong"><td></td><td style="text-align:left"><b>Tổng</b></td><td>' + nf(r.tong.soCa) + '</td><td>' + nfi(r.tong.scanDV) + '</td><td>' + nfi(r.tong.tachDV) + '</td><td>' + nfi(r.tong.ocrDV) + '</td><td>' + nf(r.tong.scanHop + r.tong.tachHop + r.tong.ocrHop) + '</td><td>' + nf(r.tong.gio) + '</td><td><b>' + nf(r.tong.dvGio) + '</b></td></tr>' : '') +
+    (ds.length ? '<tr class="ns-tong"><td style="text-align:center;">—</td><td style="text-align:left"><b>Tổng cộng</b></td><td>' + nf(r.tong.soCa) + '</td><td>' + nfi(r.tong.scanDV) + '</td><td>' + nfi(r.tong.tachDV) + '</td><td>' + nfi(r.tong.ocrDV) + '</td><td>' + nf(r.tong.scanHop + r.tong.tachHop + r.tong.ocrHop) + '</td><td>' + nf(r.tong.gio) + '</td><td><b class="ns-speed">' + nf(r.tong.dvGio) + '</b></td></tr>' : '') +
     '</table></div></div>';
   $('nsBody').innerHTML = h;
   Array.prototype.forEach.call($('nsBody').querySelectorAll('[data-sk]'), function (c) {
