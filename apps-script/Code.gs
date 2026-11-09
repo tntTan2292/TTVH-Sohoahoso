@@ -32,7 +32,7 @@ const TAB = {
   DauKy:    ['Buoc','SoHop','SoHoSo','SoTrang','SoTo','GhiChu','Ngay','Ca'],
   LogHeThong: ['ThoiGian','MaHRM','HoTen','VaiTro','HanhDong','NgayCa','ChiTiet']
 };
-const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien'];
+const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien','NguoiPhan','NguoiNhap','NguoiXacNhan','NguoiHuy'];   // dùng chung cho setup, append_, appendMany_
 const MIN_ROWS = { NhatKy: 20000, LogHeThong: 20000, PhanCa: 5000, PhanNhom: 5000, ChotCa: 5000 };   // setup bảo đảm đủ dòng TRƯỚC khi định dạng cột
 const VAI_TRO_QL = ['TOTRUONG', 'TOPHO', 'ADMIN'];
 const VAI_TRO_ALL = ['TOVIEN', 'TOTRUONG', 'TOPHO', 'LANHDAO', 'ADMIN'];
@@ -136,6 +136,9 @@ function read_(name) {
       out.push(o);
     }
   }
+  if (name === 'NhatKy') out.forEach(function (o) {   // dữ liệu cũ: mã hộp/mã hồ sơ bị Sheets đổi thành Date -> đưa về dd.MM.yy (giả định mã gốc dạng dd.mm.yy)
+    ['MaHop', 'MaHoSo'].forEach(function (k) { if (o[k] instanceof Date) o[k] = Utilities.formatDate(o[k], TZ, 'dd.MM.yy'); });
+  });
   MEMO_[name] = out;
   if (name !== 'NhanSu' && out.length) {   // dữ liệu cũ bị Sheets cắt số 0 đầu của Mã HRM -> đưa về đúng mã trong NhanSu
     const canon = {};
@@ -151,15 +154,19 @@ function read_(name) {
 function append_(name, obj) {
   const sh = ss_().getSheetByName(name);
   const cols = TAB[name], row = sh.getLastRow() + 1;
-  // Cột dạng mã/ngày phải ghi dạng văn bản, nếu không Sheets đổi "00109101" thành số 109101 (mất số 0) và Ngay thành Date
-  const TEXT_COLS = ['Ngay', 'Ca', 'Nhom', 'MaHRM', 'HoTen', 'NguoiPhan', 'NguoiNhap', 'MaHop', 'MaHoSo', 'ThanhVien', 'NguoiXacNhan', 'NguoiHuy'];
   if (row > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), 1000);   // hết dòng dựng sẵn: thêm dòng (appendRow trước đây tự làm việc này)
   const rg = sh.getRange(row, 1, 1, cols.length);
-  const f = rg.getNumberFormats()[0];   // giữ định dạng cột khác, chỉ đặt '@' cho cột văn bản – 2 lệnh thay vì từng ô
-  rg.setNumberFormats([cols.map(function (k, i) { return TEXT_COLS.indexOf(k) >= 0 ? '@' : f[i]; })]);
+  textFmt_(rg, cols, 1);   // cột mã/ngày ghi dạng văn bản, nếu không Sheets đổi "00109101" thành số, "02.01.85" thành ngày
   const vals = cols.map(function (k) { return obj[k] === undefined || obj[k] === null ? '' : safe_(obj[k]); });
   rg.setValues([vals]);
   memoThem_(name, row, cols, [vals]);
+}
+// Đặt định dạng văn bản '@' cho các cột văn bản của khối dòng sắp ghi (1 lần cho cả khối), giữ định dạng các cột khác.
+function textFmt_(rg, cols, nRows) {
+  const f = rg.getNumberFormats();
+  const out = [];
+  for (let i = 0; i < nRows; i++) out.push(cols.map(function (k, j) { return TEXT_COLS.indexOf(k) >= 0 ? '@' : (f[i] ? f[i][j] : ''); }));
+  rg.setNumberFormats(out);
 }
 // Đang ghi theo lô (ghiLo): thêm dòng mới vào bộ nhớ thay vì bỏ bộ nhớ, để cả lô chỉ đọc NhatKy 1 lần (R1)
 let LO_DANG_GHI_ = false;
@@ -549,6 +556,27 @@ function ghiLo_(u, p) {      // chạy trong withLock_ ở api(); MỌI kiểm t
   return kqCuoi;
 }
 
+/* ---------- Sửa dữ liệu cũ: mã hộp bị Sheets đổi thành ngày (CHỈ chủ Sheet chạy từ trình soạn) ---------- */
+function suaMaHopNgay() {
+  ownerOnly_();
+  return withLock_(function () {
+    const sh = ss_().getSheetByName('NhatKy'), v = sh.getDataRange().getValues(), h = TAB.NhatKy;
+    const cols = ['MaHop', 'MaHoSo'].map(function (k) { return h.indexOf(k); });
+    const sua = [], bo = [];
+    for (let i = 1; i < v.length; i++) {
+      let co = false;
+      cols.forEach(function (c) { if (v[i][c] instanceof Date) { sua.push({ row: i + 1, col: c + 1, val: Utilities.formatDate(v[i][c], TZ, 'dd.MM.yy') }); co = true; } });
+      if (co) bo.push(v[i]);
+    }
+    if (!sua.length) return { daSua: 0, soDong: 0 };
+    const saoLuu = saoLuuDong_('NhatKy', bo, 'suaMaHopNgay');      // sao lưu các dòng sắp sửa vào tab SaoLuuXoa
+    sua.forEach(function (x) { const rg = sh.getRange(x.row, x.col); rg.setNumberFormat('@'); rg.setValue(x.val); });
+    memoClear_('NhatKy');
+    log_('CHU_SHEET', 'SUA_MA_HOP_NGAY', 'đổi ' + sua.length + ' ô mã hộp/mã hồ sơ bị Sheets đổi thành ngày về dạng dd.MM.yy (' + bo.length + ' dòng, sao lưu ở ' + saoLuu + '): ' + sua.slice(0, 20).map(function (x) { return 'dòng ' + x.row + ' → ' + x.val; }).join('; '));
+    return { daSua: sua.length, soDong: bo.length };
+  });
+}
+
 function huy_(u, p) {
   const t = now_();
   const r = read_('NhatKy').filter(function (x) { return s_(x.ID) === s_(p.id); })[0];
@@ -697,7 +725,10 @@ function appendMany_(name, objs) {
   const sh = ss_().getSheetByName(name), h = TAB[name];
   const vals = objs.map(function (o) { return h.map(function (k) { return o[k] === undefined || o[k] === null ? '' : safe_(o[k]); }); });
   const first = sh.getLastRow() + 1;
-  sh.getRange(first, 1, vals.length, h.length).setValues(vals);
+  if (first + vals.length - 1 > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), Math.max(1000, vals.length));
+  const rg = sh.getRange(first, 1, vals.length, h.length);
+  textFmt_(rg, h, vals.length);   // thiếu bước này từng làm mã hộp "02.01.85" bị Sheets đổi thành ngày (dòng Nhận hộp)
+  rg.setValues(vals);
   memoThem_(name, first, h, vals);
 }
 // Sao lưu các dòng sắp xóa vào tab SaoLuuXoa (nhanh hơn nhiều so với chép cả tab)

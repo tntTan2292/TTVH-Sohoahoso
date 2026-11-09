@@ -6,7 +6,7 @@
 > Cột **Mã** dùng để nhắc tới chức năng trong commit, prompt và CHANGELOG (ví dụ "sửa F-BC-04").
 > Cột **Backend** là hàm trong `apps-script/Code.gs`; cột **Giao diện** là hàm/`id` trong `apps-script/Index.html`.
 
-Cập nhật lần cuối: 09/11/2026 — phiên bản 13 + F-QL-10, F-BC-18, F-BC-19, F-QL-11 (chưa triển khai), mock 229 đạt / 0 lỗi.
+Cập nhật lần cuối: 09/11/2026 — phiên bản 13 + F-QL-10, F-BC-18, F-BC-19, F-QL-11 (chưa triển khai), mock 242 đạt / 0 lỗi.
 
 ---
 
@@ -148,7 +148,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 |---|---|---|
 | F-HT-01 | Mọi action ghi + đăng nhập + vào ca chạy tuần tự trong 1 khóa; action đọc (`READ_ACTIONS`) không khóa | `api`, `withLock_` |
 | F-HT-02 | Chống chèn công thức (`= + - @` → thêm dấu cách) | `safe_` |
-| F-HT-03 | Mã HRM có số 0 đầu: ghi dạng văn bản, đọc đối chiếu lại | `append_`, `read_`, `TEXT_COLS` |
+| F-HT-03 | Mã HRM có số 0 đầu và mã hộp dạng `dd.mm.yy` (VD `02.01.85`): ghi dạng văn bản `@` bằng **cả** `append_` và `appendMany_` (dùng chung `TEXT_COLS` qua `textFmt_`), đọc đối chiếu lại; `read_` đưa mã hộp/mã hồ sơ đã bị Sheets đổi thành ngày về `dd.MM.yy`; `suaMaHopNgay()` (chỉ chủ Sheet chạy từ trình soạn) sửa dữ liệu cũ | `append_`, `appendMany_`, `textFmt_`, `read_`, `TEXT_COLS`, `suaMaHopNgay` |
 | F-HT-04 | Cache đọc tab + bỏ cache khi sửa tay trên Sheet | `readValues_`, `tabVer_`, `onEdit` |
 | F-HT-05 | `setup` bảo đảm đủ dòng (20.000 / 5.000) rồi mới định dạng cột; chỉ chủ Sheet chạy được | `setup`, `ownerOnly_`, `MIN_ROWS` |
 | F-HT-06 | Chống XSS khi render dữ liệu người nhập | `esc()` trong Index.html |
@@ -158,7 +158,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 ## Bảng kiểm tra sau mỗi lần sửa (bắt buộc)
 
 **Tự động (máy):**
-1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 229).
+1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 242).
 2. `node tools/kiem_tra_giao_dien.js` → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
 
 **Bằng tay trên link thử (sau khi triển khai), 4 tài khoản:**

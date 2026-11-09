@@ -19,10 +19,20 @@ class Sheet {
     const ensure = (rr) => { while (me.rows.length < rr) me.rows.push([]); };
     return {
       setValue(v) { ensure(r); me.rows[r - 1][c - 1] = v; return this; },
-      setValues(vs) { for (let i = 0; i < vs.length; i++) { ensure(r + i); for (let j = 0; j < vs[i].length; j++) me.rows[r + i - 1][c - 1 + j] = vs[i][j]; } return this; },
+      setValues(vs) {
+        for (let i = 0; i < vs.length; i++) {
+          ensure(r + i);
+          for (let j = 0; j < vs[i].length; j++) {
+            let v = vs[i][j]; const m = typeof v === 'string' && v.match(/^(\d\d)\.(\d\d)\.(\d\d)$/);
+            if (m && !(me.fmts && me.fmts[r + i] && me.fmts[r + i][c - 1 + j] === '@')) v = new Date(Date.UTC(+m[3] >= 30 ? 1900 + +m[3] : 2000 + +m[3], +m[2] - 1, +m[1]));   // giả lập Sheets tự đổi "02.01.85" thành ngày khi ô chưa là văn bản
+            me.rows[r + i - 1][c - 1 + j] = v;
+          }
+        }
+        return this;
+      },
       clearContent() { for (let i = 0; i < nr; i++) if (me.rows[r + i - 1]) for (let j = 0; j < nc; j++) me.rows[r + i - 1][c - 1 + j] = ''; return this; },
       setNumberFormat() { fmtLog.push([me.name, me.maxRows]); return this; }, setFontWeight() { return this; },
-      getNumberFormats() { return [Array(nc).fill('')]; }, setNumberFormats(f) { me.fmts = me.fmts || {}; me.fmts[r] = f[0]; return this; }
+      getNumberFormats() { return Array.from({ length: nr }, () => Array(nc).fill('')); }, setNumberFormats(f) { me.fmts = me.fmts || {}; for (let i = 0; i < f.length; i++) me.fmts[r + i] = f[i]; return this; }
     };
   }
   setFrozenRows() { } setName(n) { this.name = n; return this; }
@@ -626,6 +636,47 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   rep(tTT, { buoc: 'NHAN', hop: 'K4' });
   const r3 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: 'LO-P3-TEST-0003', muc: ['OCR', 'SCAN', 'TACH'].map(b => ({ hop: 'K4', buoc: b, soHoSo: 1, soTo: 5, hetHop: true })) });
   ok(r3.ok && r3.data.added === 3 && r3.data.warnings.every(w => !/chưa có báo cáo (Scan|Tách)/.test(w)), 'P3: Scan + Tách + OCR cùng lúc: máy chủ tự xếp đúng thứ tự, không cảnh báo thiếu khâu trước', r3);
+}
+
+// ===== Lỗi dữ liệu: mã hộp "02.01.85" bị Google Sheets đổi thành ngày (appendMany_ thiếu định dạng văn bản '@') =====
+{
+  const nkS = sh('NhatKy');
+  // 0. kiểm tra chính cái mock có giả lập đúng lỗi của Sheets: ghi "dd.mm.yy" vào ô chưa là văn bản -> thành Date
+  const tmp = sh('DauKy'); const r0 = tmp.rows.length; tmp.getRange(r0 + 1, 6, 1, 1).setValues([['02.01.85']]);
+  ok(tmp.rows[r0][5] instanceof Date, 'mock giả lập đúng Sheets: "02.01.85" vào ô chưa là văn bản bị đổi thành Date');
+  tmp.rows.length = r0;
+  // (a) Nhận hộp nhiều mã (appendMany_): mã dạng dd.mm.yy phải được lưu đúng chuỗi
+  const rN = api(tTT, 'ghi', { buoc: 'NHAN', ca: 'Chiều', hop: '03.02.86 03.02.87 MD.01' });
+  const rowsN = nkS.rows.filter(x => ['03.02.86', '03.02.87', 'MD.01'].indexOf(x[6]) >= 0 || x[6] instanceof Date);
+  ok(rN.ok && rN.data.added === 3 && rowsN.length === 3 && rowsN.every(x => typeof x[6] === 'string'), 'Nhận hộp (appendMany_): mã "03.02.86" lưu đúng chuỗi, không bị đổi thành ngày', rowsN.map(x => String(x[6])));
+  const rT = api(tTT, 'ghi', { buoc: 'TRA', ca: 'Chiều', hop: '05.04.86' });
+  ok(rT.ok && nkS.rows.filter(x => x[6] instanceof Date).length === 0, 'Trả hộp (appendMany_) cũng không tạo ô Date', rT);
+  const nMau = nkS.rows.length; ctx.memoClear_();
+  ok(api(tAdmin, 'taoMau', { ngay: '2026-11-04', cas: ['Tối'], soNguoi: 2 }).ok && nkS.rows.slice(nMau - 1).every(x => !(x[6] instanceof Date)), 'taoMau (appendMany_) không tạo ô Date');
+  // (b) dữ liệu cũ đã hỏng: dòng Nhận hộp có MaHop là Date -> đọc ra "04.03.85", khớp dòng Scan, gợi ý hộp đúng
+  nkS.rows.push(['RHONG001', '2026-11-09 07:00:00', '2026-11-09', 'Chiều', '', 'NHAN', new Date(Date.UTC(1985, 2, 4)), 0, 0, 0, 0, false, new Date(Date.UTC(1985, 0, 2)), '', 'TT1', 'THƯỜNG', false, '', '']);
+  ctx.memoClear_();
+  const doc = ctx.read_('NhatKy').find(x => x.ID === 'RHONG001');
+  ok(doc && doc.MaHop === '04.03.85' && doc.MaHoSo === '02.01.85', 'read_: MaHop/MaHoSo bị Date được đọc về "04.03.85" / "02.01.85"', doc && [doc.MaHop, doc.MaHoSo]);
+  const gy = api(tTT, 'hopGoiY', { buoc: 'NHAN_NHOM' }).data;
+  ok(gy.indexOf('04.03.85') >= 0 && !gy.some(x => /GMT|Mar|Jan/.test(x)), 'hopGoiY: hộp có dòng Nhận bị hỏng vẫn được gợi ý đúng mã', gy);
+  const rS = api(tTT, 'ghi', { buoc: 'SCAN', ca: 'Chiều', hop: '04.03.85', soHoSo: 1, soTo: 9 });
+  ok(rS.ok && !rS.data.warnings.some(w => /chưa có trong danh sách đã nhận/.test(w)), 'Scan hộp 04.03.85: khớp với dòng Nhận đã hỏng, không cảnh báo "chưa có trong danh sách đã nhận"', rS);
+  ctx.memoClear_();
+  const dd = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data;
+  ok(!JSON.stringify(dd).match(/GMT|Wed Jan|Tue Mar/), 'dash_: không còn chuỗi ngày kiểu "Tue Mar … GMT" ở bất kỳ trường nào');
+  // (c) suaMaHopNgay: chỉ chủ Sheet, sửa đúng số ô, chạy lần 2 không sửa gì, có sao lưu và log
+  ctx.__active = ''; let thr = false; try { ctx.suaMaHopNgay(); } catch (e) { thr = true; }
+  ok(thr && nkS.rows.find(x => x[0] === 'RHONG001')[6] instanceof Date, 'suaMaHopNgay: người không phải chủ Sheet bị chặn, không sửa gì');
+  ctx.__active = 'owner@x.com';
+  const s1 = ctx.suaMaHopNgay();
+  const fixed = nkS.rows.find(x => x[0] === 'RHONG001');
+  ok(s1.daSua === 2 && s1.soDong === 1 && fixed[6] === '04.03.85' && fixed[12] === '02.01.85' && typeof fixed[6] === 'string', 'suaMaHopNgay: sửa đúng 2 ô (MaHop, MaHoSo) của 1 dòng về chuỗi dd.MM.yy', s1);
+  ok(sh('SaoLuuXoa') && sh('SaoLuuXoa').rows.some(r => /RHONG001/.test(String(r[3]))), 'suaMaHopNgay: có sao lưu dòng cũ vào SaoLuuXoa');
+  ok(sh('LogHeThong').rows.some(r => r[4] === 'SUA_MA_HOP_NGAY'), 'suaMaHopNgay: có ghi log hệ thống');
+  const s2 = ctx.suaMaHopNgay();
+  ok(s2.daSua === 0 && s2.soDong === 0, 'suaMaHopNgay: chạy lần 2 không sửa thêm ô nào', s2);
+  ctx.__active = '';
 }
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
