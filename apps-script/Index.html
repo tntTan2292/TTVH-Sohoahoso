@@ -1757,7 +1757,8 @@ function renderHo(d) {
     h += '<label>Mã hộp hồ sơ</label><input id="hoHop" autocomplete="off">' +
       '<div class="row num-row"><div><label>Số hồ sơ</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
       '<div><label>Số tờ</label><input id="hoTo" type="number" min="0" placeholder="0"></div>' + (HO_STEP === 'SCAN' ? '<div><label>Trang lỗi</label><input id="hoLoi" type="number" min="0" value="0"></div>' : '') + '</div>' +
-      '<div class="check-card"><label class="check-label"><input type="checkbox" id="hoHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>';
+      '<div class="check-card"><label class="check-label"><input type="checkbox" id="hoHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
+      (HO_STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="hoKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b> bằng đúng số Scan này</span></label></div>' : '');
   }
   h += '<label>Ghi chú</label><input id="hoNote" placeholder="Ghi chú thêm nếu cần"><div id="hoMsg"></div><p style="margin-top:16px;"><button class="pri btn-large" id="hoSend">Gửi báo cáo hộ</button></p></div>';
   $('qlBody').insertAdjacentHTML('beforeend', h);
@@ -1770,9 +1771,18 @@ function renderHo(d) {
     var p = { boSung: true, ngay: d.ngay, ca: d.ca, nhom: $('hoNhom').value, nguoiHo: $('hoNg').value, buoc: HO_STEP, hop: $('hoHop').value, ghiChu: $('hoNote').value };
     if (!p.nguoiHo) return msg('hoMsg', 'Vui lòng chọn người được nhập hộ');
     if (HO_STEP !== 'NHAN_NHOM') { p.soHoSo = $('hoHs').value; p.soTrang = $('hoTrang').value; p.soTo = $('hoTo').value; p.hetHop = $('hoHet').checked; if ($('hoLoi')) p.trangLoi = $('hoLoi').value; }
+    var kemTach = HO_STEP === 'SCAN' && $('hoKemTach') && $('hoKemTach').checked;   // F-QL-10: nhập hộ Scan kèm Tách file
     $('hoSend').disabled = true;
     call('ghi', p).then(function (r) {
-      msg('hoMsg', 'Đã ghi ' + r.added + ' bản ghi hộ' + (r.warnings.length ? ' – Lưu ý: ' + r.warnings.join('; ') : ''), r.warnings.length ? 'warn' : 'ok');
+      if (!kemTach) return r;
+      var t = {}; Object.keys(p).forEach(function (k) { t[k] = p[k]; }); t.buoc = 'TACH'; delete t.trangLoi;
+      return call('ghi', t).then(function (r2) {
+        return { added: r.added + r2.added, warnings: r.warnings.concat(r2.warnings.filter(function (x) { return r.warnings.indexOf(x) < 0; })), kem: 'Scan + Tách file PDF' };
+      }, function (e) {
+        return { added: r.added, warnings: r.warnings.concat(['Đã ghi Scan nhưng CHƯA ghi được Tách file PDF: ' + e + ' – hãy nhập hộ Tách file riêng']), kem: 'Scan' };
+      });
+    }).then(function (r) {
+      msg('hoMsg', 'Đã ghi ' + r.added + ' bản ghi hộ' + (r.kem ? ' (' + r.kem + ')' : '') + (r.warnings.length ? ' – Lưu ý: ' + r.warnings.join('; ') : ''), r.warnings.length ? 'warn' : 'ok');
       ['hoHop', 'hoHs', 'hoTrang', 'hoTo', 'hoNote'].forEach(function (i) { if ($(i)) $(i).value = ''; });
       if ($('hoHet')) $('hoHet').checked = false;
     }).catch(function (e) { msg('hoMsg', e); }).then(function () { if ($('hoSend')) $('hoSend').disabled = false; });

@@ -487,5 +487,17 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(sh('LogHeThong').rows.slice(1).some(x => x[4] === 'BAO_CAO' && /mã hồ sơ\/ghi chú: Từ 472 đến 476/.test(x[6])), 'nhật ký BAO_CAO có ghi chú/mã hồ sơ của hộp nhận');
 }
 
+// ===== F-QL-10: Nhập hộ Scan kèm Tách file (giao diện gửi lại đúng payload, đổi buoc = TACH, bỏ trangLoi) =====
+{
+  const p = { buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nhom: '', nguoiHo: 'B1', hop: 'KT1', soHoSo: 2, soTrang: 25, soTo: 0, trangLoi: 1, hetHop: true };
+  const r1 = api(tTT, 'ghi', p);
+  const t = Object.assign({}, p, { buoc: 'TACH' }); delete t.trangLoi;
+  const r2 = api(tTT, 'ghi', t);
+  const rows = sh('NhatKy').rows.filter(x => x[6] === 'KT1');
+  const sc = rows.find(x => x[5] === 'SCAN'), ta = rows.find(x => x[5] === 'TACH');
+  ok(r1.ok && r2.ok && sc && ta, 'nhập hộ Scan kèm Tách: ghi đủ 2 bản ghi SCAN và TACH', [r1, r2]);
+  ok(ta && Number(ta[8]) === 25 && Number(ta[7]) === 2 && ta[11] === true && ta[15] === 'NHẬP HỘ' && ta[18] === 'B1', 'bản ghi Tách cùng số trang/hồ sơ/hết hộp, loại NHẬP HỘ, tính cho người được nhập hộ', ta);
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

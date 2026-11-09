@@ -6,7 +6,7 @@
 > Cột **Mã** dùng để nhắc tới chức năng trong commit, prompt và CHANGELOG (ví dụ "sửa F-BC-04").
 > Cột **Backend** là hàm trong `apps-script/Code.gs`; cột **Giao diện** là hàm/`id` trong `apps-script/Index.html`.
 
-Cập nhật lần cuối: 09/11/2026 — khớp phiên bản triển khai 13, mock 188 đạt / 0 lỗi.
+Cập nhật lần cuối: 09/11/2026 — phiên bản 13 + F-QL-10 (chưa triển khai), mock 190 đạt / 0 lỗi.
 
 ---
 
@@ -93,6 +93,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-QL-07 | Cấp lại PIN / mở khóa tài khoản | xem F-DN-08, F-DN-09 | `#qlNs`, `#qlRs`, `#qlUk`, `#qlMsg3` |
 | F-QL-08 | Nhập số liệu hộ thành viên (ngày hôm nay hoặc quá khứ; nhóm tùy chọn, "Cá nhân" thì bắt buộc chọn người) | `ghi_` (`boSung`, `nguoiHo`) | `renderHo`, `#hoCard`, `#hoSteps`, `#hoNhom`, `#hoNg`, `#hoSend` |
 | F-QL-09 | Áp nhóm đang chọn sang khung nhập hộ | — | `apNhomQL` |
+| F-QL-10 | Nhập hộ khâu Scan: tick "Đồng thời ghi Tách file PDF bằng đúng số Scan" (gửi thêm bản ghi `TACH` nhập hộ, bỏ trang lỗi; Tách lỗi vẫn giữ Scan) | `ghi_` (2 lần gọi, `boSung`) | `renderHo` → `#hoKemTach`, `#hoSend` |
 
 ## 6. Nhân sự – chỉ ADMIN (F-NS)
 
@@ -154,11 +155,11 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 ## Bảng kiểm tra sau mỗi lần sửa (bắt buộc)
 
 **Tự động (máy):**
-1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 188).
+1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 190).
 2. `node tools/kiem_tra_giao_dien.js` (nếu đã có) → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
 
 **Bằng tay trên link thử (sau khi triển khai), 4 tài khoản:**
 - [ ] Tổ viên: đăng nhập → Vào ca → Nhận hộp (Cá nhân/Nhóm) → Scan có tick "kèm Tách" → OCR → xem Lịch sử cá nhân. Không thấy tab Dashboard.
-- [ ] Tổ trưởng: Vào ca → Quản lý ca: Tự ghép cặp, đổi nhóm 1 ô, bỏ 1 người khỏi ca → Nhận từ TT Lưu trữ (có ghi chú mã hồ sơ) → Trả hộp → Nhập hộ → Chốt ca → Mở khóa → Dashboard đủ 6 khu.
+- [ ] Tổ trưởng: Vào ca → Quản lý ca: Tự ghép cặp, đổi nhóm 1 ô, bỏ 1 người khỏi ca → Nhận từ TT Lưu trữ (có ghi chú mã hồ sơ) → Trả hộp → Nhập hộ (khâu Scan có tick kèm Tách) → Chốt ca → Mở khóa → Dashboard đủ 6 khu.
 - [ ] Lãnh đạo: chỉ thấy Dashboard; đổi ngày bằng ◀ ▶ và nút ngày; xem 02–08/11 có số đầu kỳ.
 - [ ] ADMIN: Nhân sự (thêm/sửa/cấp PIN), Dữ liệu (sửa, xóa, khôi phục, tạo mẫu, xóa thử nghiệm), Nhật ký (lọc), Dashboard tick "gồm dữ liệu thử nghiệm".

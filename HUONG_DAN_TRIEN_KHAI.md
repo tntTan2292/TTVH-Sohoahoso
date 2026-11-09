@@ -50,7 +50,7 @@ Làm trước khi dán `Code.gs` mới:
 - **Phân nhóm:** đổi nhóm ở từng ô được lưu ngay (`luuNhom` với `chiDoi: true`, chỉ sửa những người được gửi); màn hình Quản lý ca tự làm mới sau 20 giây.
 - **Nhận hộp cá nhân/nhóm:** khâu `NHAN_NHOM` (nhãn "Nhận hộp") có nút Cá nhân/Nhóm, gửi `kieuNhan`. `CANHAN` ghi với `Nhom` rỗng; `NHOM` mà chưa được phân nhóm thì server từ chối.
 - **Dashboard khu "Từng ca":** `dash_` trả thêm `caNguoi` (mỗi người trong `PhanCa` của ngày: ca, nhóm, có mặt, số báo cáo, hộp nhận, tờ/hồ sơ Scan-Tách-OCR; báo cáo nhóm chia đều cho thành viên). Giao diện vẽ bằng `tungCaHtml(d)`.
-- **Khâu Scan:** có ô tick "Đồng thời ghi Tách file PDF bằng đúng số Scan này" (gửi tiếp một bản ghi `TACH` cùng số liệu; nếu Tách lỗi vẫn giữ Scan và nhắc báo Tách riêng).
+- **Khâu Scan:** có ô tick "Đồng thời ghi Tách file PDF bằng đúng số Scan này" (gửi tiếp một bản ghi `TACH` cùng số liệu; nếu Tách lỗi vẫn giữ Scan và nhắc báo Tách riêng). Có ở cả tab Báo cáo và form "Nhập số liệu hộ thành viên" (Quản lý ca).
 
 ## E. Kiểm thử trước khi giao
 - Chạy `node tools/test_mock.js`: phải ra `0 lỗi`.

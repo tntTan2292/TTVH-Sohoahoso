@@ -12,20 +12,19 @@
 | Cập nhật lúc | 09/11/2026 — phiên Claude Code (viết tài liệu) |
 | Nhánh / commit | `main` @ `10155a8` (đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso`) |
 | Bản đang chạy | Apps Script **phiên bản 13** trên link chính `…MlRA/exec`; link phụ `…NIQ/exec` còn ở phiên bản 12 |
-| Mã trên Apps Script khớp repo? | Có (bản 13 = `ef54be3`) |
-| Mock | `node tools/test_mock.js` → **188 đạt, 0 lỗi** |
+| Mã trên Apps Script khớp repo? | **Không** — repo có thêm F-QL-10 (`Index.html`), chưa triển khai. Bản 13 = `ef54be3` |
+| Mock | `node tools/test_mock.js` → **190 đạt, 0 lỗi** |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
 > Ghi rõ: đang sửa gì, file nào, đã xong bước nào, còn bước nào. Nếu không có gì dở → ghi "Không".
 
-- **Việc:** Điều tra **F-BC-08** (tick "Scan đồng thời ghi Tách file PDF") — chủ dự án báo bị mất.
-- **Đã kiểm tra:** trong repo (`10155a8`) chức năng VẪN CÒN ở tab Báo cáo: `buildForm` dòng ~1505 (`#fKemTach`), `send()` dòng ~1554–1572 (gửi thêm bản ghi `TACH`). Form "Nhập hộ" (`renderHo`) **chưa bao giờ** có ô tick này.
-- **Đang chờ:** chủ dự án cho biết thấy mất ở màn hình nào (tab Báo cáo trên link `…MlRA`, hay form Nhập hộ ở Quản lý ca). Nếu ở tab Báo cáo → mã trên Apps Script khác repo: mở Apps Script, tìm `fKemTach` trong file `Index`.
-- **Còn lại sau đó:** sửa theo kết quả trên; (đề xuất) viết `tools/kiem_tra_giao_dien.js`.
+- **Việc:** **F-QL-10** — thêm tick "Scan đồng thời ghi Tách file PDF" vào form Nhập hộ (chủ dự án báo thiếu ở form này; tab Báo cáo vẫn có F-BC-08).
+- **Đã xong:** sửa `renderHo` trong `Index.html` (`#hoKemTach`, gửi thêm `ghi` buoc `TACH`), thêm 2 kiểm tra vào mock (190/0), thử giao diện bằng mock trong trình duyệt (tick chỉ hiện ở khâu Scan, gửi đúng 2 lệnh). Cập nhật `CHUC_NANG.md`, `CHANGELOG.md`, `HUONG_DAN_TRIEN_KHAI.md`.
+- **Còn lại:** commit + push; **dán `Index.html` lên Apps Script và triển khai phiên bản mới** trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ.
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
-1. Commit tài liệu và đẩy lên GitHub.
+1. Triển khai F-QL-10 lên Apps Script và thử thật (mục 2).
 2. Viết `tools/kiem_tra_giao_dien.js` (chống mất chức năng ở giao diện — nơi hay bị mất nhất).
 3. Kiểm thử trên Sheet thật theo bảng kiểm tra cuối `docs/CHUC_NANG.md` với 4 tài khoản.
 4. Chuyển link phụ `…NIQ` lên phiên bản mới hoặc ngừng dùng.
@@ -33,7 +32,7 @@
 ## 4. Lỗi / chức năng bị mất đã biết (chưa sửa)
 > Mỗi dòng: mô tả · mã chức năng (F-xx) · phát hiện ngày nào · ai phát hiện.
 
-- Tick "Scan đồng thời ghi Tách file PDF" bị mất · F-BC-08 · 09/11/2026 · chủ dự án báo. Repo vẫn có ở tab Báo cáo → đang xác định màn hình bị mất (xem mục 2).
+- Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
 
 ## 5. Quyết định đang chờ chủ dự án
 - Hộp đã trả có còn được Tách file không.
