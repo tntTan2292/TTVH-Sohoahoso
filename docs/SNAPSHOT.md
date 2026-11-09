@@ -24,7 +24,7 @@
 - **Prompt giao việc:** `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` (đã liệt kê 10 điểm trùng D1–D10, ràng buộc, câu hỏi không được tự quyết).
 - **Cách làm:** 2 giai đoạn. GĐ1: viết `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` (đếm thao tác trước/sau, đề xuất P1, P2…) rồi **dừng chờ chủ dự án duyệt**. GĐ2: làm từng đề xuất đã duyệt, mỗi đề xuất một commit.
 - **Phân công** (`docs/PHAN_CONG.md`): GĐ1 đề xuất + GĐ2 code → **Sonnet**; đề xuất đụng cách tính số liệu/API → **Opus review** trước khi chủ dự án duyệt; phần đẹp giao diện của form mới → **Antigravity** sau khi Sonnet xong; trước triển khai → **Opus review GO/NO-GO**.
-- **Trạng thái:** ☑ GĐ1 xong (Sonnet, 09/11/2026): `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` — đề xuất P1–P7, câu hỏi Q1–Q7, chưa sửa dòng mã nào, **không tự chuyển GĐ2** · ☐ Opus review đề xuất · ☐ chủ dự án duyệt · ☐ GĐ2 (ghi P nào xong ở đây) · ☐ Antigravity làm đẹp · ☐ Opus review trước triển khai
+- **Trạng thái:** ☑ GĐ1 xong (Sonnet, 09/11/2026): `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` — đề xuất P1–P7, câu hỏi Q1–Q7, chưa sửa dòng mã nào, **không tự chuyển GĐ2** · ☑ Opus review đề xuất (09/11/2026): **ĐẠT CÓ ĐIỀU KIỆN**, 4 yêu cầu R1–R4 ghi ở mục 7 của file đề xuất (R1 chặn: lô phải chỉ đọc NhatKy 1 lần; R2 chỉ gửi `soTo`; R3 gộp P1 vào P2; R4 `idLo` bắt buộc). Thứ tự: P0 → P2(+P1) → P4 → P6 → P5 → P7a → P3 · ☐ chủ dự án trả lời Q1–Q5 · ☐ GĐ2 (ghi P nào xong ở đây) · ☐ Antigravity làm đẹp · ☐ Opus review trước triển khai
 - **Phiên tiếp theo:** đọc prompt trên rồi làm từ bước đang ☐ đầu tiên.
 
 ### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
@@ -44,6 +44,7 @@
 - Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
 
 ## 5. Quyết định đang chờ chủ dự án
+- **Chuẩn hóa báo cáo Q1–Q5** (chi tiết ở `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` mục 6): Q1 bỏ hẳn "Nhận hộp" của tổ viên hay chỉ làm nhanh; Q2 bỏ ô "Số trang"; Q3 số hồ sơ Tách/OCR điền sẵn + có cho tick OCR cùng Scan; Q4 giới hạn mỗi lần gửi + lô lỗi một hộp thì ghi các hộp còn lại; Q5 hộp làm dở ca trước nhập phần thêm hay tổng.
 - Hộp đã trả có còn được Tách file không.
 - Số 571 trang "Tách file" ngày 05/11 ca tối (đã chuyển sang Tách) — cần Lãnh đạo xác nhận.
 - Các file `PROMPT_*.md` ở gốc đã **cũ** (ví dụ ghi Quản lý chỉ có 2 khâu) — giữ làm lưu trữ hay chuyển vào `docs/prompts-cu/`.

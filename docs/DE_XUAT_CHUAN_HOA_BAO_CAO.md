@@ -141,3 +141,25 @@ So sánh: **61 ô → 19 ô (≈ −69%)**, 16 gửi → 2, 16 confirm → 2, 16
 | Q5 | **Hộp làm dở (chưa tick hết hộp) ở ca trước:** ca sau báo tiếp thế nào? (a) nhập **phần làm thêm** (cộng dồn, đúng cách `dash_` đang cộng); (b) nhập **tổng lũy kế** rồi máy tự trừ ra phần thêm. Hộp dở thuộc về nhóm nào nếu nhóm ca sau khác? | (a), hiện rõ "ca trước đã báo X tờ" |
 | Q6 | Chấp nhận cơ chế chống ghi đôi `idLo` (mục 5.1)? | Có |
 | Q7 | Thứ tự làm và đề xuất nào duyệt / hoãn / bỏ (P1–P7)? | P1→P2→P4→P5→P6→P3→P7a |
+
+---
+
+## 7. Opus review (09/11/2026)
+
+**Kết luận: ĐẠT CÓ ĐIỀU KIỆN.** Phân tích D1–D10, E1–E6 đúng với mã (đã kiểm lại `ghi_`, `hopGoiY_`, `dash_`, `append_`, `withLock_`). Hướng P2 (gọi lại `ghi_` cho từng mục) là đúng: giữ nguyên mọi kiểm tra, không đổi cột, `dash_` không đổi. Có 4 chỗ phải sửa trước khi làm:
+
+| # | Mức | Vấn đề | Yêu cầu |
+|---|---|---|---|
+| R1 | **Chặn** | P2 hiệu năng: `NhatKy` **không** nằm trong `CACHE_TABS`, và `append_` gọi `memoClear_('NhatKy')` → mỗi mục trong lô đọc lại **toàn bộ** sheet. Lô 30 mục × vài nghìn dòng chạy trong một khóa, trong khi người khác chỉ chờ khóa 25 giây (`withLock_`) → báo "hệ thống bận" hàng loạt giữa ca. Đề xuất ghi "tối ưu sau nếu đo thấy chậm" là không đủ. | Trong P2: khi đang chạy `ghiLo`, `append_` **thêm dòng mới vào `MEMO_.NhatKy`** thay vì xóa (hoặc cờ tương đương), để cả lô chỉ đọc sheet **1 lần**. Mock phải đếm `getValues` của NhatKy = 1 cho một lô. Giới hạn lô mặc định **10 hộp × 3 khâu**. |
+| R2 | Quan trọng | P4 gửi `soTrang = soTo` làm bảng "Nhật ký ca" (`loadNK`) và khu "Ai nhập – Chi tiết" hiện hai cột trùng số (25 trang, 25 tờ) → người đọc dễ cộng gấp đôi; cột `SoTrang` đổi nghĩa. | Giao diện chỉ gửi **`soTo`**, `soTrang` để trống (0). `dv` vẫn đúng (`to > 0`), cột `SoTrang` giữ nghĩa "số trang có nhập". Không cần sửa `Code.gs`. |
+| R3 | Quan trọng | P1 riêng (tách form cũ thành hàm chung) là refactor cỡ M ở **chỗ dễ mất chức năng nhất**, không đem lại lợi ích cho người dùng, rồi P2/P3/P6 lại thay phần Scan/Tách/OCR của chính form đó → làm hai lần. | **Gộp P1 vào P2**: dựng thẳng thành phần mới "bảng báo cáo nhiều hộp" **dùng chung ngay từ đầu** cho tab Báo cáo và form Nhập hộ (tham số `boSung/nguoiHo`). Form cũ **giữ nguyên, không xóa** cho tới khi chủ dự án nghiệm thu bảng mới; khi đó mới gỡ phần Scan/Tách/OCR cũ trong một commit riêng. |
+| R4 | Quan trọng | Chống ghi đôi (`idLo`) đang để "cần duyệt". Đây là quyết định kỹ thuật, không phải nghiệp vụ. | CTO quyết: **bắt buộc có trong P2**. Lưu `idLo` → kết quả vào CacheService 10 phút **sau khi** ghi xong; gửi lại cùng `idLo` thì trả lại kết quả cũ, không ghi thêm. Q6 bỏ khỏi danh sách hỏi chủ dự án. |
+
+Ghi nhận khác (không chặn):
+- P3: đồng ý mặc định **chỉ tick sẵn Scan + Tách**, OCR phải chủ động bật (OCR thường lệch số, dễ thổi phồng Dashboard).
+- P7: đồng ý **7a**; 7b đổi ý nghĩa "nhóm đã báo cáo" ở `dash_` → chỉ làm nếu chủ dự án chọn ở Q1.
+- Việc **P0 = `tools/kiem_tra_giao_dien.js`** phải xong trước mọi sửa giao diện (kiểm `id`, `call('…')` trong `docs/CHUC_NANG.md`).
+- Triển khai theo **đợt**, mỗi đợt Opus review L3 + chủ dự án thử trên link thật: Đợt 1 = P0 + P2 (gồm P1, R1, R4) + P4 + F-QL-10; Đợt 2 = P6 + P5 + P7a; Đợt 3 = P3.
+
+**Thứ tự làm đã chốt (chờ chủ dự án duyệt Q1–Q5):** P0 → P2(+P1) → P4 → P6 → P5 → P7a → P3.
+**Câu hỏi còn lại cho chủ dự án:** Q1, Q2, Q3, Q4 (con số giới hạn), Q5. Q6 đã quyết (R4). Q7 thay bằng thứ tự trên.
