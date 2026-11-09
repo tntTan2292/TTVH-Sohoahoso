@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
+- Sửa dữ liệu thật theo yêu cầu chủ dự án (không đổi mã): nhập hộ ngày 09/11 của 3 nhóm bị ghi nhầm ca Sáng/Tối → chuyển về **Tối**: `NhatKy` 3 dòng (hộp nhóm 3), `PhanNhom` 6 dòng, `PhanCa` 5 dòng. Số liệu không đổi. Giữ nguyên 1 dòng `PhanCa` ca Sáng của một người đã có dòng ca Tối (tránh trùng). Nguyên nhân gốc: nhập hộ chọn sai ca; lịch sử phiên bản Google Sheet còn để quay lui.
 - Triển khai **phiên bản 17** lên `…MlRA` (commit `a2b738f`: Đợt 1 – P0, P2 `ghiLo` + bảng nhiều hộp, P4, P3, giao diện Antigravity, F-QL-10). Bản trước: phiên bản 16. Mã khớp repo (băm). Chưa thử trên Sheet thật.
 - Tài liệu: thêm skill `.claude/skills/update-code-sohoa` (UpdateCodeSohoa), `.gitignore` cho phép `.claude/skills/`. Triển khai Đợt 1 đã thực hiện sau đó (dòng kế).
 - Giao diện Đợt 1 · F-BC-18, F-BC-19, F-QL-11: làm đẹp "Bảng báo cáo nhiều hộp" dùng một tay trên điện thoại 360px. Mỗi hộp là thẻ gọn (Mã hộp, Mã hồ sơ, Số hồ sơ + Số tờ cạnh nhau 50/50, checkbox hoàn thành hộp); thanh tick khâu gọn (Scan + Tách 2 cột, OCR nổi bật có badge "Chủ động tick"); chip gợi ý hộp lớn 38px dễ chạm; nút "Thêm hộp" full-width 46px; nút "Gửi báo cáo" 50px nổi bật; kết quả ✔/✕ từng hộp dạng thẻ có dải màu xanh/đỏ; thông báo lỗi đỏ tại thẻ. Không sửa Code.gs, giữ nguyên toàn bộ id/hàm/action. Mock 229/0, kiểm tra giao diện 356/0.
