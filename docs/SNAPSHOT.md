@@ -49,6 +49,9 @@
 ## 4. Lỗi / chức năng bị mất đã biết (chưa sửa)
 > Mỗi dòng: mô tả · mã chức năng (F-xx) · phát hiện ngày nào · ai phát hiện.
 
+- **LỖI DỮ LIỆU – ƯU TIÊN 1 · F-HT-03 · 10/11/2026 · chủ dự án (ảnh bảng "Chi tiết từng lần báo cáo"):** mã hộp dạng `02.01.85` ở các dòng **Nhận hộp** bị Google Sheets đổi thành ngày (hiện "Wed Jan 02 1985 07:00:00 GMT+0700"); dòng Scan/Tách cùng hộp vẫn đúng. **Nguyên nhân (Opus xác minh trong mã):** `append_` (Scan/Tách/OCR) đặt định dạng `@` cho cột văn bản trước khi ghi; `appendMany_` (dùng cho NHAN/NHAN_NHOM/TRA ở `ghi_` và `taoMau_`) **không đặt** → ô chưa sẵn `@` bị tự đổi kiểu. Hậu quả: hộp Nhận và hộp Scan không khớp mã → cảnh báo "chưa có trong danh sách đã nhận", gợi ý hộp sai, số Nhận/Tồn trên Dashboard sai. **Giao Sonnet:** prompt trong `docs/prompts/PROMPT_SONNET_SUA_MA_HOP_NGAY.md`. Opus cho **GO triển khai ngay** nếu kiểm tra đạt (lỗi đang làm hỏng dữ liệu thật).
+- **Không phải lỗi:** cột "Giờ" ở bảng Chi tiết là **giờ bấm gửi**, không phải giờ của ca. Nhập hộ lúc 03:49 cho "Ca Tối" là đúng (nhập bù ca đã qua).
+
 - **KHÔNG PHẢI LỖI (ghi để khỏi điều tra lại):** 09/11/2026 23:22 chủ dự án đăng nhập tổ viên không thấy "Vào ca"/form báo cáo → do ngoài giờ (ca Tối đóng nhập 22:00; ca mở sớm 15', đóng sau giờ kết thúc 60'). Opus đã thử mã repo bằng mock trong trình duyệt: bảng nhiều hộp hiện bình thường, không lỗi JS. **Thử ngoài giờ:** dùng Tổ trưởng/ADMIN → Quản lý ca → **Nhập hộ** (không giới hạn giờ, cùng bảng nhiều hộp, cùng `ghiLo`). Thử luồng tổ viên trong giờ ca thật (từ 07:15). **Không gỡ khóa giờ trên bản đang chạy.** Dữ liệu thử: ADMIN hủy ở tab Dữ liệu sau khi thử.
 
 - Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
