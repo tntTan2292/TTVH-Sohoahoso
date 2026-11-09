@@ -51,7 +51,8 @@
 | `cas[]`: `ca, bd, kt, nguoiPhan, tonDau, chuaScan, chuaTach, chuaOcr, scanDV, tachDV, ocrDV, nhanHop, traHop, nguoiBaoCao, nhomDaBC, tongNhom`, trạng thái chốt | khu ĐẦU CA, CUỐI CA |
 | `caGop` `{scanDV, tachDV, ocrDV}` | thẻ "Ca ngày (gộp)" giai đoạn 02–08/11 |
 | `day`: `nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop` | KẾT THÚC NGÀY |
-| `series[]` (10 ngày): `ngay, nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV` | biểu đồ `c2`, `c4`, nút ngày `#dNgayCo` |
+| `khoangNgay { tu, den, soNgay }`: ngày đầu/cuối có dữ liệu (không tính THỬ NGHIỆM khi không `gomThu`, không tính bản đã hủy, gồm DauKy có `Ngay`, `den` ≤ hôm nay; rỗng thì `tu=den=''`, `soNgay=0`) | dòng "Có dữ liệu" `#dNgayCo`, `#dNgay.min` |
+| `series[]` (10 ngày): `ngay, nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV` | biểu đồ `c2`, `c4` |
 | `caNguoi[]` | khu Từng ca (`tungCaHtml`) |
 | `nhom[]`: `ca, nhom, tv[], scanDV, scanHs, tachDV, ocrDV, scanDVGio, tachDVGio, ocrDVGio, ...` | bảng nhóm |
 | `canhan[]`: `ten, soCa, scanDV, tachDV, ocrDV` | bảng cá nhân |

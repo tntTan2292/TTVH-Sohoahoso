@@ -13,7 +13,7 @@
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
 | Bản đang chạy | Apps Script **phiên bản 19** (09/11/2026 23:40) trên link chính `…MlRA/exec` = commit `60189ab` (Dashboard loại TN-xx, ngày 7 một hàng; trước đó F-HT-03). Phiên bản trước: 18 (`fe49dba`). Link phụ `…NIQ/exec` không đụng |
 | Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `60189ab` sau khi lưu và tải lại trang) |
-| Mock | `node tools/test_mock.js` → **245 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
+| Mock | `node tools/test_mock.js` → **250 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
@@ -51,7 +51,7 @@
 
 - **ĐÃ SỬA TRONG MÃ (10/11/2026, Sonnet; mock 245/0; triển khai bằng skill ngay sau đó) · phần mã của dòng dưới, chủ dự án vẫn dọn dữ liệu PhanCa thật.** Dashboard còn người ở ca Sáng/Chiều 09/11 sau khi xóa dữ liệu thử · F-DB-03, F-DB-06 · 10/11/2026 · chủ dự án.** Nguyên nhân (Opus): "Nhân sự" và khu "Từng ca" lấy từ `PhanCa` (danh sách vào ca), không từ báo cáo; dữ liệu thử đã xóa bản ghi nhưng còn dòng `PhanCa` của người giả `TN-07..11` và của Trần Nhật Tân (ca Sáng, Chiều). **Dọn dữ liệu (chủ dự án, không cần sửa mã):** ADMIN → Dữ liệu → "Xóa dữ liệu thử nghiệm" (xóa cả `PhanCa`/`NhanSu` của `TN-xx`); Quản lý ca → ngày 09/11, ca Sáng rồi ca Chiều → "Bỏ khỏi ca" Trần Nhật Tân. **Sửa mã (Sonnet):** `dash_` loại người `TN-xx` khỏi "Nhân sự"/`caNguoi` khi không `gomThu` (cùng quy tắc với bản ghi THỬ NGHIỆM).
 - **Opus GO triển khai (10/11/2026, theo phiếu giao việc của chủ dự án) cho commit sửa F-DB-01/F-DB-06 (mock 245/0).**
-- **CHƯA ĐẠT – LÀM LẠI · "Ngày có dữ liệu" · F-DB-01 · 10/11/2026 · chủ dự án.** Bản 19 (Sonnet làm đúng yêu cầu cũ của Opus: 7 nút ngày, một hàng) **không đạt ý chủ dự án**: vẫn là dãy nút ngày, lâu dài không gọn. **Quyết định chủ dự án (10/11/2026): bỏ dãy nút ngày, chỉ ghi KHOẢNG NGÀY.** Opus chốt cách làm:
+- **ĐÃ LÀM LẠI (10/11/2026, Sonnet; mock 250/0, giao diện 356/0): `khoangNgay` + một dòng khoảng ngày; Opus GO theo phiếu; triển khai ngay sau đó.** (Nội dung yêu cầu:) "Ngày có dữ liệu" · F-DB-01 · 10/11/2026 · chủ dự án.** Bản 19 (Sonnet làm đúng yêu cầu cũ của Opus: 7 nút ngày, một hàng) **không đạt ý chủ dự án**: vẫn là dãy nút ngày, lâu dài không gọn. **Quyết định chủ dự án (10/11/2026): bỏ dãy nút ngày, chỉ ghi KHOẢNG NGÀY.** Opus chốt cách làm:
   - `dash_` trả thêm `khoangNgay: { tu, den, soNgay }` = ngày đầu và ngày cuối có dữ liệu (bản ghi báo cáo còn hiệu lực, không tính THỬ NGHIỆM khi không `gomThu`, kể cả số đầu kỳ `DauKy` có `Ngay`), `den` ≤ hôm nay; `soNgay` = số ngày khác nhau có dữ liệu.
   - Giao diện `#dNgayCo` thay dãy nút bằng **một dòng**: `Có dữ liệu: 02/11/2026 → 09/11/2026 · 8 ngày`; hai ngày đầu/cuối bấm được để nhảy tới; ô lịch `#dNgay` đặt `min = tu`. Bỏ biến cộng dồn `NGAY_CO` và các nút `.chip-ngay`. Giữ id `#dNgayCo`, `#dNgay`, nút ◀ ▶ / Hôm nay.
   - Giao Sonnet (nhỏ, không qua Antigravity); kiểm tra đạt thì triển khai (Opus GO).

@@ -415,6 +415,28 @@ ok(sh('LogHeThong').rows.slice(1).filter(x => x[4] && x[4] !== 'TEST_DATE').ever
   sh('PhanCa').rows.pop(); sh('PhanNhom').rows.pop(); ctx.memoClear_();
 }
 
+// ===== Dashboard: khoangNgay (khoảng ngày có dữ liệu) =====
+{
+  ctx.memoClear_();
+  const kn = function (o) { return api(tAdmin, 'dashboard', Object.assign({ ngay: '2026-11-09' }, o || {})).data.khoangNgay; };
+  const b = kn();
+  ok(b && /^\d{4}-\d\d-\d\d$/.test(b.tu) && b.den <= '2026-11-09' && b.tu <= b.den && b.soNgay >= 1, 'khoangNgay: có tu/den/soNgay hợp lệ, den không quá hôm nay', b);
+  const nk0 = sh('NhatKy').rows.length, dk0 = sh('DauKy').rows.length;
+  ctx.append_('NhatKy', { ID: 'KN1', ThoiGian: NOW, Ngay: '2026-10-20', Ca: 'Chiều', Nhom: '1', Buoc: 'SCAN', MaHop: 'KN-1', SoHoSo: 1, SoTrang: 10, SoTo: 0, HetHop: true, NguoiNhap: 'ADMIN', Loai: 'THỬ NGHIỆM', Huy: false });
+  ctx.append_('NhatKy', { ID: 'KN2', ThoiGian: NOW, Ngay: '2026-10-19', Ca: 'Chiều', Nhom: '1', Buoc: 'SCAN', MaHop: 'KN-2', SoHoSo: 1, SoTrang: 10, SoTo: 0, HetHop: true, NguoiNhap: 'ADMIN', Loai: 'BÌNH THƯỜNG', Huy: true });
+  ctx.append_('NhatKy', { ID: 'KN3', ThoiGian: NOW, Ngay: '2026-12-01', Ca: 'Chiều', Nhom: '1', Buoc: 'SCAN', MaHop: 'KN-3', SoHoSo: 1, SoTrang: 10, SoTo: 0, HetHop: true, NguoiNhap: 'ADMIN', Loai: 'BÌNH THƯỜNG', Huy: false });
+  ctx.memoClear_();
+  const k1 = kn();
+  ok(k1.tu === b.tu && k1.den === b.den && k1.soNgay === b.soNgay, 'khoangNgay: bỏ qua THỬ NGHIỆM, bản ghi đã hủy và ngày tương lai', [b, k1]);
+  const k2 = kn({ gomThu: true });
+  ok(k2.tu === '2026-10-20' && k2.soNgay === b.soNgay + 1, 'khoangNgay: gomThu (ADMIN) thì tính cả THỬ NGHIỆM (vẫn không tính bản đã hủy)', k2);
+  sh('DauKy').rows.push(['SCAN', '', '', '', 50, 'x', '2026-10-30', 'Ngày']); ctx.memoClear_('DauKy'); ctx.memoClear_();
+  const k3 = kn();
+  ok(k3.tu === '2026-10-30' && k3.soNgay === b.soNgay + 1, 'khoangNgay: gồm cả ngày của DauKy có Ngay', k3);
+  sh('DauKy').rows.length = dk0; sh('NhatKy').rows.length = nk0; ctx.memoClear_('DauKy'); ctx.memoClear_();
+  ok(JSON.stringify(kn()) === JSON.stringify(b), 'khoangNgay: dọn dữ liệu thử xong trở lại như cũ');
+}
+
 // ===== Nhật ký: tổ viên chỉ thấy báo cáo của mình / nhóm mình lúc báo cáo =====
 {
   const nkRow = (id, nguoi, nhom, tv) => sh('NhatKy').rows.push([id, '2026-11-09 15:00:00', '2026-11-09', 'Chiều', nhom, 'NHAN_NHOM', id, 0, 0, 0, 0, false, '', '', nguoi, 'THƯỜNG', false, '', tv]);

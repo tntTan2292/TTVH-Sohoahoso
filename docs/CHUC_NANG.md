@@ -128,7 +128,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 
 | Mã | Chức năng | Backend (trường trong kết quả `dash_`) | Giao diện |
 |---|---|---|---|
-| F-DB-01 | Chọn ngày: ◀ Ngày trước / Hôm nay / Ngày sau ▶, không xem ngày tương lai, dòng thứ-ngày, nút các ngày có dữ liệu (7 ngày gần nhất, một hàng cuộn ngang) | `series` | `veNgayNav`, `#dNgay`, `#dTruoc`, `#dHomNay`, `#dSau`, `#dThu`, `#dNgayCo` |
+| F-DB-01 | Chọn ngày: ◀ Ngày trước / Hôm nay / Ngày sau ▶, không xem ngày tương lai, dòng thứ-ngày, một dòng "Có dữ liệu: dd/mm/yyyy → dd/mm/yyyy · N ngày" (hai ngày đầu/cuối bấm được; ô lịch `#dNgay` có `min` = ngày đầu) | `khoangNgay` | `veNgayNav`, `#dNgay`, `#dTruoc`, `#dHomNay`, `#dSau`, `#dThu`, `#dNgayCo` |
 | F-DB-02 | Widget tiến độ: 3 vòng Scan/Tách/OCR so với 175.000 tờ, còn lại, TB/ngày, TB/ca, ngày dự kiến xong | `tienDo`, `luyKe` | `widgetHtml`, `ring` |
 | F-DB-03 | Khu ĐẦU CA: 3 thẻ ca (nhân sự, tồn đầu ca, chưa scan, chờ tách, chờ OCR) + biểu đồ `c1`, `c3` | `cas[]` | `loadDash`, `zone('z1')` |
 | F-DB-04 | Khu CUỐI CA: tờ scan/tách/OCR, hộp nhận/trả, "x/y nhóm đã báo cáo" + biểu đồ `c5` | `cas[].nhomDaBC`, `tongNhom` | `zone('z2')` |

@@ -2609,18 +2609,18 @@ function ttChip(c) {
 function m(label, v, unit) { return '<div class="mt"><span class="mt-label">' + label + '</span><b class="mt-val">' + (typeof v === 'number' ? nf(v) : esc(v)) + (unit ? ' <small>' + unit + '</small>' : '') + '</b></div>'; }
 
 var THU_VN = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
-var NGAY_CO = [];   // các ngày gần đây có dữ liệu (lấy từ d.series)
 function veNgayNav(d) {
   var v = $('dNgay').value || ME.ngay, dt = new Date(v + 'T00:00:00Z');
   $('dSau').disabled = v >= ME.ngay;
   $('dHomNay').disabled = v === ME.ngay;
   $('dThu').innerHTML = THU_VN[dt.getUTCDay()] + ', ' + v.split('-').reverse().join('/') + (v === ME.ngay ? ' · <b>hôm nay</b>' : ' · <b style="color:var(--warn)">đang xem lịch sử</b>');
-  if (d && d.series) d.series.forEach(function (x) { if ((x.scanDV || x.tachDV || x.ocrDV || x.nhanHop) && NGAY_CO.indexOf(x.ngay) < 0) NGAY_CO.push(x.ngay); });
-  NGAY_CO.sort(); var ds = NGAY_CO.slice(-7);
-  $('dNgayCo').innerHTML = ds.length ? '<span class="muted">Ngày có dữ liệu:</span> ' + ds.map(function (x) {
-    return '<button type="button" class="chip-ngay' + (x === v ? ' on' : '') + '" data-ng="' + x + '">' + x.slice(8, 10) + '/' + x.slice(5, 7) + '</button>';
-  }).join('') : '';
-  Array.prototype.forEach.call($('dNgayCo').querySelectorAll('[data-ng]'), function (b) { b.onclick = function () { $('dNgay').value = b.dataset.ng; loadDash(); }; });
+  var k = d && d.khoangNgay;
+  if (k && k.tu) {
+    $('dNgay').min = k.tu;
+    var f = function (x) { return x.split('-').reverse().join('/'); };
+    $('dNgayCo').innerHTML = '<span class="muted">Có dữ liệu:</span> <button type="button" class="chip-ngay" data-ng="' + esc(k.tu) + '">' + f(k.tu) + '</button> → <button type="button" class="chip-ngay" data-ng="' + esc(k.den) + '">' + f(k.den) + '</button> <span class="muted">· ' + k.soNgay + ' ngày</span>';
+    Array.prototype.forEach.call($('dNgayCo').querySelectorAll('[data-ng]'), function (b) { b.onclick = function () { $('dNgay').value = b.dataset.ng; loadDash(); }; });
+  } else if (d) { $('dNgayCo').innerHTML = ''; }
 }
 function loadDash() {
   $('dBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải dữ liệu Dashboard điều hành…</div></div>';

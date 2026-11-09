@@ -1142,5 +1142,9 @@ function dash_(ngayIn, gomThu) {
     else if (r.buoc === 'NHAN' || r.buoc === 'NHAN_NHOM') x.nhanHop++; else if (r.buoc === 'TRA') x.traHop++;
   });
   const nguoiNhap = Object.keys(nnMap).map(function (k) { return nnMap[k]; }).sort(function (a, b) { return CA[a.ca].o - CA[b.ca].o || a.ten.localeCompare(b.ten, 'vi'); });
-  return { ngay: ngay, capNhat: t.ts, cas: cas, caGop: caGop, day: day, series: series, nhom: nhomOut, canhan: canhanOut, caNguoi: caNguoi, nguoiNhap: nguoiNhap, chiTiet: chiTiet, luyKe: all, tienDo: tienDo };
+  // khoảng ngày có dữ liệu (bản ghi còn hiệu lực, không THỬ NGHIỆM khi không gomThu, gồm DauKy có Ngay), tối đa tới hôm nay
+  const dmAll = {}; rows.forEach(function (r) { if (r.ngay) dmAll[r.ngay] = 1; }); dkNgay.forEach(function (x) { dmAll[x.ngay] = 1; });
+  const dsAll = Object.keys(dmAll).filter(function (x) { return x <= t.ngay; }).sort();
+  const khoangNgay = { tu: dsAll[0] || '', den: dsAll.length ? dsAll[dsAll.length - 1] : '', soNgay: dsAll.length };
+  return { ngay: ngay, capNhat: t.ts, khoangNgay: khoangNgay, cas: cas, caGop: caGop, day: day, series: series, nhom: nhomOut, canhan: canhanOut, caNguoi: caNguoi, nguoiNhap: nguoiNhap, chiTiet: chiTiet, luyKe: all, tienDo: tienDo };
 }
