@@ -183,6 +183,6 @@ Ghi nhận khác (không chặn):
 **Còn chờ chủ dự án xác nhận (không chặn Đợt 1):** Q8 — Mã hồ sơ có **bắt buộc** khi hộp **chưa xong** (chưa tick hết hộp) không? Mặc định trong Đợt 1: **không bắt buộc, nhưng hiển thị nổi bật** và nhắc khi để trống.
 
 **Kế hoạch đã duyệt:**
-- **Đợt 1 (Sonnet):** P0 `tools/kiem_tra_giao_dien.js` → P2 bảng nhiều hộp dùng chung Báo cáo + Nhập hộ (gồm P1, R1, R4, mã hồ sơ mỗi dòng, gõ tay mã ngoài danh sách) → P4 chỉ "Số tờ" → P3 tick nhiều khâu (Scan + Tách mặc định, OCR tự bật). Opus review L3, chủ dự án thử trên link thật (gộp triển khai F-QL-10).
-- **Đợt 2 (Sonnet):** P6 "Hộp của tôi" + hiển thị mã hồ sơ đã nhận/đã báo → P7a Nhận hộp và Trả hộp chọn bằng tick + gõ tay.
-- **Đợt 3 (Antigravity):** làm đẹp giao diện các phần mới (sau khi Đợt 1–2 được nghiệm thu).
+- **Đợt 1 (Sonnet):** P0 `tools/kiem_tra_giao_dien.js` → P2 bảng nhiều hộp dùng chung Báo cáo + Nhập hộ (gồm P1, R1, R4, mã hồ sơ mỗi dòng, gõ tay mã ngoài danh sách) → P4 chỉ "Số tờ" → P3 tick nhiều khâu (Scan + Tách mặc định, OCR tự bật). Xong → Sonnet **tự viết prompt Antigravity** làm đẹp phần mới (nếu không có điểm phải dừng, `CHUAN_PROMPT.md` mục 3a) → Antigravity → **Opus review tổng thể một lần (L3)** → chủ dự án thử trên link thật (gộp triển khai F-QL-10).
+- **Đợt 2 (Sonnet → Antigravity):** P6 "Hộp của tôi" + hiển thị mã hồ sơ đã nhận/đã báo → P7a Nhận hộp và Trả hộp chọn bằng tick + gõ tay. Cùng luồng: Sonnet → Antigravity → Opus review tổng thể → chủ dự án thử.
+- (Cập nhật 09/11/2026: bỏ "Đợt 3 Antigravity riêng"; giao diện làm ngay trong từng đợt để tiết kiệm một vòng review.)

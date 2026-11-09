@@ -30,10 +30,14 @@
 1. **Opus** nhận yêu cầu từ chủ dự án → xác định loại việc theo bảng → (việc lớn) viết phiếu giao việc `docs/prompts/PROMPT_<NGUOI>_<VIEC>.md` → ghi vào SNAPSHOT: việc, người làm, phiếu → đưa prompt ngắn theo mẫu `CHUAN_PROMPT.md` mục 10.
 2. **Chủ dự án** mở chat mới với đúng developer và gõ: *"Đọc `AGENTS.md`, `docs/SNAPSHOT.md` rồi làm theo `docs/prompts/<file>`."*
 3. **Developer** làm, mỗi việc một commit, cập nhật SNAPSHOT trước khi dừng (kể cả dừng giữa chừng).
-4. Việc cần review → chủ dự án mở chat Opus: *"Review các commit của việc <tên> theo `docs/PHAN_CONG.md`."* Opus ghi kết quả (đạt / cần sửa + danh sách) vào SNAPSHOT.
-5. Antigravity sửa giao diện **sau** Sonnet trên cùng file `Index.html` → luôn kéo bản mới nhất (`git pull`), không làm song song trên cùng file.
+4. **Sonnet xong:** nếu không gặp "điểm phải dừng" (`CHUAN_PROMPT.md` mục 3a) thì Sonnet **tự viết luôn prompt cho Antigravity** ở cuối báo cáo, không cần qua Opus. Có điểm phải dừng thì Sonnet dừng và báo Opus review trước.
+5. **Antigravity xong** → chủ dự án mở chat Opus, dùng mẫu 10.5: Opus **review tổng thể một lần** cho cả đợt (code + giao diện), ghi kết quả (đạt / cần sửa + danh sách) vào SNAPSHOT.
+
+> **Mục tiêu của Opus = điều phối + tiết kiệm quota toàn team** (`CHUAN_PROMPT.md` mục 0): review gộp cuối đợt, đọc tối thiểu, không làm thay developer rẻ hơn.
+6. Antigravity sửa giao diện **sau** Sonnet trên cùng file `Index.html` → luôn kéo bản mới nhất (`git pull`), không làm song song trên cùng file.
 
 ## Quy tắc riêng cho Antigravity
+- **CẤM dùng trình duyệt**: không mở trình duyệt, không tìm kiếm web, không chụp màn hình, không chạy dev server/preview (tốn quota). Chỉ đọc và sửa file cục bộ. Ngoại lệ chỉ khi prompt ghi rõ cho phép và nêu đúng một màn hình. Khối chữ bắt buộc chép vào prompt: `CHUAN_PROMPT.md` mục 3b.
 - Prompt cho Antigravity phải ghi rõ: **chỉ sửa CSS/HTML tại chỗ**, giữ nguyên mọi hàm JS, `id`, `call('…')` có trong `docs/CHUC_NANG.md`.
-- Sau khi Antigravity sửa: chạy `node tools/test_mock.js` và xem `git diff --stat` (`Index.html` bị xóa hàng trăm dòng là dấu hiệu viết lại cả file → không nhận).
+- Sau khi Antigravity sửa: chạy `node tools/test_mock.js`, `node tools/kiem_tra_giao_dien.js` và xem `git diff --stat` (`Index.html` bị xóa hàng trăm dòng là dấu hiệu viết lại cả file → không nhận).
 - Trước đây giao diện bị viết lại cả file làm mất chức năng; đây là lý do có quy tắc này.

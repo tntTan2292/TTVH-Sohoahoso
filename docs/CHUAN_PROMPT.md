@@ -4,6 +4,7 @@
 > **Opus (CTO) phải đọc file này trước khi viết bất kỳ prompt nào** cho Sonnet hoặc Antigravity. Ai làm gì: `docs/PHAN_CONG.md`.
 
 ## Mục lục
+0. Mục tiêu CTO: điều phối + tiết kiệm quota toàn team
 1. Nguyên tắc: prompt ngắn, repo là nguồn sự thật
 2. Hai loại tài liệu: phiếu giao việc và prompt dán vào chat
 3. Cặp developer bắt buộc ghi rõ
@@ -16,6 +17,20 @@
 10. Mẫu prompt (dán dùng ngay)
 
 ---
+
+## 0. Mục tiêu CTO: điều phối + tiết kiệm quota toàn team
+Opus có hai nhiệm vụ ngang nhau: **điều phối dự án** và **tiết kiệm quota cho cả team** (Opus, Sonnet, Antigravity). Mọi quyết định giao việc phải trả lời được câu hỏi: *có cách nào rẻ hơn mà vẫn đúng không?*
+
+| Quy tắc | Cách làm |
+|---|---|
+| Developer rẻ nhất làm được | Việc thường giao Sonnet, giao diện giao Antigravity. Opus chỉ làm việc khó (`PHAN_CONG.md`). |
+| **Review gộp, không review từng bước** | Mỗi đợt Opus review **một lần tổng thể** ở cuối (sau khi cả Sonnet và Antigravity xong), không review từng commit. Chỉ review giữa đợt khi gặp "điểm phải dừng" ở mục 3a. |
+| Sonnet tự chuyển cho Antigravity | Nếu việc của Sonnet không có điểm phải dừng, Sonnet **viết luôn prompt cho Antigravity**, không cần qua Opus (mục 3a). |
+| Opus đọc tối thiểu | Khi review: đọc SNAPSHOT, báo cáo kênh B, `git log` và `git diff --stat` của đợt, rồi chỉ mở đúng các đoạn rủi ro (phân quyền, `ghi_`, `dash_`, action mới). Không đọc lại cả `Index.html`/`Code.gs`. |
+| Không hỏi lại điều repo đã có | Quyết định đã ghi trong repo thì không hỏi lại chủ dự án. |
+| Không dùng trình duyệt khi không cần | Antigravity: **cấm** (mục 3b). Sonnet/Opus: kiểm bằng mock và `tools/kiem_tra_giao_dien.js`; chỉ mở trình duyệt khi lỗi chỉ thấy được trên giao diện, và chỉ đúng màn hình đó. |
+| Chat ngắn | Bàn giao sang chat mới sớm khi chat nặng (mục 9). Một chat cho một việc hoặc một đợt. |
+| Prompt ngắn | Dưới 250 từ, trỏ về repo (mục 1); prompt tiếp nối chỉ ghi phần thay đổi (mục 4). |
 
 ## 1. Nguyên tắc: prompt ngắn, repo là nguồn sự thật
 - Developer làm việc **trong thư mục dự án**, tự đọc được repo. Vì vậy prompt **không chép lại** những gì repo đã có: quy tắc trong `AGENTS.md`, chức năng trong `docs/CHUC_NANG.md`, API trong `docs/API.md`, trạng thái trong `docs/SNAPSHOT.md`, hướng dẫn commit/kiểm thử.
@@ -41,10 +56,37 @@ Mỗi prompt có đúng **một** developer chính, tiêu đề ghi đúng một
 Cặp **không tồn tại**: "Antigravity (Sonnet)", "Claude Code (Gemini)". Viết như vậy là lỗi.
 
 Quy tắc kèm theo:
-- Developer **tự làm** việc được giao. Không dừng ở bước tìm hiểu rồi viết prompt chuyển cho developer khác.
+- Developer **tự làm** việc được giao. Không dừng ở bước tìm hiểu rồi viết prompt chuyển cho developer khác. **Ngoại lệ duy nhất:** Sonnet làm xong phần của mình thì viết prompt cho Antigravity theo mục 3a.
 - Gặp phần ngoài vai (Sonnet gặp việc làm đẹp giao diện; Antigravity gặp việc phải sửa `Code.gs`) thì **dừng phần đó, báo lại Opus** bằng một ghi chú ngắn. Không tự chuyển việc.
 - Việc lẫn cả logic và giao diện: **Sonnet làm logic và API trước**, Antigravity làm giao diện **sau** khi phần logic đã ổn.
 - Việc rủi ro cao: **người code và người review phải khác nhau** (khác model hoặc khác phiên).
+
+## 3a. Sonnet xong → tự viết prompt cho Antigravity (không qua Opus)
+Mục đích: bớt một vòng Opus ở giữa. Luồng chuẩn của một đợt:
+```
+Sonnet code + kiểm tra → Sonnet viết prompt Antigravity → Antigravity làm giao diện → Opus review TỔNG THỂ 1 lần → chủ dự án thử link thật → triển khai
+```
+**Điểm phải dừng** – Sonnet KHÔNG viết prompt Antigravity mà dừng, báo Opus review trước, nếu việc của Sonnet có một trong các điều sau:
+1. Đụng phân quyền, đăng nhập, PIN, khóa tài khoản.
+2. Đổi cách tính số liệu Dashboard (`dash_`, tiến độ, đầu kỳ, chia công nhóm) hoặc kiểm thử so `dash_` trước/sau **khác nhau**.
+3. Đổi cột Sheet, đổi nghĩa trường dữ liệu, đổi/xóa action cũ.
+4. Còn lỗi mock, còn kiểm tra chưa đạt, hoặc có "rủi ro còn lại" Sonnet không tự đánh giá được.
+5. Phiếu giao việc ghi rõ "Opus review trước giao diện".
+
+Thêm action mới chỉ **bổ sung** (không đổi action cũ) và đã có kiểm thử mock thì **không** phải dừng; Opus xem trong lần review tổng thể.
+
+Khi viết prompt Antigravity, Sonnet:
+- dùng **mẫu 10.3**, dưới 250 từ, ghi rõ màn hình/khối cần làm đẹp và các `id`/hàm **không được đổi**;
+- ghi vào SNAPSHOT: "Đã giao Antigravity: <việc>", kèm prompt (hoặc lưu `docs/prompts/PROMPT_ANTIGRAVITY_<VIEC>.md` nếu dài);
+- đặt prompt ở **cuối báo cáo kênh B**, dưới tiêu đề `### Prompt cho Antigravity (Gemini)`.
+
+Antigravity làm xong → chủ dự án mở chat Opus, dùng **mẫu 10.5** để review tổng thể cả đợt (code Sonnet + giao diện Antigravity) một lần.
+
+## 3b. Quy tắc bắt buộc cho Antigravity (tiết kiệm quota)
+Mọi prompt cho Antigravity **phải chép nguyên khối này**:
+> KHÔNG mở trình duyệt, KHÔNG tìm kiếm web, KHÔNG chụp màn hình, KHÔNG chạy dev server hay preview. Chỉ đọc và sửa file trong thư mục dự án. Không đọc lại cả `Index.html` nhiều lần: tìm đúng đoạn cần sửa bằng tìm kiếm rồi sửa tại chỗ. Kiểm tra duy nhất được phép: `node tools/test_mock.js` và `node tools/kiem_tra_giao_dien.js`.
+
+Chỉ được mở trình duyệt khi prompt **ghi rõ cho phép** và nêu đúng một màn hình cần xem. Nghiệm thu giao diện là việc của chủ dự án trên link thật, không phải của Antigravity.
 
 ## 4. Prompt đầu tiên và prompt tiếp nối (delta)
 **Chat mới** (developer chưa biết gì): prompt phải có dòng đọc chuỗi khởi động
@@ -87,9 +129,9 @@ Viết đủ để Opus kiểm lại được, không kể lể từng bước. 
 - **Rủi ro còn lại**: chỉ khi có thật.
 - **Git**: commit, đã push chưa.
 
-Độ dài khoảng 100–250 từ cho việc đơn giản, 250–500 từ cho lỗi thật có nguyên nhân. Developer **không viết** prompt cho developer khác trong báo cáo.
+Độ dài khoảng 100–250 từ cho việc đơn giản, 250–500 từ cho lỗi thật có nguyên nhân. Developer **không viết** prompt cho developer khác trong báo cáo, **trừ** Sonnet viết prompt cho Antigravity theo mục 3a.
 
-Antigravity thêm (khi liên quan): màn hình nào, khổ màn hình, cách tái hiện, mong đợi và thực tế, ảnh chụp. Không kết luận nguyên nhân phía máy chủ khi không có bằng chứng.
+Antigravity thêm (khi liên quan): màn hình/khối nào đã đổi, đổi gì (mô tả bằng lời, **không chụp màn hình**), những `id`/hàm đã giữ nguyên, kết quả hai lệnh kiểm tra. Không kết luận nguyên nhân phía máy chủ khi không có bằng chứng.
 
 ### Kênh A: Opus → chủ dự án
 Opus đọc báo cáo kỹ thuật, tự quyết phần thuần kỹ thuật, rồi trả lời chủ dự án **đúng 3 phần**:
@@ -170,13 +212,16 @@ VIỆC: <mã việc>, <tên ngắn>
 
 Đọc: AGENTS.md → docs/SNAPSHOT.md → docs/CHUC_NANG.md (mục <...>).
 
-Mục tiêu giao diện: <màn hình, kết quả nhìn thấy được>
+Mục tiêu giao diện: <màn hình, kết quả nhìn thấy được; khổ 360px và máy tính>
+Giữ nguyên (không đổi tên/xóa): <các id, hàm liên quan>
 Chỉ sửa HTML/CSS trong apps-script/Index.html, sửa tại chỗ. KHÔNG sửa Code.gs.
 KHÔNG viết lại cả file. KHÔNG đổi tên hàm JS, id, call('...'), trường dữ liệu.
 Cần thêm dữ liệu hoặc logic từ máy chủ: dừng, báo lại, không tự làm.
 
-Kiểm tra: node tools/test_mock.js (0 lỗi); git diff --stat không xóa hàng loạt dòng Index.html.
-Xong: commit, push, cập nhật SNAPSHOT. Báo cáo kênh B: màn hình đã đổi, ảnh chụp trước/sau ở khổ 360px và máy tính.
+KHÔNG mở trình duyệt, KHÔNG tìm kiếm web, KHÔNG chụp màn hình, KHÔNG chạy dev server hay preview. Chỉ đọc và sửa file trong thư mục dự án. Không đọc lại cả Index.html nhiều lần: tìm đúng đoạn rồi sửa tại chỗ.
+
+Kiểm tra (duy nhất): node tools/test_mock.js (0 lỗi) và node tools/kiem_tra_giao_dien.js (0 lỗi); git diff --stat không xóa hàng loạt dòng Index.html.
+Xong: commit, push, cập nhật SNAPSHOT. Báo cáo kênh B: khối đã đổi (mô tả bằng lời), id/hàm đã giữ, kết quả 2 lệnh kiểm tra.
 ```
 
 ### 10.4 Prompt tiếp nối (delta) trong cùng chat
@@ -191,11 +236,11 @@ Delta cho việc <mã việc>:
 Khoanh vùng → đọc tối thiểu → xác minh nguyên nhân → sửa đúng chỗ → kiểm tra → dừng. Báo cáo kênh B.
 ```
 
-### 10.5 Prompt cho Claude Code (Opus) review
+### 10.5 Prompt cho Claude Code (Opus) review (tổng thể cuối đợt)
 ```text
 ### Prompt cho Claude Code (Opus)
-Review <các commit | file đề xuất> của việc <mã việc> theo docs/PHAN_CONG.md và docs/CHUAN_PROMPT.md.
-Đọc: AGENTS.md → docs/SNAPSHOT.md → <phiếu giao việc> → <file cần review>.
+Review TỔNG THỂ đợt <tên đợt> của việc <mã việc> (code Sonnet + giao diện Antigravity), commit <từ>..<đến>, theo docs/PHAN_CONG.md và docs/CHUAN_PROMPT.md mục 0.
+Đọc tối thiểu: docs/SNAPSHOT.md → báo cáo kênh B của Sonnet/Antigravity → git log + git diff --stat của đợt → chỉ mở các đoạn rủi ro.
 Tập trung: <số liệu Dashboard | phân quyền | API | mất chức năng>.
 Kết luận: ĐẠT / CẦN SỬA (danh sách, mỗi mục có kịch bản lỗi cụ thể) / CHẶN.
 Ghi kết quả vào SNAPSHOT, commit, push. Có mục CẦN SỬA thì viết luôn prompt delta cho Sonnet (mẫu 10.4).
