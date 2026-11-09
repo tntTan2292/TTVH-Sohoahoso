@@ -49,6 +49,8 @@
 ## 4. Lỗi / chức năng bị mất đã biết (chưa sửa)
 > Mỗi dòng: mô tả · mã chức năng (F-xx) · phát hiện ngày nào · ai phát hiện.
 
+- **KHÔNG PHẢI LỖI (ghi để khỏi điều tra lại):** 09/11/2026 23:22 chủ dự án đăng nhập tổ viên không thấy "Vào ca"/form báo cáo → do ngoài giờ (ca Tối đóng nhập 22:00; ca mở sớm 15', đóng sau giờ kết thúc 60'). Opus đã thử mã repo bằng mock trong trình duyệt: bảng nhiều hộp hiện bình thường, không lỗi JS. **Thử ngoài giờ:** dùng Tổ trưởng/ADMIN → Quản lý ca → **Nhập hộ** (không giới hạn giờ, cùng bảng nhiều hộp, cùng `ghiLo`). Thử luồng tổ viên trong giờ ca thật (từ 07:15). **Không gỡ khóa giờ trên bản đang chạy.** Dữ liệu thử: ADMIN hủy ở tab Dữ liệu sau khi thử.
+
 - Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
 
 ## 5. Quyết định đang chờ chủ dự án
