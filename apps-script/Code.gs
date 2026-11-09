@@ -1002,7 +1002,8 @@ function dash_(ngayIn, gomThu) {
       nguoiBaoCao: Object.keys(ng).length };
   };
   const nPhan = {};
-  read_('PhanCa').forEach(function (r) { if (d_(r.Ngay) === ngay) nPhan[s_(r.Ca)] = (nPhan[s_(r.Ca)] || 0) + 1; });
+  const laTN_ = function (ma) { return !gomThu && s_(ma).indexOf('TN-') === 0; };   // người thử nghiệm TN-xx: không tính vào số thật
+  read_('PhanCa').forEach(function (r) { if (d_(r.Ngay) === ngay && !laTN_(r.MaHRM)) nPhan[s_(r.Ca)] = (nPhan[s_(r.Ca)] || 0) + 1; });
   const tongNhomCa = {}, daBCCa = {};       // chỉ để hiển thị "x/y nhóm đã báo cáo", không chặn gì
   pn.forEach(function (r) { if (d_(r.Ngay) === ngay) (tongNhomCa[s_(r.Ca)] = tongNhomCa[s_(r.Ca)] || {})[s_(r.Nhom)] = 1; });
   rows.forEach(function (r) { if (r.ngay === ngay && r.nhom && ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'].indexOf(r.buoc) >= 0) (daBCCa[r.ca] = daBCCa[r.ca] || {})[r.nhom] = 1; });
@@ -1078,8 +1079,8 @@ function dash_(ngayIn, gomThu) {
   // TỪNG CA: mỗi người trong ca thuộc nhóm nào, làm được bao nhiêu (kể cả người chưa báo cáo)
   const cn = {};
   const getCN = function (ca, ma) { const k = ca + '|' + ma; return cn[k] = cn[k] || { ca: ca, ma: ma, ten: ns[ma] || ma, nhom: '', coMat: false, soBC: 0, nhanHop: 0, scanDV: 0, scanHs: 0, tachDV: 0, tachHs: 0, ocrDV: 0, ocrHs: 0 }; };
-  read_('PhanCa').forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)]) getCN(s_(r.Ca), s_(r.MaHRM)).coMat = true; });
-  pn.forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)]) getCN(s_(r.Ca), s_(r.MaHRM)).nhom = s_(r.Nhom); });
+  read_('PhanCa').forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)] && !laTN_(r.MaHRM)) getCN(s_(r.Ca), s_(r.MaHRM)).coMat = true; });
+  pn.forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)] && !laTN_(r.MaHRM)) getCN(s_(r.Ca), s_(r.MaHRM)).nhom = s_(r.Nhom); });
   rows.filter(function (r) { return r.ngay === ngay && ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'].indexOf(r.buoc) >= 0; }).forEach(function (r) {
     let mem = r.tv ? r.tv.split(',').filter(Boolean) : [];
     if (!mem.length) mem = r.nhom && nhoms[r.ca + '|' + r.nhom] ? nhoms[r.ca + '|' + r.nhom].tv.map(function (x) { return x.ma; }) : [r.nguoi];

@@ -400,6 +400,21 @@ ok(sh('LogHeThong').rows.slice(1).filter(x => x[4] && x[4] !== 'TEST_DATE').ever
   ok(a1 && a1.nhanHop >= 1 && b1 && b1.nhanHop >= 2, 'caNguoi: đếm hộp nhận cá nhân / nhóm cho từng người', [a1 && a1.nhanHop, b1 && b1.nhanHop]);
 }
 
+// ===== Dashboard: người thử nghiệm TN-xx không tính vào nhân sự ca (trừ khi ADMIN gomThu) =====
+{
+  ctx.memoClear_();
+  const truoc = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data, nPhanTruoc = truoc.cas.find(c => c.ca === 'Chiều').nguoiPhan;
+  const gopTruoc = api(tAdmin, 'dashboard', { ngay: '2026-11-09', gomThu: true }).data, nGopTruoc = gopTruoc.cas.find(c => c.ca === 'Chiều').nguoiPhan;
+  sh('PhanCa').rows.push(['2026-11-09', 'Chiều', 'TN-91', 'Người thử 91', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Chiều', '9', 'TN-91', 'Người thử 91', '', '']);
+  ctx.memoClear_();
+  const mac = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data, gop = api(tAdmin, 'dashboard', { ngay: '2026-11-09', gomThu: true }).data;
+  ok(mac.cas.find(c => c.ca === 'Chiều').nguoiPhan === nPhanTruoc && !mac.caNguoi.some(x => x.ma === 'TN-91'), 'dash: mặc định không đếm TN-xx (nguoiPhan, caNguoi)');
+  ok(gop.cas.find(c => c.ca === 'Chiều').nguoiPhan === nGopTruoc + 1 && gop.caNguoi.some(x => x.ma === 'TN-91'), 'dash: gomThu (ADMIN) thì đếm TN-xx');
+  ok(mac.day.scanDV === truoc.day.scanDV && mac.day.tachDV === truoc.day.tachDV && mac.luyKe.scanHop === truoc.luyKe.scanHop && mac.day.nhanHop === truoc.day.nhanHop, 'dash: số tờ/hộp không đổi khi có TN-xx');
+  sh('PhanCa').rows.pop(); sh('PhanNhom').rows.pop(); ctx.memoClear_();
+}
+
 // ===== Nhật ký: tổ viên chỉ thấy báo cáo của mình / nhóm mình lúc báo cáo =====
 {
   const nkRow = (id, nguoi, nhom, tv) => sh('NhatKy').rows.push([id, '2026-11-09 15:00:00', '2026-11-09', 'Chiều', nhom, 'NHAN_NHOM', id, 0, 0, 0, 0, false, '', '', nguoi, 'THƯỜNG', false, '', tv]);

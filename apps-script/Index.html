@@ -1109,7 +1109,8 @@ button.btn-large {
 .z5 { --zc: #0891b2; --zb: rgba(8,145,178,0.08); }
 .ngay-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .ngay-nav button:disabled { opacity: .45; cursor: not-allowed; }
-.ngay-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; }
+.ngay-chips { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; font-size: 12.5px; white-space: nowrap; }
+.ngay-chips > * { flex: 0 0 auto; }
 .chip-ngay { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--tx-sec); font-size: 12.5px; cursor: pointer; font-variant-numeric: tabular-nums; }
 .chip-ngay:hover { border-color: var(--pri); color: var(--pri); }
 .chip-ngay.on { background: var(--pri); border-color: var(--pri); color: #fff; }
@@ -2615,7 +2616,7 @@ function veNgayNav(d) {
   $('dHomNay').disabled = v === ME.ngay;
   $('dThu').innerHTML = THU_VN[dt.getUTCDay()] + ', ' + v.split('-').reverse().join('/') + (v === ME.ngay ? ' · <b>hôm nay</b>' : ' · <b style="color:var(--warn)">đang xem lịch sử</b>');
   if (d && d.series) d.series.forEach(function (x) { if ((x.scanDV || x.tachDV || x.ocrDV || x.nhanHop) && NGAY_CO.indexOf(x.ngay) < 0) NGAY_CO.push(x.ngay); });
-  NGAY_CO.sort(); var ds = NGAY_CO.slice(-14);
+  NGAY_CO.sort(); var ds = NGAY_CO.slice(-7);
   $('dNgayCo').innerHTML = ds.length ? '<span class="muted">Ngày có dữ liệu:</span> ' + ds.map(function (x) {
     return '<button type="button" class="chip-ngay' + (x === v ? ' on' : '') + '" data-ng="' + x + '">' + x.slice(8, 10) + '/' + x.slice(5, 7) + '</button>';
   }).join('') : '';
