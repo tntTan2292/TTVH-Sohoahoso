@@ -16,6 +16,7 @@ Hệ thống báo cáo sản lượng số hóa hồ sơ tại Trung tâm Lưu t
 | `docs/SNAPSHOT.md` | **Đang làm tới đâu** — đọc đầu tiên, cập nhật trước khi dừng |
 | `docs/CHUC_NANG.md` | Sổ đăng ký chức năng + bảng kiểm tra sau mỗi lần sửa |
 | `docs/API.md` | Hợp đồng giữa `Index.html` và `Code.gs` |
+| `docs/prompts/` | Prompt giao việc đang dùng (ví dụ chuẩn hóa quy trình báo cáo cho Sonnet) |
 | `CHANGELOG.md` | Nhật ký thay đổi |
 
 > Bắt đầu chat/phiên mới: *"Đọc `AGENTS.md` và `docs/SNAPSHOT.md` rồi làm tiếp."*

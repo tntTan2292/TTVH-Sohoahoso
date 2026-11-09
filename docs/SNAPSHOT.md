@@ -9,8 +9,8 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 09/11/2026 — phiên Claude Code (viết tài liệu) |
-| Nhánh / commit | `main` @ `10155a8` (đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso`) |
+| Cập nhật lúc | 09/11/2026 — phiên Claude Code (Opus): tài liệu, F-QL-10, prompt chuẩn hóa |
+| Nhánh / commit | `main` @ `07618a0` + commit prompt chuẩn hóa (đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso`) |
 | Bản đang chạy | Apps Script **phiên bản 13** trên link chính `…MlRA/exec`; link phụ `…NIQ/exec` còn ở phiên bản 12 |
 | Mã trên Apps Script khớp repo? | **Không** — repo có thêm F-QL-10 (`Index.html`), chưa triển khai. Bản 13 = `ef54be3` |
 | Mock | `node tools/test_mock.js` → **190 đạt, 0 lỗi** |
@@ -19,15 +19,23 @@
 ## 2. Việc đang làm (dở dang)
 > Ghi rõ: đang sửa gì, file nào, đã xong bước nào, còn bước nào. Nếu không có gì dở → ghi "Không".
 
-- **Việc:** **F-QL-10** — thêm tick "Scan đồng thời ghi Tách file PDF" vào form Nhập hộ (chủ dự án báo thiếu ở form này; tab Báo cáo vẫn có F-BC-08).
-- **Đã xong:** sửa `renderHo` trong `Index.html` (`#hoKemTach`, gửi thêm `ghi` buoc `TACH`), thêm 2 kiểm tra vào mock (190/0), thử giao diện bằng mock trong trình duyệt (tick chỉ hiện ở khâu Scan, gửi đúng 2 lệnh). Cập nhật `CHUC_NANG.md`, `CHANGELOG.md`, `HUONG_DAN_TRIEN_KHAI.md`.
-- **Còn lại:** commit + push; **dán `Index.html` lên Apps Script và triển khai phiên bản mới** trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ.
+### 2a. CHUẨN HÓA QUY TRÌNH BÁO CÁO — bỏ nhập trùng (việc lớn, giao Sonnet)
+- **Vấn đề:** báo cáo có quá nhiều thao tác nhập trùng (mỗi hộp gõ lại mã + số liệu ở Scan/Tách/OCR, chỉ 1 hộp mỗi lần gửi, nhận 2 tầng, 2 ô trang/tờ, form Nhập hộ là bản sao…), tốn thời gian.
+- **Prompt giao việc:** `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` (đã liệt kê 10 điểm trùng D1–D10, ràng buộc, câu hỏi không được tự quyết).
+- **Cách làm:** 2 giai đoạn. GĐ1: viết `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` (đếm thao tác trước/sau, đề xuất P1, P2…) rồi **dừng chờ chủ dự án duyệt**. GĐ2: làm từng đề xuất đã duyệt, mỗi đề xuất một commit.
+- **Trạng thái:** ☐ GĐ1 chưa bắt đầu · ☐ đề xuất đã duyệt · ☐ GĐ2 (ghi P nào xong ở đây)
+- **Phiên tiếp theo:** đọc prompt trên rồi làm từ bước đang ☐ đầu tiên.
+
+### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
+- **Đã xong trong mã** (commit `07618a0`, mock 190/0, thử giao diện bằng mock).
+- **Còn lại (chủ dự án làm):** dán `Index.html` lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ. Có thể gộp vào lần triển khai sau khi chuẩn hóa.
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
-1. Triển khai F-QL-10 lên Apps Script và thử thật (mục 2).
-2. Viết `tools/kiem_tra_giao_dien.js` (chống mất chức năng ở giao diện — nơi hay bị mất nhất).
-3. Kiểm thử trên Sheet thật theo bảng kiểm tra cuối `docs/CHUC_NANG.md` với 4 tài khoản.
-4. Chuyển link phụ `…NIQ` lên phiên bản mới hoặc ngừng dùng.
+1. **Chuẩn hóa quy trình báo cáo** (mục 2a) — giao Sonnet bằng prompt trong `docs/prompts/`.
+2. Triển khai F-QL-10 lên Apps Script và thử thật (mục 2b).
+3. Viết `tools/kiem_tra_giao_dien.js` (chống mất chức năng ở giao diện — nơi hay bị mất nhất).
+4. Kiểm thử trên Sheet thật theo bảng kiểm tra cuối `docs/CHUC_NANG.md` với 4 tài khoản.
+5. Chuyển link phụ `…NIQ` lên phiên bản mới hoặc ngừng dùng.
 
 ## 4. Lỗi / chức năng bị mất đã biết (chưa sửa)
 > Mỗi dòng: mô tả · mã chức năng (F-xx) · phát hiện ngày nào · ai phát hiện.

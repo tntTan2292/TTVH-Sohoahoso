@@ -8,7 +8,7 @@ Dự án: **Báo cáo ca Số hóa hồ sơ – Bưu điện TP Huế** (Google 
 3. `docs/API.md` — hợp đồng giữa `Index.html` và `Code.gs`.
 4. `HUONG_DAN_TRIEN_KHAI.md` — triển khai, vận hành, nghiệp vụ chi tiết.
 
-Các file `PROMPT_*.md` ở gốc là prompt **cũ**, có chỗ đã sai so với hiện tại. Khi mâu thuẫn, tin `docs/` và mã nguồn.
+Prompt giao việc **đang dùng** nằm ở `docs/prompts/` (SNAPSHOT ghi prompt nào đang chạy). Các file `PROMPT_*.md` ở gốc là prompt **cũ**, có chỗ đã sai so với hiện tại. Khi mâu thuẫn, tin `docs/` và mã nguồn.
 
 ## Mã nguồn chính thức
 Chỉ `apps-script/Code.gs`, `apps-script/Index.html`, `apps-script/appsscript.json`. Các file trong `tools/` ngoài `build_khoi_tao.py`, `test_mock.js`, `kiem_tra_giao_dien.js` là script vá tạm, **không dùng làm nguồn**.
