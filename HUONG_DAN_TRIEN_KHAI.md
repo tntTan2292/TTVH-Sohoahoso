@@ -1,0 +1,68 @@
+# Triển khai và vận hành hệ thống Báo cáo ca Số hóa hồ sơ
+
+Các file: `SoHoa_KhoiTao_v3.xlsx` (nhân sự, Lãnh đạo, tài khoản ADMIN, số đầu kỳ; **không có lịch phân ca**), thư mục `apps-script/` (`Code.gs`, `Index.html`, `appsscript.json`), `tools/build_khoi_tao.py` (tạo lại file khởi tạo), `tools/test_mock.js` (kiểm thử không cần Google).
+
+> **Trạng thái:** đã triển khai **phiên bản 13** (09/11/2026 18:51) lên link chính `…MlRA/exec`, code trên Apps Script khớp bản ở máy (mock `node tools/test_mock.js`: 172 kiểm tra, 0 lỗi). Link phụ `…NIQ/exec` vẫn ở phiên bản 12. Lần sau chỉ cập nhật link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới). Chưa kiểm thử đầy đủ trên Sheet thật, cần chạy mục E.
+
+## A. Triển khai mới hoàn toàn (Sheet mới)
+1. **Tải file khởi tạo lên Drive:** Google Drive → Mới → Tải tệp lên → `SoHoa_KhoiTao_v3.xlsx`.
+2. **Bắt buộc: chuyển thành Google Trang tính.** Mở file vừa tải lên, chọn **Tệp → Lưu dưới dạng Google Trang tính** (File → Save as Google Sheets). Nếu chỉ "mở bằng Trang tính" mà không lưu dưới dạng Google Trang tính thì file vẫn là `.xlsx`, không gắn được Apps Script và sai định dạng cột. Từ đây chỉ dùng bản Google Trang tính, xóa hoặc không dùng lại bản `.xlsx`.
+3. **Kiểm tra nhanh:** `NhanSu` có 28 dòng dữ liệu (26 nhân sự + Mai văn Mười `LANHDAO` + `ADMIN`) bắt đầu từ **dòng 2**; `PhanCa` **trống** (người dùng tự "Vào ca"); `DauKy` 3 dòng; `LogHeThong` 7 cột; `NhatKy` 19 cột (cột cuối `ThanhVien`).
+4. **Gắn mã:** Tiện ích mở rộng → Apps Script → dán `Code.gs`, tạo file HTML tên `Index` và dán `Index.html`, dán `appsscript.json` (bật "Hiện tệp kê khai" ở Cài đặt dự án).
+5. **Chạy `setup`** từ trình soạn (chỉ chủ Sheet chạy được, **không chạy được từ web ẩn danh**). Hàm này lưu ID Sheet, bảo đảm `NhatKy` và `LogHeThong` có ít nhất **20.000 dòng**, `PhanCa`, `PhanNhom`, `ChotCa` có ít nhất **5.000 dòng**, rồi mới đặt định dạng văn bản cho các cột mã, giờ, ghi chú. Chủ Sheet tự bấm **Cho phép** khi Google hỏi quyền.
+6. **Triển khai:** Triển khai → Ứng dụng web → "Thực thi với tư cách: Tôi", "Ai có quyền truy cập: Bất kỳ ai". Chép link `/exec`.
+
+## B. Nâng cấp Sheet đang chạy (không tải lại file khởi tạo)
+Làm trước khi dán `Code.gs` mới:
+1. Tab `NhatKy`: thêm tiêu đề **`ThanhVien`** ở ô S1 (cột 19).
+2. Tab `LogHeThong`: dòng 1 phải đúng 7 cột `ThoiGian, MaHRM, HoTen, VaiTro, HanhDong, NgayCa, ChiTiet`.
+3. Chạy lại `setup` (mục A.5) để bảo đảm đủ số dòng (20.000 / 5.000) và định dạng văn bản các cột `ThoiGian`, `GhiChu`, `HoTen`, `ChiTiet`, `ThanhVien`.
+4. Dán `Code.gs` rồi **Triển khai → Quản lý các tùy chọn triển khai → ✏️ → Phiên bản mới**. Giao diện cũ không còn khớp `dsLogin` mới: cần bản `Index.html` mới (mục F) cùng lúc.
+5. Cột `Email` của `NhanSu` không còn được dùng (đã bỏ kiểm tra Gmail); để trống hoặc giữ tùy ý.
+6. Tab `DauKy` của Sheet đang chạy (nếu đã nạp bản cũ) phải **thay bằng số liệu TỪNG NGÀY**: thêm 2 cột tiêu đề **`Ngay`** (G1) và **`Ca`** (H1), xóa các dòng cũ (số gộp), rồi dán 20 dòng trong file `DauKy_theo_ngay.tsv` (hoặc lấy từ tab `DauKy` của file v3 mới). **Không để lẫn dòng số gộp cũ** vì sẽ bị cộng trùng. Tổng phải ra Scan 20.031, Tách 6.352, OCR 3.140.
+
+## C. Vận hành mỗi ca
+1. **Vào ca:** khi ca mở (mở sớm 15 phút trước giờ bắt đầu, đóng sau giờ kết thúc 60 phút), từng người chọn tên, nhập PIN rồi bấm **Vào ca**. Hệ thống ghi vào `PhanCa`, không ghi trùng. **Lãnh đạo và Quản trị không vào ca**. Số người đã vào ca chỉ để hiển thị (khoảng 6 người/ca), không chặn.
+2. Đầu ca, Tổ trưởng/Tổ phó: **Quản lý ca** → **Tự ghép cặp** (chỉnh tay) → **Lưu phân nhóm**. **Phân nhóm không bắt buộc:** người chưa có nhóm vẫn báo cáo được, số liệu tính là **cá nhân** (cột `Nhom` rỗng, `ThanhVien` = chính người báo cáo), không vào bảng "theo nhóm" của Dashboard nhưng vẫn cộng vào tổng và bảng cá nhân. Khi **bỏ một người khỏi ca**, họ cũng bị xóa khỏi nhóm của ca đó (có ghi nhật ký `BO_KHOI_NHOM` với nhóm cũ → mới).
+3. Tổ trưởng/Tổ phó báo **Nhận từ TT Lưu trữ** (dán danh sách mã hộp) và **Trả hộp**; khi đã vào ca còn **tự báo Nhận hộp / Scan / Tách file / OCR như tổ viên**. Mỗi cặp 1 người nhập.
+4. **Mã hộp:** mỗi mã một dòng (hoặc cách nhau bằng khoảng trắng), chỉ gồm chữ, số, `.` `_` `-` `/`, tối đa 30 ký tự (ví dụ `208.18.17`); **không dùng dấu phẩy**; mã trùng trong danh sách bị bỏ và có cảnh báo. Số hồ sơ, trang, tờ không được âm.
+5. Hộp **đã báo xong** ở một khâu thì không nhận thêm báo cáo cho khâu đó; muốn chỉnh thì ADMIN sửa hoặc xóa bản ghi cũ. **Trả hộp:** hộp đã có bản ghi *Nhận từ TT Lưu trữ* mà **chưa Tách file xong** thì bị **bỏ qua** (có cảnh báo "chưa Tách file xong"), các hộp khác trong cùng danh sách vẫn được ghi; hộp **không có** bản ghi nhận chỉ bị cảnh báo và vẫn ghi.
+6. **Quên PIN:** Tổ trưởng/Tổ phó cấp lại PIN **cho tổ viên**; PIN của Tổ trưởng/Tổ phó/Lãnh đạo/ADMIN chỉ ADMIN cấp lại. Số liệu có thể nhập hộ ở khung "Nhập số liệu hộ thành viên" (chỉ hôm nay hoặc quá khứ). **Nhóm là tùy chọn:** để "Cá nhân (không nhóm)" thì bắt buộc chọn người được nhập hộ; nếu chọn nhóm thì nhóm phải tồn tại và người đó phải thuộc nhóm.
+7. **Chốt ca:** Tổ trưởng/Tổ phó kiểm tra rồi **Xác nhận & chốt ca** (không chốt được ngày tương lai). Hết ca 60 phút hệ thống tự khóa. **Mở khóa ca** chỉ có hiệu lực **60 phút**. Bản ghi sửa/nhập hộ giữ nguyên loại ban đầu; thay đổi được ghi trong nhật ký.
+8. **Lịch sử cá nhân:** mỗi người xem sản lượng của mình (chia theo thành viên nhóm lúc báo cáo) qua action `lichSu`.
+9. Đổi nhóm sau khi đã báo cáo không làm mất số của cá nhân (thành viên được chốt lúc báo cáo).
+
+## D. Bảo mật, sao lưu, giới hạn
+- **Đăng nhập:** tên + PIN; PIN lưu băm SHA-256 + muối. PIN tạm nằm dạng chữ ở cột `PinTam` đến khi đổi; server **buộc đổi PIN lần đầu** và **cấm PIN dễ đoán** (số lặp, dãy liên tiếp, nửa lặp như 123123, danh sách PIN phổ biến, trùng đuôi Mã HRM).
+- **Sai PIN:** 5 lần liên tiếp thì tạm khóa **15 phút**; **20 lần sai cộng dồn** (không có lần đăng nhập đúng nào xen giữa) thì **khóa hẳn** (cột `Khoa` = TRUE) cho đến khi quản lý cấp lại PIN hoặc mở khóa. Vì danh sách tên đăng nhập là công khai nên người ngoài có thể cố ý làm khóa tài khoản người khác; đây là đánh đổi chấp nhận để chặn dò PIN.
+- **Gmail:** đã bỏ kiểm tra Gmail. Chế độ ẩn danh không xác thực được người dùng Google nên quyền quản lý dựa hoàn toàn vào PIN.
+- **Mã HRM có số 0 đầu:** Google Sheets tự đổi "00109101" thành số 109101. `append_` ghi các cột mã/ngày dạng văn bản; `read_` đối chiếu lại mã bị cụt số 0 với `NhanSu` nên dòng cũ vẫn khớp. Cột MaHRM/Ngay/Ca trong `PhanCa`, `PhanNhom`, `NhatKy` nên để định dạng văn bản (`setup` đã làm).
+- **Cập nhật mã nguồn:** Triển khai → Quản lý các tùy chọn triển khai → chọn đúng bản triển khai đang chạy → ✏️ (bút chì, không phải biểu tượng lưu trữ bên cạnh) → Phiên bản mới → Triển khai. Link `/exec` giữ nguyên; **không Lưu trữ** bản đang dùng.
+- **Chống chèn công thức:** nội dung bắt đầu bằng `=`, `+`, `-`, `@` được thêm một dấu cách khi lưu; đọc lại vẫn đúng.
+- **Ghi đồng thời:** mọi thao tác ghi, đăng nhập và vào ca chạy tuần tự qua một khóa; thao tác chỉ đọc không giữ khóa.
+- **Sao lưu tự động trước khi xóa:** reset dữ liệu tạo tab `SL_<tab>_<yyMMdd_HHmmss>`; các tab này tích lũy, thỉnh thoảng xóa tay bản đã cũ. Xóa dữ liệu thử nghiệm xóa luôn các nhóm do "Tạo dữ liệu mẫu" sinh ra. Xóa theo ngày hoặc toàn bộ đều phải gõ `XOA` (server kiểm tra).
+- **Dữ liệu `THỬ NGHIỆM`** không tính vào dashboard thật; ADMIN bật "gồm dữ liệu thử nghiệm" mới thấy. Trước khi giao cho tổ: **Xóa dữ liệu thử nghiệm**.
+- **Tiến độ TB/ngày, TB/ca:** tính theo số ngày và số ca đã trôi qua **tới ngày đang xem**: giai đoạn 02–08/11 dùng bảng `DAU_KY_CA` trong `Code.gs` (02/11: 2 ca, 03–06/11: 3 ca/ngày, 07–08/11: 2 ca/ngày, theo phân ca TCHC cũ; đến hết 08/11 là 7 ngày / 18 ca); từ 09/11 tính thêm mỗi ca đã kết thúc **có người vào ca**.
+- **Số đầu kỳ TỪNG NGÀY (02–08/11)** lấy từ sheet "BÁO CÁO SẢN LƯỢNG SỐ HOÁ" (tab SCAN, SỐ HÓA, Xử lý TT) và nằm ở tab `DauKy`: mỗi dòng gồm `Buoc` (SCAN/TACH/OCR), `SoTo` (1 trang = 1 tờ), `Ngay`, `Ca`. Ca **`Ngày`** là sáng + chiều **gộp** (sheet cũ không tách), ca `Tối` riêng. Tổng đến hết 08/11: **Scan 20.031, Tách 6.352, OCR 3.140**; 571 trang ghi "Tách file" (375 + 196, ngày 05/11 ca tối) ở tab SCAN đã chuyển sang Tách. Dashboard cộng số từng ngày vào **ngày tương ứng** (thẻ ca Tối, khu "ca ngày gộp", biểu đồ 10 ngày) và vào **lũy kế đến hết ngày đang xem**, nên chọn từng ngày 02–08/11 sẽ thấy số khác nhau. Dòng `DauKy` **không có `Ngay`** vẫn được hiểu là số dư gộp (cộng vào mọi ngày); đừng nhập cả hai kiểu cho cùng một số liệu. Chưa có chi tiết từng nhóm, từng người cho giai đoạn này (bảng Chi tiết của các ngày 02–08/11 sẽ trống).
+- Đã có thêm trường `caGop` trong kết quả `dashboard` (`{scanDV, tachDV, ocrDV}` của "ca ngày" gộp) và `luyKe.dauKyDen`; xem mục F.
+- **Dashboard theo vai trò:** tổ viên (`TOVIEN`) **không xem được Dashboard** (action `dashboard` báo lỗi "Dashboard chỉ dành cho Lãnh đạo và Quản lý", giao diện ẩn tab và widget tiến độ). Tổ trưởng, Tổ phó, Lãnh đạo, ADMIN thấy đầy đủ, gồm phần "Ai nhập – nhập bao nhiêu" (`nguoiNhap`, `chiTiet`).
+- **Hủy báo cáo:** tổ viên không tự hủy được (`huy_` báo lỗi). Tổ trưởng/Tổ phó hủy được khi ca còn mở; ADMIN hủy mọi lúc. Tổ viên báo sai thì nhờ quản lý hủy rồi báo lại.
+- **Phân nhóm:** đổi nhóm ở từng ô được lưu ngay (`luuNhom` với `chiDoi: true`, chỉ sửa những người được gửi); màn hình Quản lý ca tự làm mới sau 20 giây.
+- **Nhận hộp cá nhân/nhóm:** khâu `NHAN_NHOM` (nhãn "Nhận hộp") có nút Cá nhân/Nhóm, gửi `kieuNhan`. `CANHAN` ghi với `Nhom` rỗng; `NHOM` mà chưa được phân nhóm thì server từ chối.
+- **Dashboard khu "Từng ca":** `dash_` trả thêm `caNguoi` (mỗi người trong `PhanCa` của ngày: ca, nhóm, có mặt, số báo cáo, hộp nhận, tờ/hồ sơ Scan-Tách-OCR; báo cáo nhóm chia đều cho thành viên). Giao diện vẽ bằng `tungCaHtml(d)`.
+- **Khâu Scan:** có ô tick "Đồng thời ghi Tách file PDF bằng đúng số Scan này" (gửi tiếp một bản ghi `TACH` cùng số liệu; nếu Tách lỗi vẫn giữ Scan và nhắc báo Tách riêng).
+
+## E. Kiểm thử trước khi giao
+- Chạy `node tools/test_mock.js`: phải ra `0 lỗi`.
+- Sau khi triển khai, thử bằng 4 tài khoản (Tổ viên, Tổ trưởng, Lãnh đạo, ADMIN): vào ca, phân nhóm, báo cáo, chốt ca, tạo dữ liệu mẫu, xem dashboard, xóa dữ liệu thử nghiệm.
+
+## F. Thay đổi cần ở `Index.html` (do Antigravity thực hiện)
+1. **Đăng nhập:** `dsLogin()` nay trả `{ngay, hm, nhanSu:[{ma,ten,donVi}]}` (mọi người đang hoạt động, sắp theo đơn vị); không còn `trongCa`, `ql`. Chọn tên từ danh sách này.
+2. **Vào ca:** `me.vaoCa = [{ca, bd, kt, daVao, soDaVao}]` cho ca đang mở; `me.duocVaoCa` (false với Lãnh đạo/Quản trị). Nút Vào ca gọi `call('vaoCa', {ca})`.
+3. **Báo cáo:** tổ viên **và Tổ trưởng/Tổ phó đã vào ca** có 4 bước Nhận hộp/Scan/Tách/OCR; Tổ trưởng/Tổ phó có thêm Nhận từ TT Lưu trữ/Trả hộp. Ô mã hộp: mỗi dòng một mã, không dấu phẩy.
+4. **Lịch sử cá nhân:** `call('lichSu', {tu, den})` → `[{ngay, ca, buoc, hop, dv, phanCuaToi, het}]`.
+5. **Dashboard:** tổ viên không có tab Dashboard (server từ chối); phần **"Ai nhập – nhập bao nhiêu"** dùng `nguoiNhap` (tổng hợp theo ca và người nhập) và `chiTiet` (từng lần báo cáo trong ngày, có giờ, người nhập, người thực hiện); mỗi ca có thêm `nhomDaBC`, `tongNhom` (hiển thị "x/y nhóm đã báo cáo"); `dsCa` có `soDaVao`; bảng Chi tiết dùng `scanDV/tachDV/ocrDV` và `*DVGio`; ADMIN có ô "gồm dữ liệu thử nghiệm" gửi `gomThu: true`.
+6. **Xóa dữ liệu:** `resetDuLieu` phạm vi `NGAY` và `TATCA` đều phải gửi `xacNhan: 'XOA'`; kết quả có `saoLuu`.
+7. **Thông báo lỗi từ máy chủ:** buộc đổi PIN lần đầu, tạm khóa 15 phút, khóa hẳn, PIN dễ đoán, mã hộp sai, số âm, hộp đã xong, khôi phục trùng, nhập hộ ngày tương lai/nhóm sai, Lãnh đạo chỉ xem.
+
+8. **Dashboard theo ngày (giai đoạn 02–08/11):** `dashboard` trả thêm `caGop` (sáng + chiều gộp của sheet cũ). Với các ngày 02–08/11 các thẻ ca Sáng/Chiều bằng 0, số nằm ở `caGop` (cần một thẻ "Ca ngày (gộp)") và ở thẻ ca Tối; `day`, `series`, `tienDo` đã gồm đủ.

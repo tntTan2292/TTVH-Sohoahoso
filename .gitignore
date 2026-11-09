@@ -1,0 +1,22 @@
+# Dữ liệu nhạy cảm: tên, Mã HRM, PIN tạm, danh sách tài khoản
+*.xlsx
+*.xls
+*.tsv
+*.docx
+TaiLieu/
+backup/
+
+# Cấu hình máy cá nhân của công cụ AI
+.claude/
+
+# Script vá một lần và tệp tạm
+tools/patch_*.py
+tools/recv.py
+tools/Index_recovered.html
+tools/_*.js
+tools/_*.txt
+
+node_modules/
+*.log
+tools/index_base.html
+tools/new_dash.js
