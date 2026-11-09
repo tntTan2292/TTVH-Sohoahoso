@@ -3225,14 +3225,13 @@ function dashNsBang() {
   var ds = r.nguoi.slice().sort(function (a, b) { var x = f(a), y = f(b); return (typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y) * dir; });
   var th = function (k, t) { return '<th class="nsort' + (S.sk === k ? ' ns-sorted' : '') + '" data-sk="' + k + '">' + t + (S.sk === k ? (S.asc ? ' ▲' : ' ▼') : '') + '</th>'; };
   var ngayVN = function (x) { return x.split('-').reverse().join('/'); };
-  var tongTo = (r.tong.scanDV || 0) + (r.tong.tachDV || 0) + (r.tong.ocrDV || 0);
   var tongHop = (r.tong.scanHop || 0) + (r.tong.tachHop || 0) + (r.tong.ocrHop || 0);
 
   var h = '<div class="ns-summary-grid">' +
     '<div class="ns-kpi ns-kpi-people"><span class="ns-kpi-tag">Nhân sự</span><b>' + nf(r.tong.soNguoi) + ' <small>người</small></b><span>' + nf(r.tong.soCa) + ' ca làm việc</span></div>' +
-    '<div class="ns-kpi ns-kpi-to"><span class="ns-kpi-tag">Tổng sản lượng</span><b>' + nfi(tongTo) + ' <small>tờ</small></b><span>' + nf(tongHop) + ' hộp xong</span></div>' +
+    '<div class="ns-kpi ns-kpi-to"><span class="ns-kpi-tag">Sản lượng từng khâu (tờ)</span><b style="font-size:1.05em;"><span style="color:var(--col-scan)">' + nfi(r.tong.scanDV) + '</span> · <span style="color:var(--col-tach)">' + nfi(r.tong.tachDV) + '</span> · <span style="color:var(--col-ocr)">' + nfi(r.tong.ocrDV) + '</span></b><span>Scan · Tách · OCR · ' + nf(tongHop) + ' hộp xong</span></div>' +
     '<div class="ns-kpi ns-kpi-gio"><span class="ns-kpi-tag">Tổng giờ làm</span><b>' + nf(r.tong.gio) + ' <small>giờ</small></b><span>Giờ-người thực tế</span></div>' +
-    '<div class="ns-kpi ns-kpi-speed"><span class="ns-kpi-tag">Năng suất TB</span><b>' + nf(r.tong.dvGio) + ' <small>tờ/h</small></b><span>Toàn dự án</span></div>' +
+    '<div class="ns-kpi ns-kpi-speed"><span class="ns-kpi-tag">Năng suất TB (cả 3 khâu)</span><b>' + nf(r.tong.dvGio) + ' <small>tờ/giờ-người</small></b><span>(Scan + Tách + OCR) ÷ giờ-người</span></div>' +
   '</div>';
 
   h += '<div class="card"><div class="ns-card-head">' +
@@ -3242,9 +3241,9 @@ function dashNsBang() {
       '<span class="step-pill step-pill-tach">Tách: <b>' + nfi(r.tong.tachDV) + '</b></span>' +
       '<span class="step-pill step-pill-ocr">OCR: <b>' + nfi(r.tong.ocrDV) + '</b></span>' +
     '</div></div>' +
-    '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
+    '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất = tờ (cộng cả 3 khâu Scan + Tách + OCR) / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
     (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '') + '</div>' +
-    '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ/giờ') + '</tr>' +
+    '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ (cả 3 khâu) / giờ-người') + '</tr>' +
     (ds.map(function (x) {
       var rk = rank[x.ma], rkCls = rk === 1 ? 'rank-1' : (rk === 2 ? 'rank-2' : (rk === 3 ? 'rank-3' : 'rank-other'));
       var rkTxt = rk === 1 ? '🥇 1' : (rk === 2 ? '🥈 2' : (rk === 3 ? '🥉 3' : rk));
