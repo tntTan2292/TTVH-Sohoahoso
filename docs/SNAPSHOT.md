@@ -49,6 +49,9 @@
 ## 4. Lỗi / chức năng bị mất đã biết (chưa sửa)
 > Mỗi dòng: mô tả · mã chức năng (F-xx) · phát hiện ngày nào · ai phát hiện.
 
+- **Dashboard còn người ở ca Sáng/Chiều 09/11 sau khi xóa dữ liệu thử · F-DB-03, F-DB-06 · 10/11/2026 · chủ dự án.** Nguyên nhân (Opus): "Nhân sự" và khu "Từng ca" lấy từ `PhanCa` (danh sách vào ca), không từ báo cáo; dữ liệu thử đã xóa bản ghi nhưng còn dòng `PhanCa` của người giả `TN-07..11` và của Trần Nhật Tân (ca Sáng, Chiều). **Dọn dữ liệu (chủ dự án, không cần sửa mã):** ADMIN → Dữ liệu → "Xóa dữ liệu thử nghiệm" (xóa cả `PhanCa`/`NhanSu` của `TN-xx`); Quản lý ca → ngày 09/11, ca Sáng rồi ca Chiều → "Bỏ khỏi ca" Trần Nhật Tân. **Sửa mã (Sonnet):** `dash_` loại người `TN-xx` khỏi "Nhân sự"/`caNguoi` khi không `gomThu` (cùng quy tắc với bản ghi THỬ NGHIỆM).
+- **Danh sách "Ngày có dữ liệu" dài · F-DB-01 · 10/11/2026 · chủ dự án.** Hiện tối đa 14 nút, xuống nhiều dòng. Opus chốt: chỉ **7 ngày gần nhất có dữ liệu**, một hàng, vuốt ngang trên điện thoại; ngày cũ hơn chọn bằng ô lịch / ◀ ▶ có sẵn. Giao Sonnet làm cùng việc trên (thay đổi giao diện nhỏ, không cần Antigravity).
+
 - **LỖI DỮ LIỆU F-HT-03 (mã hộp `02.01.85` bị đổi thành ngày) · 10/11/2026 · ĐÃ SỬA TRONG MÃ** (Sonnet): `appendMany_` đặt `@`; `read_` đọc đúng dữ liệu hỏng; `suaMaHopNgay()` sửa dữ liệu cũ. Mock 242/0. **Còn lại (chủ dự án):** chạy `suaMaHopNgay` một lần trong trình soạn (hướng dẫn 3 dòng ở `HUONG_DAN_TRIEN_KHAI.md` mục D) để sửa các ô đã hỏng trên Sheet thật; số Nhận/Tồn trên Dashboard đã đúng ngay sau khi triển khai nhờ `read_`.
 - **Không phải lỗi:** cột "Giờ" ở bảng Chi tiết là **giờ bấm gửi**, không phải giờ của ca. Nhập hộ lúc 03:49 cho "Ca Tối" là đúng (nhập bù ca đã qua).
 
