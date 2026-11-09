@@ -11,7 +11,14 @@ Hệ thống báo cáo sản lượng số hóa hồ sơ tại Trung tâm Lưu t
 | `tools/build_khoi_tao.py` | Tạo file khởi tạo Google Sheet từ danh sách nhân sự (không lấy CCCD/SĐT) |
 | `tools/test_mock.js` | Kiểm thử bằng mock, không cần Google: `node tools/test_mock.js` |
 | `HUONG_DAN_TRIEN_KHAI.md` | Hướng dẫn triển khai, vận hành, bảo mật |
-| `PROMPT_*.md` | Prompt giao việc cho các công cụ AI (giao diện, review, sửa lỗi) |
+| `PROMPT_*.md` | Prompt giao việc cho các công cụ AI (bản **cũ**, có chỗ đã sai so với hiện tại) |
+| `AGENTS.md` / `CLAUDE.md` | **Quy tắc bắt buộc** cho mọi AI/người sửa mã |
+| `docs/SNAPSHOT.md` | **Đang làm tới đâu** — đọc đầu tiên, cập nhật trước khi dừng |
+| `docs/CHUC_NANG.md` | Sổ đăng ký chức năng + bảng kiểm tra sau mỗi lần sửa |
+| `docs/API.md` | Hợp đồng giữa `Index.html` và `Code.gs` |
+| `CHANGELOG.md` | Nhật ký thay đổi |
+
+> Bắt đầu chat/phiên mới: *"Đọc `AGENTS.md` và `docs/SNAPSHOT.md` rồi làm tiếp."*
 
 ## Triển khai nhanh
 Xem `HUONG_DAN_TRIEN_KHAI.md`: tạo Google Sheet từ file khởi tạo, dán `Code.gs` và `Index.html` vào Apps Script, chạy `setup`, triển khai Web App.
