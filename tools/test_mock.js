@@ -603,5 +603,30 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(nkr.to === 37 && nkr.trang === 0, 'P4: Nhật ký ca trả to=37, trang=0 (không hiện hai cột trùng số)', nkr);
 }
 
+// ===== P3: tick nhiều khâu – mặc định Scan + Tách (OCR tự bật) cùng số liệu; so với cách "kèm Tách" cũ (2 lần ghi) =====
+{
+  const strip = rows => rows.map(x => x.map((v, i) => (i === 0 || i === 1) ? '' : v));
+  const dashJ = () => { ctx.memoClear_(); const dd = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data; delete dd.capNhat; return JSON.stringify(dd); };
+  ['K1', 'K2', 'K3'].forEach(h => { rep(tTT, { buoc: 'NHAN', hop: h }); api(tA, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: h, kieuNhan: 'CANHAN' }); });
+  const dong = [['K1', 3, 31, true, '1-3'], ['K2', 2, 18, false, '4-5'], ['K3', 1, 9, true, '']];
+  const lo = dong.reduce((a, d) => a.concat(['SCAN', 'TACH'].map(b => ({ hop: d[0], buoc: b, soHoSo: d[1], soTo: d[2], hetHop: d[3], maHoSo: d[4], trangLoi: b === 'SCAN' ? 1 : '' }))), []);
+  const n0 = sh('NhatKy').rows.length;
+  const r1 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: 'LO-P3-TEST-0001', muc: lo });
+  const rowsLo = strip(sh('NhatKy').rows.slice(n0)), dLo = dashJ();
+  sh('NhatKy').rows.length = n0; ctx.memoClear_();
+  dong.forEach(d => { api(tA, 'ghi', { buoc: 'SCAN', ca: 'Chiều', hop: d[0], soHoSo: d[1], soTo: d[2], hetHop: d[3], maHoSo: d[4], trangLoi: 1 }); api(tA, 'ghi', { buoc: 'TACH', ca: 'Chiều', hop: d[0], soHoSo: d[1], soTo: d[2], hetHop: d[3], maHoSo: d[4] }); });
+  const rowsOld = strip(sh('NhatKy').rows.slice(n0)), dOld = dashJ();
+  ok(r1.ok && r1.data.added === 6 && r1.data.loi === 0, 'P3: Scan + Tách cho 3 hộp trong một lô ghi đủ 6 bản ghi', r1);
+  ok(JSON.stringify(rowsLo) === JSON.stringify(rowsOld) && rowsLo.length === 6, 'P3: NhatKy giống hệt cách ghi cũ (Scan rồi Tách từng hộp), trừ ID/giờ');
+  ok(dLo === dOld, 'P3: dash_ trước/sau giống hệt trên cùng dữ liệu');
+  // OCR bật sau: lô riêng chỉ khâu OCR cho hộp đã Scan + Tách xong, không có cảnh báo "chưa Tách"
+  const r2 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: 'LO-P3-TEST-0002', muc: [{ hop: 'K1', buoc: 'OCR', soHoSo: 3, soTo: 31, hetHop: true }] });
+  ok(r2.ok && r2.data.added === 1 && !r2.data.warnings.some(w => /chưa có báo cáo Tách/.test(w)), 'P3: lô chỉ OCR (người dùng tự bật) cho hộp đã Tách: ghi 1 bản ghi, không cảnh báo', r2);
+  // ba khâu cùng lúc, đúng thứ tự dù gửi lộn xộn
+  rep(tTT, { buoc: 'NHAN', hop: 'K4' });
+  const r3 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: 'LO-P3-TEST-0003', muc: ['OCR', 'SCAN', 'TACH'].map(b => ({ hop: 'K4', buoc: b, soHoSo: 1, soTo: 5, hetHop: true })) });
+  ok(r3.ok && r3.data.added === 3 && r3.data.warnings.every(w => !/chưa có báo cáo (Scan|Tách)/.test(w)), 'P3: Scan + Tách + OCR cùng lúc: máy chủ tự xếp đúng thứ tự, không cảnh báo thiếu khâu trước', r3);
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

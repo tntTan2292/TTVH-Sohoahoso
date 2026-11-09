@@ -522,6 +522,8 @@ button.btn-large {
 .lo-chip { margin: 2px 4px 2px 0; }
 .lo-res-i { padding: 4px 0; font-size: 14px; }
 .lo-mode { margin: 10px 0; }
+.lo-khau { margin: 8px 0; }
+.lo-khau .check-label { margin: 8px 0; }
 
 /* Form Special Checkbox Card */
 .check-card {
@@ -1471,17 +1473,30 @@ function stepsFor() {
 }
 
 /* ---------- Bảng báo cáo nhiều hộp (P2) – DÙNG CHUNG tab Báo cáo (tiền tố 'f') và form Nhập hộ (tiền tố 'ho') ---------- */
-/* Một lần gửi = action ghiLo: tối đa 10 hộp; mỗi dòng 1 hộp (mã hộp, mã hồ sơ đã làm, số hồ sơ, số trang/tờ, xong hộp).  */
-/* Form một hộp cũ (buildForm / renderHo) vẫn còn: bấm "Một hộp (form cũ)" để dùng.                                     */
+/* Một lần gửi = action ghiLo: tối đa 10 hộp × 3 khâu; mỗi dòng 1 hộp (mã hộp, mã hồ sơ đã làm, số hồ sơ, số tờ, xong hộp).  */
+/* P3: tick nhiều khâu cùng lúc (Scan / Tách file / OCR) với CÙNG số liệu. Bấm nút khâu Scan → mặc định Scan + Tách;          */
+/*     bấm Tách → chỉ Tách; bấm OCR → chỉ OCR. OCR do người dùng tự bật. Lựa chọn tick được nhớ theo từng nút khâu.          */
+/* Form một hộp cũ (buildForm / renderHo) vẫn còn: bấm "Một hộp (form cũ)" để dùng.                                         */
 var LO_MAX_HOP = 10;
+var LO_BUOC = ['SCAN', 'TACH', 'OCR'];
+var LO_KHAU_MD = { SCAN: { SCAN: true, TACH: true, OCR: false }, TACH: { SCAN: false, TACH: true, OCR: false }, OCR: { SCAN: false, TACH: false, OCR: true } };
 var LO_HOP_RE = /^[A-Za-z0-9][A-Za-z0-9._\/\-]{0,29}$/;
 var LO_MODE = 'LO';        // 'LO' = bảng nhiều hộp, 'MOT' = form một hộp (cũ)
 try { if (localStorage.getItem('loMode') === 'MOT') LO_MODE = 'MOT'; } catch (e) { }
-var LO_STATE = {};         // LO_STATE[tiền tố|khâu] = { rows: [...], idLo: '', goiY: [] } – giữ dòng đã nhập khi đổi khâu / vẽ lại form
-function loRow(hop) { return { hop: hop || '', maHs: '', hs: '', to: '', loi: '', het: false, hsAuto: true, err: '' }; }
-function loSt(prefix, buoc) { var k = prefix + '|' + buoc; if (!LO_STATE[k]) LO_STATE[k] = { rows: [loRow()], idLo: '', goiY: [] }; return LO_STATE[k]; }
+var LO_STATE = {};         // LO_STATE[tiền tố] = { rows, idLo, goiY, khau, buocNut } – giữ dòng đã nhập khi đổi khâu / vẽ lại form
+function loRow(hop) { return { hop: hop || '', maHs: '', hs: '', to: '', loi: '', het: false, hsAuto: true, err: '', done: {} }; }
+function loSt(prefix) { if (!LO_STATE[prefix]) LO_STATE[prefix] = { rows: [loRow()], idLo: '', goiY: [], khau: null, buocNut: '' }; return LO_STATE[prefix]; }
 function loIdMoi() { return 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
 function loRowTrong(r) { return !r.hop && !r.maHs && !r.hs && !r.to && !r.loi && !r.het; }
+function loKhauDoc(buoc) {      // tick khâu đã nhớ cho nút khâu này (localStorage), nếu không có thì dùng mặc định
+  var md = LO_KHAU_MD[buoc] || LO_KHAU_MD.SCAN, kq = { SCAN: !!md.SCAN, TACH: !!md.TACH, OCR: !!md.OCR };
+  try {
+    var v = JSON.parse(localStorage.getItem('loKhau_' + buoc) || 'null');
+    if (v && (v.SCAN || v.TACH || v.OCR)) kq = { SCAN: !!v.SCAN, TACH: !!v.TACH, OCR: !!v.OCR };
+  } catch (e) { }
+  return kq;
+}
+function loKhauChon(st) { return LO_BUOC.filter(function (b) { return st.khau && st.khau[b]; }); }
 function loModeHtml(prefix) {
   return '<div class="steps lo-mode" id="' + prefix + 'Mode">' +
     '<button type="button" data-m="LO" class="step-btn step-nhan' + (LO_MODE === 'LO' ? ' on' : '') + '">📦 Nhiều hộp</button>' +
@@ -1499,9 +1514,12 @@ function loModeBind(prefix, redraw) {
 }
 function loRenderBox(prefix, buoc) {
   var box = $(prefix + 'LoBox'); if (!box) return;
-  var st = loSt(prefix, buoc), scan = buoc === 'SCAN';
+  var st = loSt(prefix), coScan = !!(st.khau && st.khau.SCAN);
   var h = '<datalist id="' + prefix + 'LoDl">' + st.goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>';
+  h += '<div class="check-card lo-khau"><div class="lo-khau-t"><b>Ghi cùng lúc các khâu</b> <small class="muted">(cùng số liệu cho mọi khâu được tick)</small></div>' +
+    LO_BUOC.map(function (b) { return '<label class="check-label"><input type="checkbox" data-kh="' + b + '"' + (st.khau[b] ? ' checked' : '') + '> <span>' + esc(STEP_LABEL[b] || b) + (b === 'OCR' ? ' <small class="muted">(chỉ tick khi OCR đã làm xong)</small>' : '') + '</span></label>'; }).join('') + '</div>';
   h += st.rows.map(function (r, i) {
+    var da = LO_BUOC.filter(function (b) { return r.done && r.done[b]; });
     return '<div class="lo-row' + (r.err ? ' lo-bad' : '') + '" data-i="' + i + '">' +
       '<div class="lo-head"><b>Hộp ' + (i + 1) + '</b><button type="button" class="sm bad" data-act="del" title="Xóa dòng này">✕ Xóa</button></div>' +
       '<label>Mã hộp <small class="muted">(chọn gợi ý hoặc gõ tay)</small></label>' +
@@ -1510,10 +1528,11 @@ function loRenderBox(prefix, buoc) {
       '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
       '<div class="row num-row">' +
         '<div><label>Số hồ sơ</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
-        '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.to) + '"></div>' +
-        (scan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
+        '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.to) + '"></div>' +
+        (coScan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
       '</div>' +
       '<div class="check-card"><label class="check-label"><input type="checkbox" data-k="het"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
+      (da.length ? '<div class="msg ok">✔ Đã ghi: ' + esc(da.map(function (b) { return STEP_LABEL[b] || b; }).join(', ')) + ' – gửi lại sẽ chỉ ghi các khâu còn lại</div>' : '') +
       (r.err ? '<div class="msg err">✕ ' + esc(r.err) + '</div>' : '') +
     '</div>';
   }).join('');
@@ -1543,19 +1562,26 @@ function loFocusRow(prefix, i, k) {
 }
 function loRenderChips(prefix, buoc) {
   var c = $(prefix + 'LoChips'); if (!c) return;
-  var st = loSt(prefix, buoc), da = {};
+  var st = loSt(prefix), da = {};
   st.rows.forEach(function (r) { da[r.hop] = 1; });
   var ds = st.goiY.filter(function (x) { return !da[x]; }).slice(0, 24);
   c.innerHTML = ds.length ? '<div class="muted helper-text">Hộp gợi ý – chạm để thêm vào bảng:</div>' + ds.map(function (x) { return '<button type="button" class="sm lo-chip" data-act="chip" data-h="' + esc(x) + '">' + esc(x) + '</button>'; }).join(' ') + (st.goiY.length > ds.length + Object.keys(da).length ? ' <span class="muted">…và hộp khác (gõ tay ở ô Mã hộp)</span>' : '') : '';
 }
 function loOnInput(prefix, buoc, t) {
+  var st = loSt(prefix), kh = t && t.getAttribute ? t.getAttribute('data-kh') : '';
+  if (kh) {      // tick khâu: nhớ lại theo nút khâu đang dùng
+    st.khau[kh] = !!t.checked;
+    try { localStorage.setItem('loKhau_' + (st.buocNut || buoc), JSON.stringify(st.khau)); } catch (e) { }
+    loRenderBox(prefix, buoc);
+    return;
+  }
   var k = t && t.getAttribute ? t.getAttribute('data-k') : ''; if (!k) return;
   var row = t, i = -1, box = $(prefix + 'LoBox');
   while (row && row !== box) { if (row.getAttribute && row.getAttribute('data-i') !== null) { i = +row.getAttribute('data-i'); break; } row = row.parentNode; }
   if (i < 0) return;
-  var st = loSt(prefix, buoc), r = st.rows[i]; if (!r) return;
+  var r = st.rows[i]; if (!r) return;
   if (k === 'het') r.het = !!t.checked; else r[k] = t.value;
-  if (r.err) { r.err = ''; row.classList.remove('lo-bad'); var m = row.querySelector('.msg'); if (m) m.parentNode.removeChild(m); }
+  if (r.err) { r.err = ''; row.classList.remove('lo-bad'); var m = row.querySelector('.msg.err'); if (m) m.parentNode.removeChild(m); }
   if (k === 'hs') r.hsAuto = false;
   if (k === 'maHs' && r.hsAuto) {    // "472-476" -> gợi ý số hồ sơ = 5 (người dùng vẫn sửa được)
     var mm = String(t.value).match(/^\s*(\d+)\s*(?:-|–|đến|den)\s*(\d+)\s*$/i);
@@ -1565,7 +1591,7 @@ function loOnInput(prefix, buoc, t) {
   if (k === 'hop') loRenderChips(prefix, buoc);
 }
 function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (máy chủ vẫn kiểm tra lại toàn bộ bằng ghi_)
-  var st = loSt(prefix, buoc), muc = [], seen = {}, loi = 0, tong = 0, xong = 0, thieuMa = 0;
+  var st = loSt(prefix), khs = loKhauChon(st), muc = [], seen = {}, loi = 0, tong = 0, xong = 0, thieuMa = 0, hop = 0;
   st.rows.forEach(function (r) { r.err = ''; });
   st.rows.forEach(function (r) {
     if (loRowTrong(r)) return;
@@ -1578,35 +1604,49 @@ function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (m
     else if (!(Number(r.to) >= 1)) e = 'Nhập số tờ (≥ 1)';
     if (e) { r.err = e; loi++; return; }
     seen[h] = 1;
-    muc.push({ hop: h, buoc: buoc, soHoSo: r.hs, soTo: r.to,   // P4/R2: chỉ gửi soTo (không gửi soTrang)
-       trangLoi: buoc === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
-    tong += Number(r.to);
+    var conLai = khs.filter(function (b) { return !(r.done && r.done[b]); });
+    if (!conLai.length) { r.err = 'Các khâu đã tick đều đã ghi cho hộp này – xóa dòng hoặc tick thêm khâu'; loi++; return; }
+    conLai.forEach(function (b) {
+      muc.push({ hop: h, buoc: b, soHoSo: r.hs, soTo: r.to,   // P4/R2: chỉ gửi soTo (không gửi soTrang)
+        trangLoi: b === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
+    });
+    hop++; tong += Number(r.to);
     if (r.het) xong++;
     if (!String(r.maHs || '').replace(/\s+/g, '')) thieuMa++;
   });
-  return { muc: muc, loi: loi, tong: tong, xong: xong, thieuMa: thieuMa };
+  return { muc: muc, loi: loi, tong: tong, xong: xong, thieuMa: thieuMa, hop: hop, khau: khs };
 }
 function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ngay, nhom, nguoiHo, ghiChu} | chuỗi lỗi, btn, sau }
-  var prefix = o.prefix, buoc = o.buoc, st = loSt(prefix, buoc), resEl = $(prefix + 'LoRes');
+  var prefix = o.prefix, buoc = o.buoc, st = loSt(prefix), resEl = $(prefix + 'LoRes');
   var base = o.base();
   if (typeof base === 'string') { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + esc(base) + '</div>'; return; }
+  if (!loKhauChon(st).length) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chọn ít nhất một khâu (Scan / Tách file / OCR).</div>'; return; }
   var tt = loThuThap(prefix, buoc);
   loRenderBox(prefix, buoc);
   if (tt.loi) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + tt.loi + ' dòng chưa hợp lệ – xem thông báo đỏ ở từng hộp.</div>'; return; }
   if (!tt.muc.length) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa có hộp nào để gửi.</div>'; return; }
-  var ten = STEP_LABEL[buoc] || buoc;
-  var hoi = 'Xác nhận gửi ' + tt.muc.length + ' hộp ' + ten + ' (' + nf(tt.tong) + ' tờ' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
+  var ten = tt.khau.map(function (b) { return STEP_LABEL[b] || b; }).join(' + ');
+  var hoi = 'Xác nhận gửi ' + tt.hop + ' hộp: ' + ten + ' (mỗi khâu ' + nf(tt.tong) + ' tờ' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
+  if (tt.khau.indexOf('OCR') >= 0) hoi += '\n\n⚠ Có khâu OCR: chỉ gửi nếu OCR đã làm xong đúng số tờ này.';
   if (tt.thieuMa) hoi += '\n\n⚠ ' + tt.thieuMa + ' hộp chưa nhập MÃ HỒ SƠ đã làm.';
   if (!confirm(hoi)) return;
   if (!st.idLo) st.idLo = loIdMoi();      // gửi lại sau khi mất mạng dùng lại đúng idLo này -> máy chủ không ghi trùng
   var p = {}; Object.keys(base).forEach(function (k) { p[k] = base[k]; });
   p.idLo = st.idLo; p.muc = tt.muc;
   var btn = $(o.btn); if (btn) btn.disabled = true;
-  if (resEl) resEl.innerHTML = '<div class="msg warn">Đang gửi ' + tt.muc.length + ' hộp…</div>';
+  if (resEl) resEl.innerHTML = '<div class="msg warn">Đang gửi ' + tt.hop + ' hộp…</div>';
   call('ghiLo', p).then(function (r) {
     st.idLo = '';
-    var tung = {}; (r.ketQua || []).forEach(function (k) { tung[k.hop] = k; });
-    st.rows = st.rows.filter(function (row) { var k = tung[String(row.hop || '').replace(/^\s+|\s+$/g, '')]; if (k && k.ok) return false; if (k) row.err = k.err; return true; });
+    var tung = {}; (r.ketQua || []).forEach(function (k) { (tung[k.hop] = tung[k.hop] || []).push(k); });
+    st.rows = st.rows.filter(function (row) {
+      var ks = tung[String(row.hop || '').replace(/^\s+|\s+$/g, '')];
+      if (!ks) return true;
+      var sai = [];
+      ks.forEach(function (k) { if (k.ok) { row.done = row.done || {}; row.done[k.buoc] = true; } else sai.push((STEP_LABEL[k.buoc] || k.buoc) + ': ' + k.err); });
+      if (!sai.length) return false;
+      row.err = sai.join(' | ');
+      return true;
+    });
     if (!st.rows.length) st.rows.push(loRow());
     var h = '<div class="msg ' + (r.loi ? 'warn' : 'ok') + '">' + (r.loi ? '⚠️ ' : '✔ ') + 'Đã ghi ' + r.added + ' bản ghi' + (r.guiLai ? ' (lần gửi này đã được ghi trước đó, không ghi lại)' : '') + (r.loi ? ' – ' + r.loi + ' dòng lỗi/bỏ qua (còn lại trong bảng để sửa)' : '') + '</div>';
     h += '<div class="lo-res">' + (r.ketQua || []).map(function (k) {
@@ -1619,13 +1659,15 @@ function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ng
     if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa gửi được: ' + esc(e) + '. Bấm Gửi lại nếu nghi mạng chập chờn – hệ thống không ghi trùng cùng một lần gửi.</div>';
   }).then(function () { if ($(o.btn)) $(o.btn).disabled = false; });
 }
-function loPrepare(prefix, buoc) {     // gọi sau khi khung #<prefix>LoBox đã có trên trang
+function loPrepare(prefix, buoc) {     // gọi sau khi khung #<prefix>LoBox đã có trên trang; buoc = nút khâu đang bấm
+  var st = loSt(prefix);
+  if (st.buocNut !== buoc || !st.khau) { st.buocNut = buoc; st.khau = loKhauDoc(buoc); }   // đổi nút khâu → nạp tick đã nhớ / mặc định
   loRenderBox(prefix, buoc);
   call('hopGoiY', { buoc: buoc }).then(function (list) {
     if (!$(prefix + 'LoBox')) return;
-    loSt(prefix, buoc).goiY = list || [];
+    st.goiY = list || [];
     var dl = $(prefix + 'LoDl');
-    if (dl) dl.innerHTML = loSt(prefix, buoc).goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
+    if (dl) dl.innerHTML = st.goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
     loRenderChips(prefix, buoc);
   }).catch(function () { });
 }
