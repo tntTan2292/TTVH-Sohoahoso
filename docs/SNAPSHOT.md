@@ -33,6 +33,8 @@
 - **Việc kế (chủ dự án, cách tay nếu không dùng clasp):** dán **cả `Code.gs` và `Index.html`** lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (gồm luôn F-QL-10) → thử theo danh sách trong báo cáo Opus (tổ viên lô 3 hộp Scan+Tách; gửi lại khi mất mạng; Nhập hộ lô; đo thời gian lô 10 hộp) → báo kết quả cho Opus.
 - **Sau đó:** Đợt 2 (Sonnet → Antigravity): P6 "Hộp của tôi" + P7a + F1.
 
+- **Triển khai Đợt 1 (09/11/2026, Sonnet): CHƯA LÀM – bị chặn:** Claude in Chrome không kết nối (`list_connected_browsers` rỗng, thử 2 lần). Mới xong bước A (mock 229/0, giao diện 356/0, GO có) và G (skill `update-code-sohoa`). Còn B–D: cần mở Chrome có extension rồi chạy lại "UpdateCodeSohoa" (hoặc nhờ phiên Sonnet mới). Bản đang chạy vẫn là phiên bản 13 (`ef54be3`).
+
 ### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
 - **Đã xong trong mã** (commit `07618a0`, mock 190/0, thử giao diện bằng mock).
 - **Còn lại (chủ dự án làm):** dán `Index.html` lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ. Có thể gộp vào lần triển khai sau khi chuẩn hóa.

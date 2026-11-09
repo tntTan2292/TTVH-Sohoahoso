@@ -9,6 +9,7 @@ Hệ thống báo cáo sản lượng số hóa hồ sơ tại Trung tâm Lưu t
 | `apps-script/Index.html` | Giao diện (một file HTML + CSS + JS) |
 | `apps-script/appsscript.json` | Cấu hình dự án Apps Script (múi giờ, kiểu Web App) |
 | `tools/build_khoi_tao.py` | Tạo file khởi tạo Google Sheet từ danh sách nhân sự (không lấy CCCD/SĐT) |
+| `.claude/skills/update-code-sohoa/` | Skill triển khai mã lên Apps Script ("UpdateCodeSohoa") |
 | `tools/test_mock.js` | Kiểm thử bằng mock, không cần Google: `node tools/test_mock.js` |
 | `HUONG_DAN_TRIEN_KHAI.md` | Hướng dẫn triển khai, vận hành, bảo mật |
 | `PROMPT_*.md` | Prompt giao việc cho các công cụ AI (bản **cũ**, có chỗ đã sai so với hiện tại) |

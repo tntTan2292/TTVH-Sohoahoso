@@ -31,6 +31,9 @@ Chỉ `apps-script/Code.gs`, `apps-script/Index.html`, `apps-script/appsscript.j
 7. **Trước khi dừng (kể cả dừng giữa chừng): cập nhật `docs/SNAPSHOT.md`** theo mẫu ở cuối file đó, rồi commit.
 8. Xong một việc: ghi một dòng vào `CHANGELOG.md`.
 
+## Triển khai
+- Triển khai lên Apps Script: chỉ dùng skill `update-code-sohoa` (`.claude/skills/update-code-sohoa/SKILL.md`).
+
 ## Bảo mật
 - Không đưa lên Git: file Excel/TSV (tên, Mã HRM, PIN tạm), `backup/`, `TaiLieu/` (đã có trong `.gitignore`).
 - Không in PIN, `PinTam`, `PinHash` ra màn hình hay báo cáo.

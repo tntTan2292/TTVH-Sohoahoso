@@ -8,8 +8,9 @@ backup/
 # Link /exec và ID dự án Apps Script (chỉ trên máy)
 deploy.local.md
 
-# Cấu hình máy cá nhân của công cụ AI
-.claude/
+# Cấu hình máy cá nhân của công cụ AI (skill dự án .claude/skills/ vẫn lên Git)
+.claude/*
+!.claude/skills/
 
 # Script vá một lần và tệp tạm
 tools/patch_*.py
