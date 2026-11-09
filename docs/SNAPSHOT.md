@@ -11,8 +11,8 @@
 |---|---|
 | Cập nhật lúc | 09/11/2026 — Antigravity: làm đẹp giao diện bảng nhiều hộp Đợt 1 (F-BC-18/19, F-QL-11) |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 19** (09/11/2026 23:40) trên link chính `…MlRA/exec` = commit `60189ab` (Dashboard loại TN-xx, ngày 7 một hàng; trước đó F-HT-03). Phiên bản trước: 18 (`fe49dba`). Link phụ `…NIQ/exec` không đụng |
-| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `60189ab` sau khi lưu và tải lại trang) |
+| Bản đang chạy | Apps Script **phiên bản 20** (10/11/2026 00:02) trên link chính `…MlRA/exec` = commit `d568321` (F-DB-01 khoảng ngày; trước đó bản 19 = Dashboard loại TN-xx). Phiên bản trước: 19 (`60189ab`). Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `d568321` sau khi lưu và tải lại trang) |
 | Mock | `node tools/test_mock.js` → **250 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
