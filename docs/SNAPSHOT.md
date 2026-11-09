@@ -11,8 +11,8 @@
 |---|---|
 | Cập nhật lúc | 09/11/2026 — Antigravity: làm đẹp giao diện bảng nhiều hộp Đợt 1 (F-BC-18/19, F-QL-11) |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 13** trên link chính `…MlRA/exec`; link phụ `…NIQ/exec` còn ở phiên bản 12 |
-| Mã trên Apps Script khớp repo? | **Không** — repo có thêm F-QL-10, P2 `ghiLo` + bảng nhiều hộp (`Code.gs` và `Index.html`), chưa triển khai. Bản 13 = `ef54be3` |
+| Bản đang chạy | Apps Script **phiên bản 17** (09/11/2026 23:13) trên link chính `…MlRA/exec` = commit `a2b738f` (Đợt 1: P0–P4, F-QL-10). Link phụ `…NIQ/exec` không đụng, còn bản cũ |
+| Mã trên Apps Script khớp repo? | **Có** (đối chiếu băm SHA-256 sau khi lưu và tải lại trang: `Code.gs`, `Index.html` khớp `a2b738f`; `appsscript.json` không đổi) |
 | Mock | `node tools/test_mock.js` → **229 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
@@ -33,7 +33,7 @@
 - **Việc kế (chủ dự án, cách tay nếu không dùng clasp):** dán **cả `Code.gs` và `Index.html`** lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (gồm luôn F-QL-10) → thử theo danh sách trong báo cáo Opus (tổ viên lô 3 hộp Scan+Tách; gửi lại khi mất mạng; Nhập hộ lô; đo thời gian lô 10 hộp) → báo kết quả cho Opus.
 - **Sau đó:** Đợt 2 (Sonnet → Antigravity): P6 "Hộp của tôi" + P7a + F1.
 
-- **Triển khai Đợt 1 (09/11/2026, Sonnet): CHƯA LÀM – bị chặn:** Claude in Chrome không kết nối (`list_connected_browsers` rỗng, thử 2 lần). Mới xong bước A (mock 229/0, giao diện 356/0, GO có) và G (skill `update-code-sohoa`). Còn B–D: cần mở Chrome có extension rồi chạy lại "UpdateCodeSohoa" (hoặc nhờ phiên Sonnet mới). Bản đang chạy vẫn là phiên bản 13 (`ef54be3`).
+- **Triển khai Đợt 1 (09/11/2026, Sonnet): ĐÃ LÀM** – phiên bản **17** cho `…MlRA` (trước đó là phiên bản **16**, không phải 13 như ghi cũ; mã bản 16 khớp `ef54be3`). Đối chiếu trước khi đẩy: `Code.gs`, `Index.html` khớp `ef54be3`; `appsscript.json` trên Apps Script chỉ khác định dạng (Apps Script tự xuống dòng), nội dung JSON giống hệt → không ghi đè. Mở link `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca", màn hình đăng nhập hiện bình thường. **Chủ dự án thử 5 bước** (gồm đo thời gian lô 10 hộp × 3 khâu, F2). Quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn **phiên bản 16** → Triển khai.
 
 ### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
 - **Đã xong trong mã** (commit `07618a0`, mock 190/0, thử giao diện bằng mock).

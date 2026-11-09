@@ -3,7 +3,8 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
-- Tài liệu: thêm skill `.claude/skills/update-code-sohoa` (UpdateCodeSohoa), `.gitignore` cho phép `.claude/skills/`. **Triển khai Đợt 1 chưa thực hiện** (Claude in Chrome không kết nối).
+- Triển khai **phiên bản 17** lên `…MlRA` (commit `a2b738f`: Đợt 1 – P0, P2 `ghiLo` + bảng nhiều hộp, P4, P3, giao diện Antigravity, F-QL-10). Bản trước: phiên bản 16. Mã khớp repo (băm). Chưa thử trên Sheet thật.
+- Tài liệu: thêm skill `.claude/skills/update-code-sohoa` (UpdateCodeSohoa), `.gitignore` cho phép `.claude/skills/`. Triển khai Đợt 1 đã thực hiện sau đó (dòng kế).
 - Giao diện Đợt 1 · F-BC-18, F-BC-19, F-QL-11: làm đẹp "Bảng báo cáo nhiều hộp" dùng một tay trên điện thoại 360px. Mỗi hộp là thẻ gọn (Mã hộp, Mã hồ sơ, Số hồ sơ + Số tờ cạnh nhau 50/50, checkbox hoàn thành hộp); thanh tick khâu gọn (Scan + Tách 2 cột, OCR nổi bật có badge "Chủ động tick"); chip gợi ý hộp lớn 38px dễ chạm; nút "Thêm hộp" full-width 46px; nút "Gửi báo cáo" 50px nổi bật; kết quả ✔/✕ từng hộp dạng thẻ có dải màu xanh/đỏ; thông báo lỗi đỏ tại thẻ. Không sửa Code.gs, giữ nguyên toàn bộ id/hàm/action. Mock 229/0, kiểm tra giao diện 356/0.
 - P3 · F-BC-19: tick nhiều khâu (Scan / Tách / OCR) cùng số liệu trong bảng nhiều hộp; mặc định Scan + Tách, OCR tự bật; nhớ tick theo nút khâu; khâu đã ghi không ghi lại khi gửi lại. Máy chủ không đổi. Mock 229/0 (so `NhatKy` và `dash_` với cách kèm Tách cũ). Form cũ và F-BC-08/F-QL-10 giữ nguyên. **Chưa triển khai.**
 - P4 · F-BC-18: bảng nhiều hộp chỉ còn ô "Số tờ", chỉ gửi `soTo` (R2: `SoTrang` giữ 0, không hiện hai cột trùng số); `Code.gs`/`dash_` không đổi, mock so `dash_`, Lịch sử, Nhật ký ca. Form cũ giữ hai ô. Mock 224/0.

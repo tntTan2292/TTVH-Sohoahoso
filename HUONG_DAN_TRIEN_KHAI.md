@@ -2,7 +2,7 @@
 
 Các file: `SoHoa_KhoiTao_v3.xlsx` (nhân sự, Lãnh đạo, tài khoản ADMIN, số đầu kỳ; **không có lịch phân ca**), thư mục `apps-script/` (`Code.gs`, `Index.html`, `appsscript.json`), `tools/build_khoi_tao.py` (tạo lại file khởi tạo), `tools/test_mock.js` (kiểm thử không cần Google).
 
-> **Trạng thái:** đã triển khai **phiên bản 13** (09/11/2026 18:51) lên link chính `…MlRA/exec`, code trên Apps Script khớp bản ở máy (mock `node tools/test_mock.js`: 172 kiểm tra, 0 lỗi). Link phụ `…NIQ/exec` vẫn ở phiên bản 12. Lần sau chỉ cập nhật link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới). Chưa kiểm thử đầy đủ trên Sheet thật, cần chạy mục E.
+> **Trạng thái:** đã triển khai **phiên bản 17** (09/11/2026 23:13, commit `a2b738f`; trước đó phiên bản 16) lên link chính `…MlRA/exec`. Bản cũ ghi: phiên bản 13 (09/11/2026 18:51) lên link chính `…MlRA/exec`, code trên Apps Script khớp bản ở máy (mock `node tools/test_mock.js`: 172 kiểm tra, 0 lỗi). Link phụ `…NIQ/exec` vẫn ở phiên bản 12. Lần sau chỉ cập nhật link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới). Chưa kiểm thử đầy đủ trên Sheet thật, cần chạy mục E.
 
 ## A. Triển khai mới hoàn toàn (Sheet mới)
 1. **Tải file khởi tạo lên Drive:** Google Drive → Mới → Tải tệp lên → `SoHoa_KhoiTao_v3.xlsx`.
