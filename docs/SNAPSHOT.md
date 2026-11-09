@@ -24,7 +24,7 @@
 - **Prompt giao việc:** `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` (đã liệt kê 10 điểm trùng D1–D10, ràng buộc, câu hỏi không được tự quyết).
 - **Cách làm:** 2 giai đoạn. GĐ1: viết `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` (đếm thao tác trước/sau, đề xuất P1, P2…) rồi **dừng chờ chủ dự án duyệt**. GĐ2: làm từng đề xuất đã duyệt, mỗi đề xuất một commit.
 - **Phân công** (`docs/PHAN_CONG.md`): GĐ1 đề xuất + GĐ2 code → **Sonnet**; đề xuất đụng cách tính số liệu/API → **Opus review** trước khi chủ dự án duyệt; phần đẹp giao diện của form mới → **Antigravity** sau khi Sonnet xong; trước triển khai → **Opus review GO/NO-GO**.
-- **Trạng thái:** ☐ GĐ1 chưa bắt đầu · ☐ Opus review đề xuất · ☐ chủ dự án duyệt · ☐ GĐ2 (ghi P nào xong ở đây) · ☐ Antigravity làm đẹp · ☐ Opus review trước triển khai
+- **Trạng thái:** ☑ GĐ1 xong (Sonnet, 09/11/2026): `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` — đề xuất P1–P7, câu hỏi Q1–Q7, chưa sửa dòng mã nào, **không tự chuyển GĐ2** · ☐ Opus review đề xuất · ☐ chủ dự án duyệt · ☐ GĐ2 (ghi P nào xong ở đây) · ☐ Antigravity làm đẹp · ☐ Opus review trước triển khai
 - **Phiên tiếp theo:** đọc prompt trên rồi làm từ bước đang ☐ đầu tiên.
 
 ### 2b. F-QL-10 — tick "Scan kèm Tách" ở form Nhập hộ
