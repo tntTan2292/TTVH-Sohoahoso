@@ -4,10 +4,11 @@ const code = fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8');
 
 // ---------- mock Google ----------
 let getValuesCalls = 0, lockCount = 0;
+const getValuesBy = {};   // số lần đọc từng tab (đếm R1)
 const fmtLog = [], appendRowCalls = {};
 class Sheet {
   constructor(name, header) { this.name = name; this.rows = [header.slice()]; this.maxRows = 1000; }
-  getDataRange() { const me = this; return { getValues() { getValuesCalls++; return me.rows.map(r => r.slice()); } }; }
+  getDataRange() { const me = this; return { getValues() { getValuesCalls++; getValuesBy[me.name] = (getValuesBy[me.name] || 0) + 1; return me.rows.map(r => r.slice()); } }; }
   appendRow(a) { appendRowCalls[this.name] = (appendRowCalls[this.name] || 0) + 1; this.rows.push(a.slice()); }
   getLastRow() { return this.rows.length; }
   getMaxRows() { return this.maxRows; } getMaxColumns() { return 26; }
@@ -497,6 +498,90 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const sc = rows.find(x => x[5] === 'SCAN'), ta = rows.find(x => x[5] === 'TACH');
   ok(r1.ok && r2.ok && sc && ta, 'nhập hộ Scan kèm Tách: ghi đủ 2 bản ghi SCAN và TACH', [r1, r2]);
   ok(ta && Number(ta[8]) === 25 && Number(ta[7]) === 2 && ta[11] === true && ta[15] === 'NHẬP HỘ' && ta[18] === 'B1', 'bản ghi Tách cùng số trang/hồ sơ/hết hộp, loại NHẬP HỘ, tính cho người được nhập hộ', ta);
+}
+
+// ===== P2: ghiLo – ghi nhiều hộp × (Scan, Tách, OCR) một lần gửi =====
+{
+  const idn = (() => { let i = 0; return () => 'LO-TEST-' + (++i) + '-abcdef'; })();
+  const lo = (t, muc, o) => api(t, 'ghiLo', Object.assign({ ca: 'Chiều', idLo: idn(), muc }, o || {}));
+  const mk = (hop, buoc, hs, to, extra) => Object.assign({ hop, buoc, soHoSo: hs, soTo: to }, extra || {});
+  const nk = () => sh('NhatKy').rows.slice(1);
+  const dem = h => nk().filter(x => x[6] === h).length;
+  ['LA', 'LB', 'LC'].forEach(h => { rep(tTT, { buoc: 'NHAN', hop: h }); api(tA, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: h, kieuNhan: 'CANHAN' }); });
+
+  // 1. ba hộp × ba khâu, tổ viên, một lần gửi
+  const muc1 = []; ['LA', 'LB', 'LC'].forEach((h, i) => ['SCAN', 'TACH', 'OCR'].forEach(b => muc1.push(mk(h, b, 3, 20 + i, { hetHop: h !== 'LC', maHoSo: '47' + i + '-47' + (i + 2), trangLoi: b === 'SCAN' ? 1 : 0 }))));
+  const l0 = lockCount; r = lo(tA, muc1);
+  ok(r.ok && r.data.added === 9 && r.data.loi === 0 && r.data.ketQua.length === 9 && r.data.ketQua.every(k => k.ok), 'ghiLo: 3 hộp × 3 khâu ghi đủ 9 bản ghi, không lỗi', r);
+  ok(lockCount - l0 === 1, 'ghiLo chạy trong 1 lần khóa (không thuộc READ_ACTIONS)', lockCount - l0);
+  const ra = nk().filter(x => x[6] === 'LA' && ['SCAN', 'TACH', 'OCR'].indexOf(x[5]) >= 0);
+  ok(ra.length === 3 && ra.every(x => x[18] === 'A1' && x[14] === 'A1' && x[15] === 'THƯỜNG') && ra.find(x => x[5] === 'SCAN')[12] === '470-472' && Number(ra.find(x => x[5] === 'SCAN')[10]) === 1, 'ghiLo: mỗi khâu 1 dòng NhatKy, chốt ThanhVien/Nhóm, lưu mã hồ sơ và trang lỗi như ghi cũ', ra);
+  ok(sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO_LO').length === 1 && sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO' && /^(Scan|Tách file|OCR)/.test(x[6]) && /hộp LA /.test(x[6])).length === 3, 'ghiLo ghi log: 1 dòng BAO_CAO_LO + log BAO_CAO cho từng khâu');
+
+  // 2. R1: cả lô 10 hộp × 3 khâu chỉ đọc NhatKy 1 lần
+  const muc2 = []; for (let i = 1; i <= 10; i++) ['SCAN', 'TACH', 'OCR'].forEach(b => muc2.push(mk('LX' + i, b, 2, 10, { hetHop: true })));
+  ctx.memoClear_(); for (const k in getValuesBy) delete getValuesBy[k];
+  r = lo(tA, muc2);
+  ok(r.ok && r.data.added === 30 && r.data.loi === 0, 'ghiLo: 10 hộp × 3 khâu = 30 dòng ghi được', r.ok ? { added: r.data.added, loi: r.data.loi } : r);
+  ok(getValuesBy.NhatKy === 1, 'R1: cả lô 30 mục chỉ đọc sheet NhatKy ĐÚNG 1 lần', getValuesBy);
+  ctx.memoClear_(); for (const k in getValuesBy) delete getValuesBy[k];
+  for (let i = 1; i <= 3; i++) api(tA, 'ghi', { buoc: 'SCAN', ca: 'Chiều', hop: 'LY' + i, soHoSo: 1, soTo: 5 });
+  ok(getValuesBy.NhatKy >= 3, 'đối chứng: gọi ghi cũ 3 lần thì đọc NhatKy ≥ 3 lần', getValuesBy);
+  ok(dem('LX1') === 3 && dem('LX10') === 3, 'sau lô, dữ liệu thật đã nằm trong Sheet (đọc lại thấy đủ)');
+
+  // 3. R4: gửi lại cùng idLo không ghi thêm
+  const id = 'LO-RETRY-0001', n0 = nk().length;
+  const m3 = [mk('LD', 'SCAN', 2, 15, { hetHop: true })];
+  const a1 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: id, muc: m3 }), a2 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: id, muc: m3 });
+  ok(a1.ok && a1.data.added === 1 && a2.ok && a2.data.guiLai === true && a2.data.added === 1 && nk().length === n0 + 1, 'R4: gửi lại cùng idLo trả kết quả cũ, không ghi thêm', [a1, a2, nk().length - n0]);
+  ok(!api(tB, 'ghiLo', { ca: 'Chiều', idLo: id, muc: [mk('LD', 'TACH', 2, 15)] }).data.guiLai, 'idLo gắn với người gửi: người khác dùng cùng idLo không bị trả kết quả của người kia');
+  ok(!api(tA, 'ghiLo', { ca: 'Chiều', muc: m3 }).ok && !api(tA, 'ghiLo', { ca: 'Chiều', idLo: 'x', muc: m3 }).ok, 'thiếu / sai idLo bị từ chối');
+
+  // 4. giới hạn lô
+  const nhieuHop = []; for (let i = 1; i <= 11; i++) nhieuHop.push(mk('LZ' + i, 'SCAN', 1, 1));
+  r = lo(tA, nhieuHop); ok(!r.ok && /tối đa 10 hộp/.test(r.err), 'quá 10 hộp bị từ chối', r);
+  const nhieuMuc = []; for (let i = 1; i <= 31; i++) nhieuMuc.push(mk('LZ' + (i % 10), 'SCAN', 1, 1));
+  r = lo(tA, nhieuMuc); ok(!r.ok && /tối đa/.test(r.err), 'quá 30 dòng bị từ chối', r);
+  r = lo(tA, []); ok(!r.ok, 'lô rỗng bị từ chối');
+  r = lo(tA, [mk('LZ1', 'TRA', 1, 1)]); ok(!r.ok && /Khâu không hợp lệ/.test(r.err), 'ghiLo chỉ nhận Scan/Tách/OCR', r);
+  ok(dem('LZ1') === 0, 'lô bị từ chối không ghi gì');
+
+  // 5. hộp lỗi bỏ qua, hộp đúng vẫn ghi; khâu sau của hộp lỗi bị bỏ qua
+  r = lo(tA, [mk('LA', 'SCAN', 1, 5), mk('LA', 'TACH', 1, 5), mk('LE', 'OCR', 2, 9, { hetHop: false }), mk('LE', 'SCAN', 2, 9)]);
+  const kq = r.data && r.data.ketQua;
+  ok(r.ok && r.data.added === 2 && r.data.loi === 2 && kq.filter(k => k.hop === 'LA').every(k => !k.ok) && /XONG/.test(kq.find(k => k.hop === 'LA' && k.buoc === 'SCAN').err) && /Bỏ qua/.test(kq.find(k => k.hop === 'LA' && k.buoc === 'TACH').err), 'hộp đã xong Scan: dòng lỗi báo lý do, Tách của hộp đó bị bỏ qua', kq);
+  ok(kq && kq.filter(k => k.hop === 'LE').length === 2 && kq.filter(k => k.hop === 'LE').every(k => k.ok) && dem('LE') === 2, 'hộp LE vẫn ghi (kết quả theo từng hộp), thứ tự khâu được sắp Scan → OCR');
+  ok(r.data.warnings.some(w => /LE chưa có trong danh sách đã nhận/.test(w)), 'hộp ngoài danh sách (gõ tay) vẫn ghi, chỉ cảnh báo');
+
+  // 6. cùng hộp hai dòng cùng khâu trong một lô: bộ nhớ đọc đã cập nhật nên dòng sau bị chặn "đã XONG"
+  r = lo(tA, [mk('LF', 'SCAN', 1, 5, { hetHop: true }), mk('LF', 'SCAN', 1, 5, { hetHop: true })]);
+  ok(r.ok && r.data.ketQua[0].ok && !r.data.ketQua[1].ok && /XONG/.test(r.data.ketQua[1].err) && dem('LF') === 1, 'trong cùng lô, dòng thứ hai của hộp đã xong bị chặn (đọc thấy dòng vừa ghi)', r);
+
+  // 7. mọi kiểm tra của ghi_: ngoài ca, ca không thuộc, nhập hộ, lãnh đạo, số âm, thiếu số
+  setNow('2026-11-09 19:30:00'); r = lo(tA, [mk('LG', 'SCAN', 1, 5)]);
+  ok(r.ok && r.data.added === 0 && /Ngoài thời gian|Ca đã|không thuộc/.test(r.data.ketQua[0].err), 'ngoài giờ ca: ghiLo không ghi (kế thừa kiểm tra ghi_)', r); setNow('2026-11-09 15:30:00');
+  r = lo(tA, [mk('LG', 'SCAN', 1, 5)], { ca: 'Sáng' }); ok(r.ok && r.data.added === 0 && /không thuộc danh sách/.test(r.data.ketQua[0].err), 'ca không thuộc danh sách: không ghi', r);
+  r = lo(tA, [mk('LG', 'SCAN', 1, 5)], { boSung: true, ngay: '2026-11-09', nguoiHo: 'B1' }); ok(r.ok && r.data.added === 0 && /Chỉ Tổ trưởng/.test(r.data.ketQua[0].err), 'tổ viên không nhập hộ được qua ghiLo', r);
+  r = api(tLD, 'ghiLo', { ca: 'Chiều', idLo: idn(), muc: [mk('LG', 'SCAN', 1, 5)] }); ok(!r.ok && /chỉ được xem/.test(r.err), 'Lãnh đạo không gọi được ghiLo', r);
+  r = lo(tA, [mk('LG', 'SCAN', -1, 5), mk('LH', 'SCAN', 0, 5), mk('LI', 'SCAN', 2, 0), mk('LJ', 'SCAN', 2, 99999)]);
+  ok(r.ok && r.data.added === 0 && r.data.loi === 4 && /không được âm/.test(r.data.ketQua[0].err) && /số hồ sơ/.test(r.data.ketQua[1].err) && /số trang hoặc số tờ/.test(r.data.ketQua[2].err) && /bất thường/.test(r.data.ketQua[3].err), 'số âm / thiếu số hồ sơ / thiếu số tờ / quá lớn: từng dòng báo lỗi, không ghi', r);
+  r = lo(tA, [mk('LK M', 'SCAN', 1, 5)]); ok(r.ok && r.data.added === 0 && !r.data.ketQua[0].ok, 'mã hộp có khoảng trắng bị từ chối', r);
+  r = lo(tA, [mk('a,b', 'SCAN', 1, 5)]); ok(r.ok && r.data.added === 0 && /không hợp lệ/.test(r.data.ketQua[0].err), 'mã hộp có dấu phẩy bị từ chối', r);
+  r = lo(tTT, [mk('LN', 'SCAN', 2, 9, { hetHop: true }), mk('LN', 'TACH', 2, 9)], { boSung: true, ngay: '2026-11-09', nhom: '', nguoiHo: 'B1' });
+  ok(r.ok && r.data.added === 2 && nk().filter(x => x[6] === 'LN').every(x => x[15] === 'NHẬP HỘ' && x[18] === 'B1'), 'quản lý nhập hộ qua ghiLo: loại NHẬP HỘ, tính cho người được nhập hộ', r);
+
+  // 8. so sánh với chuỗi ghi cũ: cùng dữ liệu NhatKy và cùng dash_
+  const strip = rows => rows.map(x => x.map((v, i) => (i === 0 || i === 1) ? '' : v));
+  const dashJ = () => { ctx.memoClear_(); const dd = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data; delete dd.capNhat; return JSON.stringify(dd); };
+  ['M1', 'M2', 'M3'].forEach(h => { rep(tTT, { buoc: 'NHAN', hop: 'S' + h }); api(tA, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: 'S' + h, kieuNhan: 'CANHAN' }); });
+  const muc8 = []; ['M1', 'M2', 'M3'].forEach((h, i) => ['SCAN', 'TACH', 'OCR'].forEach(b => muc8.push(mk('S' + h, b, 2 + i, 18 + i, { hetHop: i !== 2, maHoSo: 'HS-' + i, trangLoi: b === 'SCAN' ? i : 0 }))));
+  const nTruoc = sh('NhatKy').rows.length;
+  r = lo(tA, muc8); const rowsLo = strip(sh('NhatKy').rows.slice(nTruoc)), dashLo = dashJ();
+  sh('NhatKy').rows.length = nTruoc; ctx.memoClear_();
+  muc8.forEach(m => api(tA, 'ghi', { ca: 'Chiều', buoc: m.buoc, hop: m.hop, soHoSo: m.soHoSo, soTo: m.soTo, trangLoi: m.trangLoi, hetHop: m.hetHop, maHoSo: m.maHoSo }));
+  const rowsOld = strip(sh('NhatKy').rows.slice(nTruoc)), dashOld = dashJ();
+  ok(r.ok && rowsLo.length === 9 && JSON.stringify(rowsLo) === JSON.stringify(rowsOld), 'so sánh: ghiLo và chuỗi ghi cũ cho NhatKy giống hệt (trừ ID/giờ)', [rowsLo.length, rowsOld.length]);
+  ok(dashLo === dashOld && dashLo.length > 200, 'so sánh: dash_ trước/sau (ghiLo vs ghi cũ) giống hệt trên cùng dữ liệu');
 }
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');

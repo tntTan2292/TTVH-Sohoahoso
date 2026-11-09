@@ -157,8 +157,16 @@ function append_(name, obj) {
   const rg = sh.getRange(row, 1, 1, cols.length);
   const f = rg.getNumberFormats()[0];   // giữ định dạng cột khác, chỉ đặt '@' cho cột văn bản – 2 lệnh thay vì từng ô
   rg.setNumberFormats([cols.map(function (k, i) { return TEXT_COLS.indexOf(k) >= 0 ? '@' : f[i]; })]);
-  rg.setValues([cols.map(function (k) { return obj[k] === undefined || obj[k] === null ? '' : safe_(obj[k]); })]);
-  memoClear_(name);
+  const vals = cols.map(function (k) { return obj[k] === undefined || obj[k] === null ? '' : safe_(obj[k]); });
+  rg.setValues([vals]);
+  memoThem_(name, row, cols, [vals]);
+}
+// Đang ghi theo lô (ghiLo): thêm dòng mới vào bộ nhớ thay vì bỏ bộ nhớ, để cả lô chỉ đọc NhatKy 1 lần (R1)
+let LO_DANG_GHI_ = false;
+function memoThem_(name, firstRow, cols, rowsVals) {
+  if (LO_DANG_GHI_ && name === 'NhatKy' && MEMO_[name]) {
+    rowsVals.forEach(function (v, i) { const o = { _row: firstRow + i }; cols.forEach(function (k, j) { o[k] = v[j]; }); MEMO_[name].push(o); });
+  } else memoClear_(name);
 }
 function withLock_(fn) {
   const lock = LockService.getScriptLock();
@@ -296,6 +304,7 @@ function route_(u, action, p) {
     case 'me': return me_(u);
     case 'doiPin': return doiPin_(u, p);
     case 'ghi': return ghi_(u, p);
+    case 'ghiLo': return ghiLo_(u, p);
     case 'vaoCa': return vaoCa_(u, p);
     case 'lichSu': return lichSu_(u, p);
     case 'hopGoiY': return hopGoiY_(u, p);
@@ -492,6 +501,54 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
   }
 }
 
+/* ---------- Ghi theo lô: nhiều hộp × (Scan, Tách, OCR) trong một lần gửi (P2) ---------- */
+const LO_MAX_HOP = 10, LO_MAX_MUC = 30, LO_BUOC = ['SCAN', 'TACH', 'OCR'];
+function ghiLo_(u, p) {      // chạy trong withLock_ ở api(); MỌI kiểm tra nằm ở ghi_ (gọi lại cho từng mục, không chép logic)
+  const idLo = s_(p.idLo);
+  if (!/^[A-Za-z0-9_\-]{8,64}$/.test(idLo)) throw 'Thiếu mã lần gửi (idLo) – tải lại trang rồi gửi lại';
+  const cache = CacheService.getScriptCache(), key = 'lo_' + u.ma + '_' + idLo;
+  const da = cache.get(key);
+  if (da) { const kq = JSON.parse(da); kq.guiLai = true; return kq; }      // R4: gửi lại cùng idLo -> trả kết quả cũ, không ghi thêm
+  const muc = Array.isArray(p.muc) ? p.muc : [];
+  if (!muc.length) throw 'Chưa có dòng nào để gửi';
+  if (muc.length > LO_MAX_MUC) throw 'Mỗi lần gửi tối đa ' + LO_MAX_HOP + ' hộp × ' + LO_BUOC.length + ' khâu (' + LO_MAX_MUC + ' dòng)';
+  const thuTu = [], theoHop = {};
+  muc.forEach(function (m) {
+    const h = s_(m && m.hop), b = s_(m && m.buoc);
+    if (LO_BUOC.indexOf(b) < 0) throw 'Khâu không hợp lệ trong lô: ' + b + ' (chỉ Scan, Tách file, OCR)';
+    if (!h) throw 'Có dòng chưa nhập mã hộp';
+    if (!theoHop[h]) { theoHop[h] = []; thuTu.push(h); }
+    theoHop[h].push(m);
+  });
+  if (thuTu.length > LO_MAX_HOP) throw 'Mỗi lần gửi tối đa ' + LO_MAX_HOP + ' hộp (đang có ' + thuTu.length + ')';
+  const chung = {};
+  ['ca', 'boSung', 'ngay', 'nhom', 'nguoiHo', 'ghiChu'].forEach(function (k) { if (p[k] !== undefined) chung[k] = p[k]; });
+  const ketQua = [], warnings = [];
+  let added = 0, loi = 0;
+  LO_DANG_GHI_ = true;
+  try {
+    thuTu.forEach(function (h) {
+      theoHop[h].sort(function (a, b) { return LO_BUOC.indexOf(s_(a.buoc)) - LO_BUOC.indexOf(s_(b.buoc)); });
+      let hong = '';
+      theoHop[h].forEach(function (m) {
+        const b = s_(m.buoc), kq = { hop: h, buoc: b, ok: false, added: 0, warnings: [], err: '' };
+        ketQua.push(kq);
+        if (hong) { kq.err = 'Bỏ qua vì khâu ' + (STEP_NAME_[hong] || hong) + ' của hộp này bị lỗi'; loi++; return; }
+        const q = Object.assign({}, chung, { buoc: b, hop: h, soHoSo: m.soHoSo, soTrang: m.soTrang, soTo: m.soTo, trangLoi: m.trangLoi, hetHop: !!m.hetHop, maHoSo: m.maHoSo });
+        try {
+          const r = ghi_(u, q);
+          kq.ok = true; kq.added = r.added; kq.warnings = r.warnings; added += r.added;
+          r.warnings.forEach(function (w) { if (warnings.indexOf(w) < 0) warnings.push(w); });
+        } catch (e) { kq.err = String(e && e.message ? e.message : e); hong = b; loi++; }
+      });
+    });
+  } finally { LO_DANG_GHI_ = false; }
+  const kqCuoi = { idLo: idLo, ketQua: ketQua, added: added, loi: loi, warnings: warnings };
+  log_(u.ma, 'BAO_CAO_LO', 'lô ' + idLo + ': ' + thuTu.length + ' hộp, ' + muc.length + ' dòng, ghi ' + added + ' bản ghi, ' + loi + ' dòng lỗi/bỏ qua');
+  try { const txt = JSON.stringify(kqCuoi); if (txt.length < 90000) cache.put(key, txt, 600); } catch (e) { }
+  return kqCuoi;
+}
+
 function huy_(u, p) {
   const t = now_();
   const r = read_('NhatKy').filter(function (x) { return s_(x.ID) === s_(p.id); })[0];
@@ -639,8 +696,9 @@ function appendMany_(name, objs) {
   if (!objs.length) return;
   const sh = ss_().getSheetByName(name), h = TAB[name];
   const vals = objs.map(function (o) { return h.map(function (k) { return o[k] === undefined || o[k] === null ? '' : safe_(o[k]); }); });
-  sh.getRange(sh.getLastRow() + 1, 1, vals.length, h.length).setValues(vals);
-  memoClear_(name);
+  const first = sh.getLastRow() + 1;
+  sh.getRange(first, 1, vals.length, h.length).setValues(vals);
+  memoThem_(name, first, h, vals);
 }
 // Sao lưu các dòng sắp xóa vào tab SaoLuuXoa (nhanh hơn nhiều so với chép cả tab)
 function saoLuuDong_(tab, rows, nguoi) {

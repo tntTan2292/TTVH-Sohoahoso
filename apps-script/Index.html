@@ -514,6 +514,15 @@ button.btn-large {
   border: 1px solid var(--line);
 }
 
+/* Bảng báo cáo nhiều hộp (P2) – kiểu dáng tối thiểu, phần làm đẹp giao Antigravity */
+.lo-row { margin: 12px 0; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.lo-row.lo-bad { border-color: var(--bad, #c0392b); }
+.lo-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.lo-chips { margin: 8px 0; }
+.lo-chip { margin: 2px 4px 2px 0; }
+.lo-res-i { padding: 4px 0; font-size: 14px; }
+.lo-mode { margin: 10px 0; }
+
 /* Form Special Checkbox Card */
 .check-card {
   margin: 12px 0 6px;
@@ -1461,6 +1470,166 @@ function stepsFor() {
   return ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'];
 }
 
+/* ---------- Bảng báo cáo nhiều hộp (P2) – DÙNG CHUNG tab Báo cáo (tiền tố 'f') và form Nhập hộ (tiền tố 'ho') ---------- */
+/* Một lần gửi = action ghiLo: tối đa 10 hộp; mỗi dòng 1 hộp (mã hộp, mã hồ sơ đã làm, số hồ sơ, số trang/tờ, xong hộp).  */
+/* Form một hộp cũ (buildForm / renderHo) vẫn còn: bấm "Một hộp (form cũ)" để dùng.                                     */
+var LO_MAX_HOP = 10;
+var LO_HOP_RE = /^[A-Za-z0-9][A-Za-z0-9._\/\-]{0,29}$/;
+var LO_MODE = 'LO';        // 'LO' = bảng nhiều hộp, 'MOT' = form một hộp (cũ)
+try { if (localStorage.getItem('loMode') === 'MOT') LO_MODE = 'MOT'; } catch (e) { }
+var LO_STATE = {};         // LO_STATE[tiền tố|khâu] = { rows: [...], idLo: '', goiY: [] } – giữ dòng đã nhập khi đổi khâu / vẽ lại form
+function loRow(hop) { return { hop: hop || '', maHs: '', hs: '', trang: '', to: '', loi: '', het: false, hsAuto: true, err: '' }; }
+function loSt(prefix, buoc) { var k = prefix + '|' + buoc; if (!LO_STATE[k]) LO_STATE[k] = { rows: [loRow()], idLo: '', goiY: [] }; return LO_STATE[k]; }
+function loIdMoi() { return 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+function loRowTrong(r) { return !r.hop && !r.maHs && !r.hs && !r.trang && !r.to && !r.loi && !r.het; }
+function loModeHtml(prefix) {
+  return '<div class="steps lo-mode" id="' + prefix + 'Mode">' +
+    '<button type="button" data-m="LO" class="step-btn step-nhan' + (LO_MODE === 'LO' ? ' on' : '') + '">📦 Nhiều hộp</button>' +
+    '<button type="button" data-m="MOT" class="step-btn step-nhan' + (LO_MODE === 'MOT' ? ' on' : '') + '">Một hộp (form cũ)</button></div>';
+}
+function loModeBind(prefix, redraw) {
+  var el = $(prefix + 'Mode'); if (!el) return;
+  Array.prototype.forEach.call(el.children, function (b) {
+    b.onclick = function () {
+      LO_MODE = b.getAttribute('data-m');
+      try { localStorage.setItem('loMode', LO_MODE); } catch (e) { }
+      redraw();
+    };
+  });
+}
+function loRenderBox(prefix, buoc) {
+  var box = $(prefix + 'LoBox'); if (!box) return;
+  var st = loSt(prefix, buoc), scan = buoc === 'SCAN';
+  var h = '<datalist id="' + prefix + 'LoDl">' + st.goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>';
+  h += st.rows.map(function (r, i) {
+    return '<div class="lo-row' + (r.err ? ' lo-bad' : '') + '" data-i="' + i + '">' +
+      '<div class="lo-head"><b>Hộp ' + (i + 1) + '</b><button type="button" class="sm bad" data-act="del" title="Xóa dòng này">✕ Xóa</button></div>' +
+      '<label>Mã hộp <small class="muted">(chọn gợi ý hoặc gõ tay)</small></label>' +
+      '<input data-k="hop" list="' + prefix + 'LoDl" autocomplete="off" autocapitalize="characters" placeholder="VD: 208.18.17" value="' + esc(r.hop) + '">' +
+      '<label>Mã hồ sơ đã làm <small class="muted">(VD: 472-476; nên nhập để ca sau biết làm tiếp từ đâu)</small></label>' +
+      '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
+      '<div class="row num-row">' +
+        '<div><label>Số hồ sơ</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
+        '<div><label>Số trang</label><input data-k="trang" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.trang) + '"></div>' +
+        '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.to) + '"></div>' +
+        (scan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
+      '</div>' +
+      '<div class="check-card"><label class="check-label"><input type="checkbox" data-k="het"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
+      (r.err ? '<div class="msg err">✕ ' + esc(r.err) + '</div>' : '') +
+    '</div>';
+  }).join('');
+  h += '<div class="lo-chips" id="' + prefix + 'LoChips"></div>';
+  h += '<p><button type="button" class="sm" data-act="add"' + (st.rows.length >= LO_MAX_HOP ? ' disabled' : '') + '>＋ Thêm hộp</button> <span class="muted">' + st.rows.length + '/' + LO_MAX_HOP + ' hộp mỗi lần gửi</span></p>';
+  box.innerHTML = h;
+  loRenderChips(prefix, buoc);
+  box.oninput = box.onchange = function (ev) { loOnInput(prefix, buoc, ev.target); };
+  box.onclick = function (ev) {
+    var t = ev.target, act = t && t.getAttribute ? t.getAttribute('data-act') : '';
+    if (!act) return;
+    var row = t, i = -1; while (row && row !== box) { if (row.getAttribute && row.getAttribute('data-i') !== null) { i = +row.getAttribute('data-i'); break; } row = row.parentNode; }
+    if (act === 'add') { if (st.rows.length < LO_MAX_HOP) { st.rows.push(loRow()); loRenderBox(prefix, buoc); loFocusRow(prefix, st.rows.length - 1); } }
+    else if (act === 'del' && i >= 0) { st.rows.splice(i, 1); if (!st.rows.length) st.rows.push(loRow()); loRenderBox(prefix, buoc); }
+    else if (act === 'chip') {
+      var ma = t.getAttribute('data-h'), dung = null;
+      st.rows.forEach(function (r) { if (!dung && loRowTrong(r)) dung = r; });
+      if (!dung && st.rows.length < LO_MAX_HOP) { dung = loRow(); st.rows.push(dung); }
+      if (dung) { dung.hop = ma; loRenderBox(prefix, buoc); loFocusRow(prefix, st.rows.indexOf(dung), 'maHs'); }
+    }
+  };
+}
+function loFocusRow(prefix, i, k) {
+  var box = $(prefix + 'LoBox'); if (!box) return;
+  var el = box.querySelector('[data-i="' + i + '"] [data-k="' + (k || 'hop') + '"]');
+  if (el) { try { el.focus(); } catch (e) { } }
+}
+function loRenderChips(prefix, buoc) {
+  var c = $(prefix + 'LoChips'); if (!c) return;
+  var st = loSt(prefix, buoc), da = {};
+  st.rows.forEach(function (r) { da[r.hop] = 1; });
+  var ds = st.goiY.filter(function (x) { return !da[x]; }).slice(0, 24);
+  c.innerHTML = ds.length ? '<div class="muted helper-text">Hộp gợi ý – chạm để thêm vào bảng:</div>' + ds.map(function (x) { return '<button type="button" class="sm lo-chip" data-act="chip" data-h="' + esc(x) + '">' + esc(x) + '</button>'; }).join(' ') + (st.goiY.length > ds.length + Object.keys(da).length ? ' <span class="muted">…và hộp khác (gõ tay ở ô Mã hộp)</span>' : '') : '';
+}
+function loOnInput(prefix, buoc, t) {
+  var k = t && t.getAttribute ? t.getAttribute('data-k') : ''; if (!k) return;
+  var row = t, i = -1, box = $(prefix + 'LoBox');
+  while (row && row !== box) { if (row.getAttribute && row.getAttribute('data-i') !== null) { i = +row.getAttribute('data-i'); break; } row = row.parentNode; }
+  if (i < 0) return;
+  var st = loSt(prefix, buoc), r = st.rows[i]; if (!r) return;
+  if (k === 'het') r.het = !!t.checked; else r[k] = t.value;
+  if (r.err) { r.err = ''; row.classList.remove('lo-bad'); var m = row.querySelector('.msg'); if (m) m.parentNode.removeChild(m); }
+  if (k === 'hs') r.hsAuto = false;
+  if (k === 'maHs' && r.hsAuto) {    // "472-476" -> gợi ý số hồ sơ = 5 (người dùng vẫn sửa được)
+    var mm = String(t.value).match(/^\s*(\d+)\s*(?:-|–|đến|den)\s*(\d+)\s*$/i);
+    var hsEl = row.querySelector('[data-k="hs"]');
+    if (mm && +mm[2] >= +mm[1] && +mm[2] - +mm[1] < 60) { r.hs = String(+mm[2] - +mm[1] + 1); if (hsEl) hsEl.value = r.hs; }
+  }
+  if (k === 'hop') loRenderChips(prefix, buoc);
+}
+function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (máy chủ vẫn kiểm tra lại toàn bộ bằng ghi_)
+  var st = loSt(prefix, buoc), muc = [], seen = {}, loi = 0, tong = 0, xong = 0, thieuMa = 0;
+  st.rows.forEach(function (r) { r.err = ''; });
+  st.rows.forEach(function (r) {
+    if (loRowTrong(r)) return;
+    var h = String(r.hop || '').replace(/^\s+|\s+$/g, ''), e = '';
+    if (!h) e = 'Nhập mã hộp';
+    else if (!LO_HOP_RE.test(h)) e = 'Mã hộp không hợp lệ (chỉ chữ, số, . _ - /; tối đa 30 ký tự; không dấu cách, không dấu phẩy)';
+    else if (seen[h]) e = 'Trùng mã hộp với dòng phía trên';
+    else if (Number(r.hs) < 0 || Number(r.trang) < 0 || Number(r.to) < 0 || Number(r.loi) < 0) e = 'Số liệu không được âm';
+    else if (!(Number(r.hs) >= 1)) e = 'Nhập số hồ sơ (≥ 1)';
+    else if (!(Number(r.trang) >= 1 || Number(r.to) >= 1)) e = 'Nhập số trang hoặc số tờ';
+    if (e) { r.err = e; loi++; return; }
+    seen[h] = 1;
+    muc.push({ hop: h, buoc: buoc, soHoSo: r.hs, soTrang: r.trang, soTo: r.to, trangLoi: buoc === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
+    tong += Number(r.to) > 0 ? Number(r.to) : Number(r.trang);
+    if (r.het) xong++;
+    if (!String(r.maHs || '').replace(/\s+/g, '')) thieuMa++;
+  });
+  return { muc: muc, loi: loi, tong: tong, xong: xong, thieuMa: thieuMa };
+}
+function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ngay, nhom, nguoiHo, ghiChu} | chuỗi lỗi, btn, sau }
+  var prefix = o.prefix, buoc = o.buoc, st = loSt(prefix, buoc), resEl = $(prefix + 'LoRes');
+  var base = o.base();
+  if (typeof base === 'string') { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + esc(base) + '</div>'; return; }
+  var tt = loThuThap(prefix, buoc);
+  loRenderBox(prefix, buoc);
+  if (tt.loi) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + tt.loi + ' dòng chưa hợp lệ – xem thông báo đỏ ở từng hộp.</div>'; return; }
+  if (!tt.muc.length) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa có hộp nào để gửi.</div>'; return; }
+  var ten = STEP_LABEL[buoc] || buoc;
+  var hoi = 'Xác nhận gửi ' + tt.muc.length + ' hộp ' + ten + ' (' + nf(tt.tong) + ' tờ/trang' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
+  if (tt.thieuMa) hoi += '\n\n⚠ ' + tt.thieuMa + ' hộp chưa nhập MÃ HỒ SƠ đã làm.';
+  if (!confirm(hoi)) return;
+  if (!st.idLo) st.idLo = loIdMoi();      // gửi lại sau khi mất mạng dùng lại đúng idLo này -> máy chủ không ghi trùng
+  var p = {}; Object.keys(base).forEach(function (k) { p[k] = base[k]; });
+  p.idLo = st.idLo; p.muc = tt.muc;
+  var btn = $(o.btn); if (btn) btn.disabled = true;
+  if (resEl) resEl.innerHTML = '<div class="msg warn">Đang gửi ' + tt.muc.length + ' hộp…</div>';
+  call('ghiLo', p).then(function (r) {
+    st.idLo = '';
+    var tung = {}; (r.ketQua || []).forEach(function (k) { tung[k.hop] = k; });
+    st.rows = st.rows.filter(function (row) { var k = tung[String(row.hop || '').replace(/^\s+|\s+$/g, '')]; if (k && k.ok) return false; if (k) row.err = k.err; return true; });
+    if (!st.rows.length) st.rows.push(loRow());
+    var h = '<div class="msg ' + (r.loi ? 'warn' : 'ok') + '">' + (r.loi ? '⚠️ ' : '✔ ') + 'Đã ghi ' + r.added + ' bản ghi' + (r.guiLai ? ' (lần gửi này đã được ghi trước đó, không ghi lại)' : '') + (r.loi ? ' – ' + r.loi + ' dòng lỗi/bỏ qua (còn lại trong bảng để sửa)' : '') + '</div>';
+    h += '<div class="lo-res">' + (r.ketQua || []).map(function (k) {
+      return '<div class="lo-res-i">' + (k.ok ? '<span class="chip ok">✔</span>' : '<span class="chip bad">✕</span>') + ' <b>' + esc(k.hop) + '</b> · ' + esc(STEP_LABEL[k.buoc] || k.buoc) + (k.ok ? '' : ' – ' + esc(k.err)) + (k.warnings && k.warnings.length ? '<div class="muted">⚠ ' + esc(k.warnings.join('; ')) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+    if (resEl) resEl.innerHTML = h;
+    loRenderBox(prefix, buoc);
+    if (o.sau) o.sau(r);
+  }).catch(function (e) {
+    if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa gửi được: ' + esc(e) + '. Bấm Gửi lại nếu nghi mạng chập chờn – hệ thống không ghi trùng cùng một lần gửi.</div>';
+  }).then(function () { if ($(o.btn)) $(o.btn).disabled = false; });
+}
+function loPrepare(prefix, buoc) {     // gọi sau khi khung #<prefix>LoBox đã có trên trang
+  loRenderBox(prefix, buoc);
+  call('hopGoiY', { buoc: buoc }).then(function (list) {
+    if (!$(prefix + 'LoBox')) return;
+    loSt(prefix, buoc).goiY = list || [];
+    var dl = $(prefix + 'LoDl');
+    if (dl) dl.innerHTML = loSt(prefix, buoc).goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
+    loRenderChips(prefix, buoc);
+  }).catch(function () { });
+}
+
 var KEM_TACH = false;
 var KIEU_NHAN = '';   // 'CANHAN' | 'NHOM' – nhận hộp cho cá nhân hay cho nhóm   // nhớ lựa chọn "ghi kèm Tách file" khi đổi khâu
 function buildForm(open, m) {
@@ -1492,7 +1661,11 @@ function buildForm(open, m) {
   box.innerHTML = h;
   Array.prototype.forEach.call($('steps').children, function (b) { b.onclick = function () { STEP = b.dataset.s; buildForm(open, m); }; });
   var f = '';
-  if (STEP === 'SCAN' || STEP === 'TACH' || STEP === 'OCR') {
+  var laBaoCao = STEP === 'SCAN' || STEP === 'TACH' || STEP === 'OCR';
+  if (laBaoCao) f += loModeHtml('f');
+  if (laBaoCao && LO_MODE === 'LO') {
+    f += '<div id="fLoBox"></div><div id="fLoRes"></div>';
+  } else if (laBaoCao) {
     f += '<label>Mã hộp hồ sơ</label><input id="fHop" list="dlHop" placeholder="VD: 208.18.17" autocomplete="off"><datalist id="dlHop"></datalist>' +
       '<div class="row num-row">' +
         '<div><label>Số hồ sơ</label><input id="fHs" type="number" inputmode="numeric" min="1" placeholder="0"></div>' +
@@ -1512,7 +1685,14 @@ function buildForm(open, m) {
   f += '<label>Ghi chú</label><input id="fNote" placeholder="Ghi chú thêm nếu cần">';
   $('fields').innerHTML = f;
   if ($('fHop') && $('fHop').tagName === 'TEXTAREA') $('fHop').oninput = function () { var n = $('fHop').value.split(/[\s,;]+/).filter(Boolean).length; $('fCnt').textContent = 'Số hộp: ' + n; };
-  $('fSend').onclick = send;
+  if ($('fLoBox')) {
+    $('fSend').onclick = function () {
+      loGui({ prefix: 'f', buoc: STEP, btn: 'fSend', sau: function () { loadNK(); renderWidget(true); },
+        base: function () { var ca = $('fCa') ? $('fCa').value : CUR_CA; if (!ca) return 'Chưa chọn ca'; return { ca: ca, ghiChu: $('fNote').value }; } });
+    };
+    loPrepare('f', STEP);
+  } else $('fSend').onclick = send;
+  loModeBind('f', function () { buildForm(open, m); });
   if ($('kieuNhan')) {
     var caHT = function () { return $('fCa') ? $('fCa').value : CUR_CA; };
     var nhomCua = function () { var c = (ME.cas || []).filter(function (x) { return x.ca === caHT(); })[0]; return c && c.nhom ? c : null; };
@@ -1539,7 +1719,8 @@ function buildForm(open, m) {
     veKieuNhan();
   }
   if ($('fKemTach')) { $('fKemTach').checked = KEM_TACH; $('fKemTach').onchange = function () { KEM_TACH = $('fKemTach').checked; }; }
-  call('hopGoiY', { buoc: STEP }).then(function (list) {
+  ($('fLoBox') ? Promise.resolve(null) : call('hopGoiY', { buoc: STEP })).then(function (list) {
+    if (!list) return;
     if ($('dlHop')) $('dlHop').innerHTML = list.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
     if ($('fHop') && $('fHop').tagName === 'TEXTAREA' && list.length) $('fCnt').textContent = 'Hộp gợi ý: ' + list.slice(0, 12).join(', ') + (list.length > 12 ? '…' : '');
   }).catch(function () {});
@@ -1754,7 +1935,9 @@ function renderHo(d) {
     d.nguoi.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('') + '</select></div></div>';
   if (HO_STEP === 'NHAN_NHOM') h += '<label>Mã hộp (mỗi dòng 1 mã)</label><textarea id="hoHop"></textarea>';
   else {
-    h += '<label>Mã hộp hồ sơ</label><input id="hoHop" autocomplete="off">' +
+    h += loModeHtml('ho');
+    if (LO_MODE === 'LO') h += '<div id="hoLoBox"></div><div id="hoLoRes"></div>';
+    else h += '<label>Mã hộp hồ sơ</label><input id="hoHop" autocomplete="off">' +
       '<div class="row num-row"><div><label>Số hồ sơ</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
       '<div><label>Số tờ</label><input id="hoTo" type="number" min="0" placeholder="0"></div>' + (HO_STEP === 'SCAN' ? '<div><label>Trang lỗi</label><input id="hoLoi" type="number" min="0" value="0"></div>' : '') + '</div>' +
       '<div class="check-card"><label class="check-label"><input type="checkbox" id="hoHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
@@ -1767,7 +1950,13 @@ function renderHo(d) {
     var k = $('hoNhom').value, ps = k ? g[k] : d.nguoi;
     $('hoNg').innerHTML = '<option value="">— Chọn người —</option>' + ps.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
   };
+  loModeBind('ho', function () { if ($('hoCard')) $('hoCard').remove(); renderHo(d); });
+  if ($('hoLoBox')) loPrepare('ho', HO_STEP);
   $('hoSend').onclick = function () {
+    if ($('hoLoBox')) {
+      return loGui({ prefix: 'ho', buoc: HO_STEP, btn: 'hoSend',
+        base: function () { if (!$('hoNg').value) return 'Vui lòng chọn người được nhập hộ'; return { boSung: true, ngay: d.ngay, ca: d.ca, nhom: $('hoNhom').value, nguoiHo: $('hoNg').value, ghiChu: $('hoNote').value }; } });
+    }
     var p = { boSung: true, ngay: d.ngay, ca: d.ca, nhom: $('hoNhom').value, nguoiHo: $('hoNg').value, buoc: HO_STEP, hop: $('hoHop').value, ghiChu: $('hoNote').value };
     if (!p.nguoiHo) return msg('hoMsg', 'Vui lòng chọn người được nhập hộ');
     if (HO_STEP !== 'NHAN_NHOM') { p.soHoSo = $('hoHs').value; p.soTrang = $('hoTrang').value; p.soTo = $('hoTo').value; p.hetHop = $('hoHet').checked; if ($('hoLoi')) p.trangLoi = $('hoLoi').value; }
