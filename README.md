@@ -17,10 +17,11 @@ Hệ thống báo cáo sản lượng số hóa hồ sơ tại Trung tâm Lưu t
 | `docs/CHUC_NANG.md` | Sổ đăng ký chức năng + bảng kiểm tra sau mỗi lần sửa |
 | `docs/API.md` | Hợp đồng giữa `Index.html` và `Code.gs` |
 | `docs/PHAN_CONG.md` | Phân công: Opus (CTO, điều phối, review, việc khó), Sonnet (code), Antigravity (giao diện) |
+| `docs/CHUAN_PROMPT.md` | Chuẩn viết prompt + mẫu prompt (mở chat Opus mới, giao Sonnet, giao Antigravity, review) + chuẩn báo cáo |
 | `docs/prompts/` | Prompt giao việc đang dùng (ví dụ chuẩn hóa quy trình báo cáo cho Sonnet) |
 | `CHANGELOG.md` | Nhật ký thay đổi |
 
-> Bắt đầu chat/phiên mới: *"Đọc `AGENTS.md` và `docs/SNAPSHOT.md` rồi làm tiếp."*
+> Bắt đầu chat/phiên mới: *"Đọc `AGENTS.md` và `docs/SNAPSHOT.md` rồi làm tiếp."* Mở chat Opus (CTO) mới: dùng mẫu 10.1 trong `docs/CHUAN_PROMPT.md`.
 
 ## Triển khai nhanh
 Xem `HUONG_DAN_TRIEN_KHAI.md`: tạo Google Sheet từ file khởi tạo, dán `Code.gs` và `Index.html` vào Apps Script, chạy `setup`, triển khai Web App.

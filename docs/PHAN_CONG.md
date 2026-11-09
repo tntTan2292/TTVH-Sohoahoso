@@ -25,7 +25,9 @@
 **"Việc khó"** (Opus tự làm): sai một chỗ là sai số liệu báo cáo Lãnh đạo, lộ quyền, hoặc hỏng dữ liệu thật; hoặc lỗi Sonnet đã sửa 2 lần không xong.
 
 ## Quy trình phối hợp
-1. **Opus** nhận yêu cầu từ chủ dự án → xác định loại việc theo bảng → viết prompt vào `docs/prompts/PROMPT_<NGUOI>_<VIEC>.md` → ghi vào SNAPSHOT: việc, người làm, prompt.
+> Cách viết prompt, mẫu prompt, mức kiểm tra L1/L2/L3, cách báo cáo: **`docs/CHUAN_PROMPT.md`**.
+
+1. **Opus** nhận yêu cầu từ chủ dự án → xác định loại việc theo bảng → (việc lớn) viết phiếu giao việc `docs/prompts/PROMPT_<NGUOI>_<VIEC>.md` → ghi vào SNAPSHOT: việc, người làm, phiếu → đưa prompt ngắn theo mẫu `CHUAN_PROMPT.md` mục 10.
 2. **Chủ dự án** mở chat mới với đúng developer và gõ: *"Đọc `AGENTS.md`, `docs/SNAPSHOT.md` rồi làm theo `docs/prompts/<file>`."*
 3. **Developer** làm, mỗi việc một commit, cập nhật SNAPSHOT trước khi dừng (kể cả dừng giữa chừng).
 4. Việc cần review → chủ dự án mở chat Opus: *"Review các commit của việc <tên> theo `docs/PHAN_CONG.md`."* Opus ghi kết quả (đạt / cần sửa + danh sách) vào SNAPSHOT.

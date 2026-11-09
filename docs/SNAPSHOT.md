@@ -9,8 +9,8 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 09/11/2026 — phiên Claude Code (Opus): tài liệu, F-QL-10, prompt chuẩn hóa |
-| Nhánh / commit | `main` @ `07618a0` + commit prompt chuẩn hóa (đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso`) |
+| Cập nhật lúc | 09/11/2026 — Opus: thêm `docs/CHUAN_PROMPT.md` (chuẩn viết prompt) |
+| Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
 | Bản đang chạy | Apps Script **phiên bản 13** trên link chính `…MlRA/exec`; link phụ `…NIQ/exec` còn ở phiên bản 12 |
 | Mã trên Apps Script khớp repo? | **Không** — repo có thêm F-QL-10 (`Index.html`), chưa triển khai. Bản 13 = `ef54be3` |
 | Mock | `node tools/test_mock.js` → **190 đạt, 0 lỗi** |

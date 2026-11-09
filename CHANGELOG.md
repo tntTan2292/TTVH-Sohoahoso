@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
+- Tài liệu: thêm `docs/CHUAN_PROMPT.md` — chuẩn viết prompt (học từ CODEX_PROMPT_STANDARD + MASTER_START_PROMPT của dự án Điều hành chất lượng): prompt < 250 từ, cặp developer, delta, L1/L2/L3, 2 kênh báo cáo, Opus tự duyệt, bàn giao chat, 5 mẫu prompt.
 - Tài liệu: thêm `docs/DE_XUAT_CHUAN_HOA_BAO_CAO.md` — giai đoạn 1 chuẩn hóa báo cáo (đếm thao tác 61 ô/16 gửi/16 confirm cho 5 hộp, đề xuất P1–P7, câu hỏi Q1–Q7). Chưa sửa mã, chờ duyệt.
 - Tài liệu: thêm `docs/PHAN_CONG.md` — Opus (CTO điều phối, review, việc khó), Sonnet (code), Antigravity Gemini Flash 3.8 (giao diện).
 - Tài liệu: thêm `docs/prompts/PROMPT_SONNET_CHUAN_HOA_BAO_CAO.md` — giao Sonnet chuẩn hóa quy trình báo cáo, bỏ nhập trùng (2 giai đoạn: đề xuất → duyệt → làm).
