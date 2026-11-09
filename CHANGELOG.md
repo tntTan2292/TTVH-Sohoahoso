@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-09
+- P4 · F-BC-18: bảng nhiều hộp chỉ còn ô "Số tờ", chỉ gửi `soTo` (R2: `SoTrang` giữ 0, không hiện hai cột trùng số); `Code.gs`/`dash_` không đổi, mock so `dash_`, Lịch sử, Nhật ký ca. Form cũ giữ hai ô. Mock 224/0.
 - P2 (gồm P1) · F-BC-18, F-QL-11: action `ghiLo` + bảng nhiều hộp dùng chung tab Báo cáo và form Nhập hộ. R1: cả lô chỉ đọc NhatKy 1 lần (`memoThem_`, mock đếm = 1 cho lô 10 hộp × 3 khâu); R4: `idLo` chống ghi đôi (CacheService 10 phút); mỗi dòng có mã hồ sơ; gõ tay mã ngoài danh sách; so `dash_` giống hệt chuỗi `ghi` cũ. Form cũ giữ nguyên. Mock 220/0. **Chưa triển khai Apps Script.**
 - P0 · `tools/kiem_tra_giao_dien.js`: kiểm `id`/hàm giao diện trong CHUC_NANG.md, action trong API.md ↔ `route_` ↔ `call('…')`, cú pháp `<script>`/Code.gs, id tĩnh trùng. 328 đạt / 0 lỗi; đã thử cố ý đổi `id="fSend"` và tên `buildForm` → bắt được.
 - Tài liệu: thêm `docs/CHUAN_PROMPT.md` — chuẩn viết prompt (học từ CODEX_PROMPT_STANDARD + MASTER_START_PROMPT của dự án Điều hành chất lượng): prompt < 250 từ, cặp developer, delta, L1/L2/L3, 2 kênh báo cáo, Opus tự duyệt, bàn giao chat, 5 mẫu prompt.

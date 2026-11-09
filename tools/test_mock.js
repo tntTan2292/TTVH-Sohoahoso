@@ -584,5 +584,24 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(dashLo === dashOld && dashLo.length > 200, 'so sánh: dash_ trước/sau (ghiLo vs ghi cũ) giống hệt trên cùng dữ liệu');
 }
 
+// ===== P4: giao diện chỉ gửi soTo (soTrang không gửi) – số liệu vẫn đúng ở dash_ và lịch sử =====
+{
+  const idn = 'LO-P4-TEST-0001';
+  ['T1', 'T2'].forEach(h => { rep(tTT, { buoc: 'NHAN', hop: h }); api(tA, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: h, kieuNhan: 'CANHAN' }); });
+  const dTruoc = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data;
+  const r1 = api(tA, 'ghiLo', { ca: 'Chiều', idLo: idn, muc: [
+    { hop: 'T1', buoc: 'SCAN', soHoSo: 2, soTo: 37, hetHop: true, maHoSo: '10-11' },
+    { hop: 'T1', buoc: 'TACH', soHoSo: 2, soTo: 37, hetHop: true },
+    { hop: 'T2', buoc: 'SCAN', soHoSo: 1, soTo: 12, hetHop: false }] });
+  const rows = sh('NhatKy').rows.filter(x => x[6] === 'T1' || x[6] === 'T2').filter(x => x[5] !== 'NHAN' && x[5] !== 'NHAN_NHOM');
+  ok(r1.ok && r1.data.added === 3 && rows.length === 3 && rows.every(x => Number(x[8]) === 0 && Number(x[9]) > 0), 'P4: chỉ gửi soTo → cột SoTrang giữ 0, SoTo có số (không trùng hai cột)', rows);
+  const dSau = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }).data;
+  ok(dSau.day.scanDV - dTruoc.day.scanDV === 49 && dSau.day.tachDV - dTruoc.day.tachDV === 37 && dSau.day.scanHop - dTruoc.day.scanHop === 1, 'P4: dash_ cộng đúng theo số tờ (dv = to), hộp xong đếm 1', [dSau.day.scanDV - dTruoc.day.scanDV, dSau.day.tachDV - dTruoc.day.tachDV]);
+  const ls = api(tA, 'lichSu', { tu: '2026-11-09', den: '2026-11-09' }).data;
+  ok(ls.filter(x => x.hop === 'T1' && x.buoc === 'SCAN')[0].dv === 37, 'P4: Lịch sử cá nhân hiện đúng 37 tờ cho bản ghi chỉ có soTo');
+  const nkr = api(tA, 'nhatKy', {}).data.filter(x => x.hop === 'T1' && x.buoc === 'SCAN')[0];
+  ok(nkr.to === 37 && nkr.trang === 0, 'P4: Nhật ký ca trả to=37, trang=0 (không hiện hai cột trùng số)', nkr);
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

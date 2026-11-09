@@ -1478,10 +1478,10 @@ var LO_HOP_RE = /^[A-Za-z0-9][A-Za-z0-9._\/\-]{0,29}$/;
 var LO_MODE = 'LO';        // 'LO' = bảng nhiều hộp, 'MOT' = form một hộp (cũ)
 try { if (localStorage.getItem('loMode') === 'MOT') LO_MODE = 'MOT'; } catch (e) { }
 var LO_STATE = {};         // LO_STATE[tiền tố|khâu] = { rows: [...], idLo: '', goiY: [] } – giữ dòng đã nhập khi đổi khâu / vẽ lại form
-function loRow(hop) { return { hop: hop || '', maHs: '', hs: '', trang: '', to: '', loi: '', het: false, hsAuto: true, err: '' }; }
+function loRow(hop) { return { hop: hop || '', maHs: '', hs: '', to: '', loi: '', het: false, hsAuto: true, err: '' }; }
 function loSt(prefix, buoc) { var k = prefix + '|' + buoc; if (!LO_STATE[k]) LO_STATE[k] = { rows: [loRow()], idLo: '', goiY: [] }; return LO_STATE[k]; }
 function loIdMoi() { return 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
-function loRowTrong(r) { return !r.hop && !r.maHs && !r.hs && !r.trang && !r.to && !r.loi && !r.het; }
+function loRowTrong(r) { return !r.hop && !r.maHs && !r.hs && !r.to && !r.loi && !r.het; }
 function loModeHtml(prefix) {
   return '<div class="steps lo-mode" id="' + prefix + 'Mode">' +
     '<button type="button" data-m="LO" class="step-btn step-nhan' + (LO_MODE === 'LO' ? ' on' : '') + '">📦 Nhiều hộp</button>' +
@@ -1510,7 +1510,6 @@ function loRenderBox(prefix, buoc) {
       '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
       '<div class="row num-row">' +
         '<div><label>Số hồ sơ</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
-        '<div><label>Số trang</label><input data-k="trang" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.trang) + '"></div>' +
         '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.to) + '"></div>' +
         (scan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
       '</div>' +
@@ -1574,13 +1573,14 @@ function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (m
     if (!h) e = 'Nhập mã hộp';
     else if (!LO_HOP_RE.test(h)) e = 'Mã hộp không hợp lệ (chỉ chữ, số, . _ - /; tối đa 30 ký tự; không dấu cách, không dấu phẩy)';
     else if (seen[h]) e = 'Trùng mã hộp với dòng phía trên';
-    else if (Number(r.hs) < 0 || Number(r.trang) < 0 || Number(r.to) < 0 || Number(r.loi) < 0) e = 'Số liệu không được âm';
+    else if (Number(r.hs) < 0 || Number(r.to) < 0 || Number(r.loi) < 0) e = 'Số liệu không được âm';
     else if (!(Number(r.hs) >= 1)) e = 'Nhập số hồ sơ (≥ 1)';
-    else if (!(Number(r.trang) >= 1 || Number(r.to) >= 1)) e = 'Nhập số trang hoặc số tờ';
+    else if (!(Number(r.to) >= 1)) e = 'Nhập số tờ (≥ 1)';
     if (e) { r.err = e; loi++; return; }
     seen[h] = 1;
-    muc.push({ hop: h, buoc: buoc, soHoSo: r.hs, soTrang: r.trang, soTo: r.to, trangLoi: buoc === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
-    tong += Number(r.to) > 0 ? Number(r.to) : Number(r.trang);
+    muc.push({ hop: h, buoc: buoc, soHoSo: r.hs, soTo: r.to,   // P4/R2: chỉ gửi soTo (không gửi soTrang)
+       trangLoi: buoc === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
+    tong += Number(r.to);
     if (r.het) xong++;
     if (!String(r.maHs || '').replace(/\s+/g, '')) thieuMa++;
   });
@@ -1595,7 +1595,7 @@ function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ng
   if (tt.loi) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + tt.loi + ' dòng chưa hợp lệ – xem thông báo đỏ ở từng hộp.</div>'; return; }
   if (!tt.muc.length) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa có hộp nào để gửi.</div>'; return; }
   var ten = STEP_LABEL[buoc] || buoc;
-  var hoi = 'Xác nhận gửi ' + tt.muc.length + ' hộp ' + ten + ' (' + nf(tt.tong) + ' tờ/trang' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
+  var hoi = 'Xác nhận gửi ' + tt.muc.length + ' hộp ' + ten + ' (' + nf(tt.tong) + ' tờ' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
   if (tt.thieuMa) hoi += '\n\n⚠ ' + tt.thieuMa + ' hộp chưa nhập MÃ HỒ SƠ đã làm.';
   if (!confirm(hoi)) return;
   if (!st.idLo) st.idLo = loIdMoi();      // gửi lại sau khi mất mạng dùng lại đúng idLo này -> máy chủ không ghi trùng

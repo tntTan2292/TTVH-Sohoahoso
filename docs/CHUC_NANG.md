@@ -6,7 +6,7 @@
 > Cột **Mã** dùng để nhắc tới chức năng trong commit, prompt và CHANGELOG (ví dụ "sửa F-BC-04").
 > Cột **Backend** là hàm trong `apps-script/Code.gs`; cột **Giao diện** là hàm/`id` trong `apps-script/Index.html`.
 
-Cập nhật lần cuối: 09/11/2026 — phiên bản 13 + F-QL-10, F-BC-18, F-QL-11 (chưa triển khai), mock 220 đạt / 0 lỗi.
+Cập nhật lần cuối: 09/11/2026 — phiên bản 13 + F-QL-10, F-BC-18, F-QL-11 (chưa triển khai), mock 224 đạt / 0 lỗi.
 
 ---
 
@@ -79,7 +79,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-BC-15 | Lịch sử cá nhân (chia theo thành viên nhóm lúc báo cáo) | `lichSu_` | `openLichSu`, `#modalLS`, `#lsTu`, `#lsDen`, `#lsBody` |
 | F-BC-16 | Ngoài giờ nhập / ca đã chốt → không ghi được | `caState_`, `ghi_` | chip trạng thái |
 | F-BC-17 | Lãnh đạo không ghi được | `ghi_`, `LANHDAO_ACTIONS` | ẩn tab Báo cáo |
-| F-BC-18 | **Báo cáo nhiều hộp một lần (P2):** bảng nhiều dòng cho Scan/Tách/OCR (≤ 10 hộp × 3 khâu/lần). Mỗi dòng: mã hộp (chọn gợi ý/chạm chip hoặc **gõ tay** mã ngoài danh sách), **mã hồ sơ đã làm**, số hồ sơ (gõ "472-476" gợi ý 5), số trang, số tờ, trang lỗi (Scan), xong hộp. Một confirm tóm tắt; kết quả từng hộp; hộp lỗi bỏ qua và báo lý do, hộp đúng vẫn ghi. Cả lô chỉ đọc NhatKy 1 lần (R1); gửi lại cùng `idLo` không ghi trùng (R4). Form một hộp cũ vẫn còn (nút "Một hộp (form cũ)"; chọn được nhớ trong trình duyệt) | `ghiLo_` (gọi lại `ghi_` cho từng mục), `memoThem_`, `LO_MAX_HOP` | `loRenderBox`, `loThuThap`, `loGui`, `loPrepare`, `loModeHtml`, `#fLoBox`, `#fLoRes` |
+| F-BC-18 | **Báo cáo nhiều hộp một lần (P2):** bảng nhiều dòng cho Scan/Tách/OCR (≤ 10 hộp × 3 khâu/lần). Mỗi dòng: mã hộp (chọn gợi ý/chạm chip hoặc **gõ tay** mã ngoài danh sách), **mã hồ sơ đã làm**, số hồ sơ (gõ "472-476" gợi ý 5), **số tờ** (P4: bảng này không có ô Số trang, chỉ gửi `soTo`; form cũ vẫn có cả hai ô), trang lỗi (Scan), xong hộp. Một confirm tóm tắt; kết quả từng hộp; hộp lỗi bỏ qua và báo lý do, hộp đúng vẫn ghi. Cả lô chỉ đọc NhatKy 1 lần (R1); gửi lại cùng `idLo` không ghi trùng (R4). Form một hộp cũ vẫn còn (nút "Một hộp (form cũ)"; chọn được nhớ trong trình duyệt) | `ghiLo_` (gọi lại `ghi_` cho từng mục), `memoThem_`, `LO_MAX_HOP` | `loRenderBox`, `loThuThap`, `loGui`, `loPrepare`, `loModeHtml`, `#fLoBox`, `#fLoRes` |
 
 ## 5. Quản lý ca – Tổ trưởng/Tổ phó/ADMIN (F-QL)
 
@@ -157,7 +157,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 ## Bảng kiểm tra sau mỗi lần sửa (bắt buộc)
 
 **Tự động (máy):**
-1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 220).
+1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 224).
 2. `node tools/kiem_tra_giao_dien.js` → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
 
 **Bằng tay trên link thử (sau khi triển khai), 4 tài khoản:**
