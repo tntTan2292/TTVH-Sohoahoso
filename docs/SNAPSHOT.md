@@ -57,6 +57,7 @@
   - **☑ Opus review Đợt B (10/11/2026, `49336fc..0bb84bb`): ĐẠT – GO triển khai.** Mock 371/0, giao diện 482/0, `node --check` Code.gs + script Index.html đạt. Đã soi: B1 `donViChon_` (tạo mới bắt buộc đơn vị trong danh mục; sửa giữ được giá trị cũ ngoài danh mục, `fillNsDv` hiện "(ngoài danh mục – giữ nguyên)" → TT/TP vẫn sửa tổ viên được khi danh mục còn trống); đổi tên đơn vị đang có người bị chặn. B2 chỉ đổi cột `DonVi`, sao lưu không có PIN, `xacNhan:'DONVI'`. B3 PIN tạm lưu **băm** (PinHash+Salt, PinTam trống, DoiPin) khớp `login_`, log không chứa PIN; mã HRM kiểu số bị từ chối, SheetJS 0.18.5 cdnjs `raw:false`; vai trò chỉ TOVIEN/TOTRUONG/TOPHO; có lỗi → không ghi. Ô "Nhận từ TTLT" (F-DB-03) đạt.
     - **Sau triển khai (theo thứ tự, ADMIN):** (1) tab Nhân sự → Chuẩn hóa đơn vị → **Xem trước** (danh mục đang trống nên mọi tên sẽ ở "chưa khớp") → chụp bảng gửi chủ dự án; (2) chủ dự án chọn tên chuẩn cho từng nhóm (hoặc "+" lấy tên gợi ý); (3) Áp dụng (gõ `DONVI`). Chưa áp dụng thì chưa giao B4.
     - Lưu ý vận hành: khi danh mục còn trống, **tạo nhân sự mới sẽ báo "chưa có trong danh mục"** → làm bước chuẩn hóa trước khi thêm người.
+- ☐ **Đợt H – Mã hộp & Đối soát (Sonnet, thêm 10/11/2026 theo chủ dự án; phiếu mục ĐỢT H):** H1 khóa hộp `maHopKhoa_` (`2.1.87` = `02.01.87`) — **làm NGAY sau chuẩn hóa đơn vị, trước B4** (lỗi số liệu) · H2 tab con "Đối soát hộp" + hàm `trangThaiHop_` dùng chung, **gộp C0** · H3 ép dạng chuẩn + chuẩn hóa dữ liệu cũ (chờ chủ dự án). Thứ tự: B triển khai ✔ → chuẩn hóa đơn vị → **H1** → B4 → T1 → **H2(+C0)** → T2 → C1 → C2.
 - ☐ **Đợt T (Sonnet, thêm 10/11/2026 theo chủ dự án — làm ngay sau Đợt B, trước C):** T1 lớp chờ dùng chung + chống bấm lặp (`call()` + `idGui`) · T2 đo thời gian máy chủ → bảng đề xuất tối ưu → Opus review · ☐ triển khai. Chi tiết: phiếu mục ĐỢT T.
 - ☐ **Đợt C:** **C0 ô số liệu khung Ca trong ngày bấm được → danh sách chi tiết (thêm 10/11, action đọc `chiTietCa`)** → C1 biểu đồ tiến độ hằng ngày 30 ngày (Sonnet) → C2 giao diện điện thoại (Antigravity) · ☐ Opus review (kiểm khổ 375px) · ☐ triển khai
 
@@ -92,6 +93,7 @@
 - Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
 
 ## 5. Quyết định đang chờ chủ dự án
+- **Mã hộp (H3, 10/11/2026):** (a) Đoạn đầu có khi nào 3 chữ số (vd `208.18.17`)? (b) Hộp `TEST-…`/mã không theo mẫu số: giữ nguyên, không ép? (c) Hộp chưa có nhận TTLT khi báo cáo: giữ **cảnh báo** như hiện nay hay **chặn cứng**? (Opus khuyến nghị: a – cho phép, giữ nguyên số chữ số; b – giữ nguyên; c – cảnh báo, vì nhóm có thể làm trước khi Quản lý kịp ghi nhận.)
 - **Chuẩn hóa báo cáo Q8:** Mã hồ sơ có bắt buộc khi hộp chưa xong không? (Đợt 1 mặc định: không bắt buộc, hiển thị nổi bật, nhắc khi trống.)
 - Hộp đã trả có còn được Tách file không.
 - Số 571 trang "Tách file" ngày 05/11 ca tối (đã chuyển sang Tách) — cần Lãnh đạo xác nhận.
