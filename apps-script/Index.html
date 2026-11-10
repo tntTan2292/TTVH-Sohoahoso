@@ -3543,9 +3543,9 @@ function fillNsDv(giaTri) {      // danh sách chọn Đơn vị = đơn vị đ
   sel.innerHTML = ops; sel.value = thay || cur || '';
 }
 function veDV() {
-  $('dvList').innerHTML = '<table><tr><th>Đơn vị</th><th>Thứ tự</th><th>Số người</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (DV_DS.length ? DV_DS.map(function (x, i) {
-    return '<tr' + (x.hoatDong ? '' : ' style="opacity:.55"') + '><td><b>' + esc(x.ten) + '</b></td><td>' + x.thuTu + '</td><td>' + x.soNguoi + '</td><td>' + (x.hoatDong ? '<span class="chip ok">Hoạt động</span>' : '<span class="chip chip-mut">Ẩn</span>') + '</td>' +
-      '<td><button class="sm" data-dve="' + i + '">Sửa</button> <button class="sm" data-dvh="' + i + '">' + (x.hoatDong ? 'Ẩn' : 'Hiện lại') + '</button></td></tr>';
+  $('dvList').innerHTML = '<table class="table-card-mobile"><tr><th>Đơn vị</th><th>Thứ tự</th><th>Số người</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (DV_DS.length ? DV_DS.map(function (x, i) {
+    return '<tr' + (x.hoatDong ? '' : ' style="opacity:.55"') + '><td><b>' + esc(x.ten) + '</b></td><td data-label="Thứ tự">' + x.thuTu + '</td><td data-label="Số người">' + x.soNguoi + '</td><td data-label="Trạng thái">' + (x.hoatDong ? '<span class="chip ok">Hoạt động</span>' : '<span class="chip chip-mut">Ẩn</span>') + '</td>' +
+      '<td data-label="Thao tác"><button class="sm" data-dve="' + i + '">Sửa</button> <button class="sm" data-dvh="' + i + '">' + (x.hoatDong ? 'Ẩn' : 'Hiện lại') + '</button></td></tr>';
   }).join('') : '<tr><td colspan="5" class="muted">Chưa có đơn vị nào. Thêm đơn vị ở trên (hoặc dùng "Chuẩn hóa đơn vị" để lấy từ tên đang có ở nhân sự).</td></tr>') + '</table>';
   Array.prototype.forEach.call($('dvList').querySelectorAll('[data-dve]'), function (b) {
     b.onclick = function () { var x = DV_DS[+b.dataset.dve]; DV_SUA = x.ten; $('dvTen').value = x.ten; $('dvThuTu').value = x.thuTu; $('dvLuu').textContent = 'Lưu đơn vị'; msg('dvMsg', ''); };
@@ -3583,14 +3583,14 @@ function dvChCall(apDung) {
 function veDvCh(r) {
   var h = '<div class="muted" style="margin-top:12px;">Đã quét ' + r.soNguoiQuet + ' nhân sự (bỏ qua người giả TN-xx) · ' + r.soDonViChuan + ' đơn vị trong danh mục' + (r.donViTrong ? ' · ' + r.donViTrong + ' người chưa có đơn vị' : '') + '</div>';
   if (r.doi.length) {
-    h += '<h3 style="margin:14px 0 6px;">Sẽ đổi tên đơn vị (' + r.doi.length + ' tên, ' + r.doi.reduce(function (a, x) { return a + x.soNguoi; }, 0) + ' người)</h3><div class="scroll"><table><tr><th>Tên hiện tại</th><th>Đổi thành</th><th>Số người</th><th>Người</th><th></th></tr>' + r.doi.map(function (x) {
-      return '<tr><td>' + esc(x.tenCu) + '</td><td><b>' + esc(x.tenMoi) + '</b></td><td>' + x.soNguoi + '</td><td>' + esc(x.nguoi.join(', ')) + '</td><td>' + (x.nguon === 'ADMIN_CHON' ? '<button class="sm" data-dvb="' + esc(x.khoa) + '">Bỏ chọn</button>' : '') + '</td></tr>';
+    h += '<h3 style="margin:14px 0 6px;">Sẽ đổi tên đơn vị (' + r.doi.length + ' tên, ' + r.doi.reduce(function (a, x) { return a + x.soNguoi; }, 0) + ' người)</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Tên hiện tại</th><th>Đổi thành</th><th>Số người</th><th>Người</th><th></th></tr>' + r.doi.map(function (x) {
+      return '<tr><td><b>' + esc(x.tenCu) + '</b></td><td data-label="Đổi thành"><b>' + esc(x.tenMoi) + '</b></td><td data-label="Số người">' + x.soNguoi + '</td><td data-label="Người">' + esc(x.nguoi.join(', ')) + '</td><td data-label="Thao tác">' + (x.nguon === 'ADMIN_CHON' ? '<button class="sm" data-dvb="' + esc(x.khoa) + '">Bỏ chọn</button>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
   }
   if (r.themVaoDanhMuc.length) h += '<div class="msg warn"><span>Sẽ thêm vào danh mục: <b>' + esc(r.themVaoDanhMuc.join(', ')) + '</b></span></div>';
   if (r.khongKhop.length) {
-    h += '<h3 style="margin:14px 0 6px;">Tên chưa có trong danh mục – chọn cách xử lý (' + r.khongKhop.length + ')</h3><div class="scroll"><table><tr><th>Tên đang dùng</th><th>Số người</th><th>Xử lý</th></tr>' + r.khongKhop.map(function (k, i) {
-      return '<tr><td>' + k.cacTen.map(function (t) { return esc(t.ten) + ' (' + t.soNguoi + ')'; }).join('<br>') + '</td><td>' + k.soNguoi + '</td><td><select data-dvk="' + esc(k.khoa) + '"><option value="">(để nguyên, chưa xử lý)</option><option value="+">Thêm "' + esc(k.goiY) + '" vào danh mục</option>' +
+    h += '<h3 style="margin:14px 0 6px;">Tên chưa có trong danh mục – chọn cách xử lý (' + r.khongKhop.length + ')</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Tên đang dùng</th><th>Số người</th><th>Xử lý</th></tr>' + r.khongKhop.map(function (k, i) {
+      return '<tr><td><b>' + k.cacTen.map(function (t) { return esc(t.ten) + ' (' + t.soNguoi + ')'; }).join('<br>') + '</b></td><td data-label="Số người">' + k.soNguoi + '</td><td data-label="Xử lý"><select data-dvk="' + esc(k.khoa) + '"><option value="">(để nguyên, chưa xử lý)</option><option value="+">Thêm "' + esc(k.goiY) + '" vào danh mục</option>' +
         DV_DS.filter(function (x) { return x.hoatDong; }).map(function (x) { return '<option value="' + esc(x.ten) + '">Gom về: ' + esc(x.ten) + '</option>'; }).join('') + '</select></td></tr>';
     }).join('') + '</table></div>';
   }
@@ -3667,8 +3667,8 @@ function imXem() {
 function veImXem(r) {
   var nhan = { OK: '<span class="chip ok">Sẽ thêm</span>', BO_QUA: '<span class="chip chip-mut">Bỏ qua</span>', LOI: '<span class="chip bad">Lỗi</span>' };
   var h = '<div class="muted" style="margin-top:12px;">' + r.dong.length + ' dòng: <b>' + r.soOk + '</b> sẽ thêm · <b>' + r.soBoQua + '</b> bỏ qua (mã đã có) · <b>' + r.soLoi + '</b> lỗi</div>' +
-    '<div class="scroll"><table><tr><th>#</th><th>Mã HRM</th><th>Họ tên</th><th>Chức vụ</th><th>Đơn vị</th><th>Vai trò</th><th>Kết quả</th></tr>' + r.dong.map(function (x) {
-      return '<tr' + (x.trangThai === 'LOI' ? ' style="background:rgba(220,38,38,.08)"' : '') + '><td>' + x.stt + '</td><td><code>' + esc(x.ma) + '</code></td><td>' + esc(x.ten) + '</td><td>' + esc(x.chucVu) + '</td><td>' + esc(x.donVi) + '</td><td>' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</td><td>' + nhan[x.trangThai] + (x.loi.length ? '<br>' + esc(x.loi.join('; ')) : '') + (x.ghiChu ? '<br><small class="muted">' + esc(x.ghiChu) + '</small>' : '') + '</td></tr>';
+    '<div class="scroll"><table class="table-card-mobile"><tr><th>#</th><th>Mã HRM</th><th>Họ tên</th><th>Chức vụ</th><th>Đơn vị</th><th>Vai trò</th><th>Kết quả</th></tr>' + r.dong.map(function (x) {
+      return '<tr' + (x.trangThai === 'LOI' ? ' style="background:rgba(220,38,38,.08)"' : '') + '><td>' + x.stt + '</td><td data-label="Mã HRM"><code>' + esc(x.ma) + '</code></td><td data-label="Họ tên"><b>' + esc(x.ten) + '</b></td><td data-label="Chức vụ">' + esc(x.chucVu) + '</td><td data-label="Đơn vị">' + esc(x.donVi) + '</td><td data-label="Vai trò">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</td><td data-label="Kết quả">' + nhan[x.trangThai] + (x.loi.length ? '<br>' + esc(x.loi.join('; ')) : '') + (x.ghiChu ? '<br><small class="muted">' + esc(x.ghiChu) + '</small>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
   if (r.soLoi) h += '<div class="msg err"><span>Còn ' + r.soLoi + ' dòng lỗi – sửa file (hoặc dữ liệu dán) rồi bấm Xem trước lại. Chưa ghi gì.</span></div>';
   else if (r.soOk) h += '<p style="margin-top:14px;"><button class="pri bad" id="imGhi">Ghi ' + r.soOk + ' nhân sự và cấp PIN tạm</button></p>';
@@ -3683,8 +3683,8 @@ function imGhi() {
   call('importNhanSu', { dong: IM_DONG, apDung: true, xacNhan: t }).then(function (r) {
     IM_DONG = []; $('imFile').value = ''; $('imDan').value = '';
     msg('imMsg', 'Đã thêm ' + r.daGhi + ' nhân sự' + (r.soBoQua ? ', bỏ qua ' + r.soBoQua + ' mã đã có' : '') + '. Ghi lại PIN tạm bên dưới NGAY – đóng hoặc làm mới trang là mất.', 'ok');
-    $('imKq').innerHTML = r.pin.length ? '<div class="scroll" id="imPin"><table><tr><th>Mã HRM</th><th>Họ tên</th><th>Đơn vị</th><th>PIN tạm</th></tr>' + r.pin.map(function (x) {
-      return '<tr><td><code>' + esc(x.ma) + '</code></td><td>' + esc(x.ten) + '</td><td>' + esc(x.donVi) + '</td><td><b style="font-size:1.1em;letter-spacing:2px;">' + esc(x.pin) + '</b></td></tr>';
+    $('imKq').innerHTML = r.pin.length ? '<div class="scroll" id="imPin"><table class="table-card-mobile"><tr><th>Mã HRM</th><th>Họ tên</th><th>Đơn vị</th><th>PIN tạm</th></tr>' + r.pin.map(function (x) {
+      return '<tr><td><code>' + esc(x.ma) + '</code></td><td data-label="Họ tên"><b>' + esc(x.ten) + '</b></td><td data-label="Đơn vị">' + esc(x.donVi) + '</td><td data-label="PIN tạm"><b style="font-size:1.1em;letter-spacing:2px;">' + esc(x.pin) + '</b></td></tr>';
     }).join('') + '</table></div><p style="margin-top:12px;"><button id="imIn">In danh sách PIN</button> <button id="imXoaPin">Đã ghi xong, ẩn danh sách</button></p>' : '';
     if ($('imIn')) $('imIn').onclick = function () { window.print(); };
     if ($('imXoaPin')) $('imXoaPin').onclick = function () { $('imKq').innerHTML = ''; msg('imMsg', ''); };
@@ -3704,7 +3704,7 @@ function maCall(apDung) {
 }
 function veMaXem(r) {
   var h = '<div class="muted" style="margin-top:12px;">Độ dài chuẩn ' + r.doDai + ' chữ số · ' + r.daDungDoDai + ' mã đã đủ độ dài · ' + r.doi.length + ' mã cần đệm số 0 · ' + r.xungDot.length + ' xung đột</div>';
-  if (r.doi.length) h += '<div class="scroll"><table><tr><th>Họ và tên</th><th>Mã hiện tại</th><th>Mã mới</th><th>Đơn vị</th></tr>' + r.doi.map(function (x) { return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td><td><code><b>' + esc(x.moi) + '</b></code></td><td>' + esc(x.donVi) + '</td></tr>'; }).join('') + '</table></div>';
+  if (r.doi.length) h += '<div class="scroll"><table class="table-card-mobile"><tr><th>Họ và tên</th><th>Mã hiện tại</th><th>Mã mới</th><th>Đơn vị</th></tr>' + r.doi.map(function (x) { return '<tr><td><b>' + esc(x.ten) + '</b></td><td data-label="Mã hiện tại"><code>' + esc(x.ma) + '</code></td><td data-label="Mã mới"><code><b>' + esc(x.moi) + '</b></code></td><td data-label="Đơn vị">' + esc(x.donVi) + '</td></tr>'; }).join('') + '</table></div>';
   if (r.xungDot.length) h += '<h3 style="margin:14px 0 6px;">Xung đột – không tự đổi (' + r.xungDot.length + ')</h3>' + r.xungDot.map(function (x) { return '<div class="msg warn"><span><b>' + esc(x.ten) + '</b> <code>' + esc(x.ma) + '</code> → <code>' + esc(x.moi) + '</code>: ' + esc(x.ly) + '</span></div>'; }).join('');
   h += r.doi.length ? '<p style="margin-top:14px;"><button class="pri bad" id="maApDung">Áp dụng (' + r.doi.length + ' mã)</button></p>' : '<div class="msg ok"><span>Không có mã nào cần đệm số 0.</span></div>';
   $('maKq').innerHTML = h;
@@ -3724,7 +3724,7 @@ function doBang() {
 }
 function doVe() {
   var r = doBang();
-  $('doBody').innerHTML = DO_LOG.length ? '<div class="scroll"><table><tr>' + r[0].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>' + r.slice(1).map(function (x) { return '<tr>' + x.map(function (c, i) { return '<td' + (i ? '' : ' style="text-align:left"') + '>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div><div class="muted" style="font-size:12px;margin-top:6px;">"Máy chủ" = từ lúc nhận lệnh tới lúc trả (gồm xác thực, đợi khóa, đọc, ghi, nhật ký). "Ngoài máy chủ" = đường truyền + hàng đợi của Google (vòng − máy chủ).</div>' : '<div class="muted">Chưa có số đo. Bật chế độ đo rồi thao tác vài lệnh.</div>';
+  $('doBody').innerHTML = DO_LOG.length ? '<div class="scroll"><table class="table-card-mobile"><tr>' + r[0].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>' + r.slice(1).map(function (x) { return '<tr>' + x.map(function (c, i) { return '<td data-label="' + esc(r[0][i]) + '"' + (i ? '' : ' style="text-align:left"') + '>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div><div class="muted" style="font-size:12px;margin-top:6px;">"Máy chủ" = từ lúc nhận lệnh tới lúc trả (gồm xác thực, đợi khóa, đọc, ghi, nhật ký). "Ngoài máy chủ" = đường truyền + hàng đợi của Google (vòng − máy chủ).</div>' : '<div class="muted">Chưa có số đo. Bật chế độ đo rồi thao tác vài lệnh.</div>';
 }
 function doKhoiTao() {
   try { DO_ON = localStorage.getItem('sohoa_do') === '1'; } catch (e) { DO_ON = false; }
@@ -3792,9 +3792,9 @@ function chCall(apDung) {
 }
 function veChXem(r) {
   var bang = function (ds, tieuDe) {
-    return ds.length ? '<h3 style="margin:14px 0 6px;">' + tieuDe + ' (' + ds.length + ')</h3><div class="scroll"><table><tr><th>Dòng</th><th>Giờ</th><th>Khâu</th><th>Hộp</th><th>Số liệu</th><th>Người</th><th>Cũ</th><th>Mới</th><th>Lý do</th></tr>' + ds.map(function (x) {
-      return '<tr><td><code>' + esc(x.id) + '</code></td><td>' + esc(x.gio) + '</td><td>' + esc(STEP_LABEL[x.buoc] || x.buoc) + '</td><td><b>' + esc(x.hop) + '</b></td><td>' + x.hs + ' hs / ' + x.trang + ' trang / ' + x.to + ' tờ' + (x.het ? ' ✔' : '') + '</td><td>' + esc(x.nguoi) + '</td>' +
-        '<td>' + esc(x.nhomCu) + ': ' + esc(x.tvCu) + '</td><td>' + (x.hanhDong === 'HUY_TRUNG' ? '<span class="chip bad">Hủy mềm</span>' : 'Nhóm ' + esc(x.nhomMoi) + ': ' + esc(x.tvMoi)) + '</td><td>' + esc(x.ly) + '</td></tr>';
+    return ds.length ? '<h3 style="margin:14px 0 6px;">' + tieuDe + ' (' + ds.length + ')</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Dòng</th><th>Giờ</th><th>Khâu</th><th>Hộp</th><th>Số liệu</th><th>Người</th><th>Cũ</th><th>Mới</th><th>Lý do</th></tr>' + ds.map(function (x) {
+      return '<tr><td><code>' + esc(x.id) + '</code></td><td data-label="Giờ">' + esc(x.gio) + '</td><td data-label="Khâu">' + esc(STEP_LABEL[x.buoc] || x.buoc) + '</td><td data-label="Hộp"><b>' + esc(x.hop) + '</b></td><td data-label="Số liệu">' + x.hs + ' hs / ' + x.trang + ' trang / ' + x.to + ' tờ' + (x.het ? ' ✔' : '') + '</td><td data-label="Người">' + esc(x.nguoi) + '</td>' +
+        '<td data-label="Cũ">' + esc(x.nhomCu) + ': ' + esc(x.tvCu) + '</td><td data-label="Mới">' + (x.hanhDong === 'HUY_TRUNG' ? '<span class="chip bad">Hủy mềm</span>' : 'Nhóm ' + esc(x.nhomMoi) + ': ' + esc(x.tvMoi)) + '</td><td data-label="Lý do">' + esc(x.ly) + '</td></tr>';
     }).join('') + '</table></div>' : '';
   };
   var h = '<div class="muted" style="margin-top:12px;">Ngày ' + esc(r.ngay) + ' · ca ' + esc(r.ca) + ' · đã quét ' + r.tongQuet + ' dòng báo cáo (Nhận hộp nhóm/Scan/Tách/OCR) · giữ nguyên dạng cá nhân ' + r.boQua + ' dòng (người chưa có nhóm)</div>';
@@ -3815,9 +3815,9 @@ function veChXem(r) {
 function loadDL() {
   $('dlEdit').classList.add('hide');
   call('nhatKy', { ngay: $('dlNgay').value, includeHuy: true }).then(function (rs) {
-    $('dlList').innerHTML = rs.length ? '<table><tr><th>Giờ</th><th>Ca</th><th>Nhóm</th><th>Bước</th><th>Hộp</th><th>Hồ sơ</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Loại</th><th>Thao tác</th></tr>' + rs.map(function (r, i) {
-      return '<tr' + (r.daXoa ? ' style="opacity:.45;text-decoration:line-through"' : '') + '><td>' + r.gio + '</td><td>Ca ' + esc(r.ca) + '</td><td>' + esc(r.nhom) + '</td><td>' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td><b>' + esc(r.hop) + '</b></td><td>' + r.hs + '</td><td>' + r.trang + '</td><td>' + r.to + '</td><td>' + (r.het ? '✔' : '') + '</td><td>' + esc(r.nguoi) + '</td><td>' + esc(r.loai) + '</td>' +
-        '<td>' + (r.daXoa ? '<button class="sm" data-u="' + r.id + '">Khôi phục</button>' : '<button class="sm" data-e="' + i + '">Sửa</button> <button class="sm bad" data-d="' + r.id + '">Xóa</button>') + '</td></tr>';
+    $('dlList').innerHTML = rs.length ? '<table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Nhóm</th><th>Bước</th><th>Hộp</th><th>Hồ sơ</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Loại</th><th>Thao tác</th></tr>' + rs.map(function (r, i) {
+      return '<tr' + (r.daXoa ? ' style="opacity:.45;text-decoration:line-through"' : '') + '><td>' + r.gio + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Nhóm">' + esc(r.nhom) + '</td><td data-label="Bước">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td data-label="Hộp"><b>' + esc(r.hop) + '</b></td><td data-label="Hồ sơ">' + r.hs + '</td><td data-label="Trang">' + r.trang + '</td><td data-label="Tờ">' + r.to + '</td><td data-label="Xong hộp">' + (r.het ? '✔' : '') + '</td><td data-label="Người nhập">' + esc(r.nguoi) + '</td><td data-label="Loại">' + esc(r.loai) + '</td>' +
+        '<td data-label="Thao tác">' + (r.daXoa ? '<button class="sm" data-u="' + r.id + '">Khôi phục</button>' : '<button class="sm" data-e="' + i + '">Sửa</button> <button class="sm bad" data-d="' + r.id + '">Xóa</button>') + '</td></tr>';
     }).join('') + '</table>' : '<div class="empty-state"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--mut)" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><div>Không có bản ghi nào trong ngày này.</div></div>';
     Array.prototype.forEach.call($('dlList').querySelectorAll('[data-d]'), function (b) { b.onclick = function () { if (confirm('Xóa bản ghi này?')) call('huy', { id: b.dataset.d }).then(loadDL).catch(alert); }; });
     Array.prototype.forEach.call($('dlList').querySelectorAll('[data-u]'), function (b) { b.onclick = function () { call('khoiPhuc', { id: b.dataset.u }).then(loadDL).catch(alert); }; });
@@ -3850,8 +3850,8 @@ function initLG() {
 function loadLG() {
   $('lgList').innerHTML = '<div class="muted">Đang tải nhật ký…</div>';
   call('nhatKyHT', { tu: $('lgTu').value, den: $('lgDen').value, ma: $('lgMa').value, hanhDong: $('lgHd').value }).then(function (rs) {
-    $('lgList').innerHTML = rs.length ? '<table><tr><th>Thời gian</th><th>Người thực hiện</th><th>Vai trò</th><th>Thuộc ca</th><th>Hành động</th><th>Chi tiết thao tác</th></tr>' + rs.map(function (r) {
-      return '<tr><td>' + esc(r.tg) + '</td><td><b>' + esc(r.ten || r.ma) + '</b> <span class="muted">(' + esc(r.ma) + ')</span></td><td><span class="chip">' + esc(VAI_LABEL[r.vai] || r.vai) + '</span></td><td>' + esc(r.ngayCa) + '</td><td><span class="chip ok">' + esc(r.hd) + '</span></td><td style="white-space:normal;text-align:left;min-width:280px">' + esc(r.ct) + '</td></tr>';
+    $('lgList').innerHTML = rs.length ? '<table class="table-card-mobile"><tr><th>Thời gian</th><th>Người thực hiện</th><th>Vai trò</th><th>Thuộc ca</th><th>Hành động</th><th>Chi tiết thao tác</th></tr>' + rs.map(function (r) {
+      return '<tr><td><b>' + esc(r.tg) + '</b></td><td data-label="Người thực hiện"><b>' + esc(r.ten || r.ma) + '</b> <span class="muted">(' + esc(r.ma) + ')</span></td><td data-label="Vai trò"><span class="chip">' + esc(VAI_LABEL[r.vai] || r.vai) + '</span></td><td data-label="Thuộc ca">' + esc(r.ngayCa) + '</td><td data-label="Hành động"><span class="chip ok">' + esc(r.hd) + '</span></td><td data-label="Chi tiết" style="white-space:normal;text-align:left;min-width:280px">' + esc(r.ct) + '</td></tr>';
     }).join('') + '</table><div class="muted" style="margin-top:8px;">Hiển thị tối đa 600 dòng mới nhất theo bộ lọc.</div>' : '<div class="empty-state"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--mut)" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><div>Không có dòng nhật ký phù hợp.</div></div>';
   }).catch(function (e) { $('lgList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
@@ -4075,14 +4075,14 @@ function dashTabNhatKy(d) {
   if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
       var nnRows = d.nguoiNhap || [], ctRows = d.chiTiet || [];
       h += zone('z4', 'AI NHẬP', 'Ai nhập – nhập bao nhiêu trong từng ca', 'Số liệu theo người bấm gửi báo cáo ngày ' + esc(d.ngay) + ' (nhập hộ tính cho người nhập hộ; cột "Thực hiện" là người/nhóm làm)');
-      h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
-        (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td style="text-align:left"><b>' + esc(r.ten) + '</b></td><td>' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td>' + r.soLan + '</td><td><b>' + nf(r.scanDV) + '</b></td><td>' + r.scanHs + '</td><td><b>' + nf(r.tachDV) + '</b></td><td>' + r.tachHs + '</td><td><b>' + nf(r.ocrDV) + '</b></td><td>' + r.ocrHs + '</td><td>' + r.nhanHop + '</td><td>' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
-      h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
+      h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
+        (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td data-label="Người nhập" style="text-align:left"><b>' + esc(r.ten) + '</b></td><td data-label="Nhóm">' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td data-label="Số lần">' + r.soLan + '</td><td data-label="Tờ scan"><b>' + nf(r.scanDV) + '</b></td><td data-label="HS scan">' + r.scanHs + '</td><td data-label="Tờ tách"><b>' + nf(r.tachDV) + '</b></td><td data-label="HS tách">' + r.tachHs + '</td><td data-label="Tờ OCR"><b>' + nf(r.ocrDV) + '</b></td><td data-label="HS OCR">' + r.ocrHs + '</td><td data-label="Hộp nhận">' + r.nhanHop + '</td><td data-label="Hộp trả">' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
+      h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
         (ctRows.map(function (r) {
           var stepHtml = '<span class="step-pill step-pill-' + String(r.buoc).toLowerCase() + '">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</span>';
           var hetHtml = r.het ? '<span class="chip ok" style="padding:1px 6px;font-size:11px;">✔</span>' : '<span class="muted">—</span>';
           var loaiHtml = r.loai === 'NHẬP HỘ' ? '<span class="chip warn" style="padding:1px 6px;font-size:11px;">Nhập hộ</span>' : '<span class="chip" style="padding:1px 6px;font-size:11px;">Báo cáo</span>';
-          return '<tr><td>' + esc(r.gio) + '</td><td>Ca ' + esc(r.ca) + '</td><td>' + stepHtml + '</td><td><b>' + esc(r.hop) + '</b></td><td>' + r.hs + '</td><td>' + r.trang + '</td><td><b>' + r.to + '</b></td><td>' + hetHtml + '</td><td style="text-align:left">' + esc(r.nguoi) + '</td><td style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td>' + loaiHtml + '</td></tr>';
+          return '<tr><td>' + esc(r.gio) + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Khâu">' + stepHtml + '</td><td data-label="Mã hộp"><b>' + esc(r.hop) + '</b></td><td data-label="HS">' + r.hs + '</td><td data-label="Trang">' + r.trang + '</td><td data-label="Tờ"><b>' + r.to + '</b></td><td data-label="Xong hộp">' + hetHtml + '</td><td data-label="Người nhập" style="text-align:left">' + esc(r.nguoi) + '</td><td data-label="Thực hiện" style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td data-label="Loại">' + loaiHtml + '</td></tr>';
         }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có bản ghi</td></tr>') + '</table></div></div>';
   }
   return h;
@@ -4267,14 +4267,14 @@ function closeCT() { $('modalCT').classList.add('hide'); }
 function ctVe() {
   var rows = CT.rows || [], q = ($('ctTim').value || '').toLowerCase().trim(), h;
   if (CT.loai === 'nhanSu') {
-    h = '<div class="muted" style="margin-bottom:8px;">' + rows.length + ' người</div><div class="scroll"><table><tr><th>Họ và tên</th><th>Nhóm</th><th>Báo cáo</th></tr>' + rows.map(function (x) {
-      return '<tr><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + (x.nhom ? esc(x.nhom) : '<span class="muted">chưa có nhóm</span>') + '</td><td>' + (x.soBC > 0 ? '<span class="chip ok">Đã báo cáo (' + x.soBC + ')</span>' : '<span class="chip chip-mut">Chưa báo cáo</span>') + '</td></tr>';
+    h = '<div class="muted" style="margin-bottom:8px;">' + rows.length + ' người</div><div class="scroll"><table class="table-card-mobile"><tr><th>Họ và tên</th><th>Nhóm</th><th>Báo cáo</th></tr>' + rows.map(function (x) {
+      return '<tr><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td data-label="Nhóm">' + (x.nhom ? esc(x.nhom) : '<span class="muted">chưa có nhóm</span>') + '</td><td data-label="Báo cáo">' + (x.soBC > 0 ? '<span class="chip ok">Đã báo cáo (' + x.soBC + ')</span>' : '<span class="chip chip-mut">Chưa báo cáo</span>') + '</td></tr>';
     }).join('') + '</table></div>';
     $('ctBody').innerHTML = h; return;
   }
   var ds = rows.filter(function (x) { return !q || x.ma.toLowerCase().indexOf(q) >= 0 || x.khoa.toLowerCase().indexOf(q) >= 0; });
-  h = '<div class="muted" style="margin-bottom:8px;">' + ds.length + (ds.length !== rows.length ? ' / ' + rows.length : '') + ' hộp</div><div class="scroll"><table><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Tờ đã báo</th></tr>' + ds.map(function (x) {
-    return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td>' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) : '<span class="muted">–</span>') + '</td><td>' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + ' · ' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) : '<span class="muted">–</span>') + '</td><td>' + khauOo(x.scan) + '</td><td>' + khauOo(x.tach) + '</td><td>' + khauOo(x.ocr) + '</td><td>' + nfi(x.scan.to + x.tach.to + x.ocr.to) + '</td></tr>';
+  h = '<div class="muted" style="margin-bottom:8px;">' + ds.length + (ds.length !== rows.length ? ' / ' + rows.length : '') + ' hộp</div><div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Tờ đã báo</th></tr>' + ds.map(function (x) {
+    return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận TTLT">' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) : '<span class="muted">–</span>') + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + ' · ' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Tờ đã báo">' + nfi(x.scan.to + x.tach.to + x.ocr.to) + '</td></tr>';
   }).join('') + '</table></div>';
   $('ctBody').innerHTML = ds.length || !rows.length ? h : '<div class="muted">Không có hộp nào khớp "' + esc(q) + '".</div>';
 }
@@ -4311,8 +4311,8 @@ function dashDsBang() {
     return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] ? r.dem[t[0]] : r.dem.tong) + ')</button>';
   }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
     '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
-    '<div class="scroll"><table><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
-      return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td>' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) + '<span class="ds-ghichu">' + esc(x.nhan.nguoi) + '</span>' : '<span class="muted">–</span>') + '</td><td>' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td>' + khauOo(x.scan) + '</td><td>' + khauOo(x.tach) + '</td><td>' + khauOo(x.ocr) + '</td><td>' + (x.tra ? ngayNgan(x.tra.ngay) : '<span class="muted">–</span>') + '</td><td><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
+    '<div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
+      return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận TTLT">' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) + '<span class="ds-ghichu">' + esc(x.nhan.nguoi) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả">' + (x.tra ? ngayNgan(x.tra.ngay) : '<span class="muted">–</span>') + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
     }).join('') || '<tr><td colspan="8" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
   $('dsBody').innerHTML = h;
   Array.prototype.forEach.call($('dsBody').querySelectorAll('[data-dtt]'), function (b) { b.onclick = function () { S.tt = b.getAttribute('data-dtt'); dashDsBang(); }; });
