@@ -18,9 +18,9 @@
 | 10 | Xóa người giả "Thử nghiệm 01–11" | B5b | ✅ Xong (chủ dự án xác nhận 10/11) |
 | 11 | Ban chỉ đạo: vai trò Lãnh đạo, hiện chức vụ, import được | B5c | ✅ Xong (chủ dự án xác nhận 10/11) |
 | 12 | Bộ lọc Đơn vị/Vai trò/Trạng thái ở danh sách nhân sự | B5d | ✅ Xong (chủ dự án xác nhận 10/11) |
-| 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ⚠️ Bản sửa Opus đạt, chờ triển khai; CHƯA bấm Áp dụng |
-| 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟡 Xong trong mã, Opus đạt, chờ triển khai |
-| 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | 🟡 Xong trong mã, Opus đạt, chờ triển khai |
+| 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ⚠️ Đã lên link chính (phiên bản 26) nhưng CHƯA bấm Xem trước/Áp dụng; chờ chủ dự án đồng ý |
+| 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟢 Đã lên link chính (phiên bản 26); chờ chủ dự án xác nhận |
+| 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | 🟢 Đã lên link chính (phiên bản 26); chủ dự án nhập Trung = 1, Mười = 2 rồi xác nhận |
 | 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | ⬜ Chưa làm |
 | 17 | Màn hình chờ và chống bấm lặp | T1 | ⬜ Chưa làm |
 | 18 | Đo tốc độ, đề xuất tối ưu | T2 | ⬜ Chưa làm |

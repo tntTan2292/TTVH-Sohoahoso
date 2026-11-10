@@ -9,10 +9,10 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 10/11/2026 — Opus: review E2 + B5e ĐẠT, GO triển khai H1 + E2 + B5e; đã giao Sonnet triển khai rồi làm tiếp ĐỢT GỘP (B4 → T1 → H2+C0 → T2 → C1), review MỘT LẦN cuối đợt; bản chạy: phiên bản 25 |
+| Cập nhật lúc | 10/11/2026 16:20 — Sonnet: ĐÃ TRIỂN KHAI phiên bản 26 (H1 + E2 + B5e, commit `7dc1446`); tiếp theo làm ĐỢT GỘP (B4 → T1 → H2+C0 → T2 → C1), review MỘT LẦN cuối đợt |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 25** (10/11/2026 15:41) trên link chính `…MlRA/exec` = commit `42e59fa` (B5b, B5c, B5, B5d, E1 + **F-NS-11 khôi phục số 0 đầu Mã HRM — thêm sau review, chỉ chạy khi ADMIN bấm Áp dụng, CHƯA chạy**). Phiên bản trước: 24 (`0bb84bb`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 24 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
-| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` 0ee865877e4f…, `Index.html` 8b78263fb175… khớp `42e59fa` sau khi lưu và tải lại trang; bản 24 trước khi đẩy khớp `0bb84bb`) |
+| Bản đang chạy | Apps Script **phiên bản 26** (10/11/2026 16:17) trên link chính `…MlRA/exec` = mã của commit `7dc1446` (H1 khóa mã hộp + E2 + B5e thứ tự đăng nhập, trên nền phiên bản 25 `42e59fa`; **F-NS-11 vẫn CHƯA bấm Xem trước/Áp dụng**). Phiên bản trước: 25 (`42e59fa`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 25 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` c98c7608d8dc…, `Index.html` 958b3b3c7702… khớp `7dc1446` sau khi lưu và tải lại trang; trước khi đẩy bản trên Apps Script khớp `42e59fa`: 0ee865877e4f / 8b78263fb175). Từ nay `main` có thể đi trước bản chạy (đợt gộp chưa triển khai) |
 | Mock | `node tools/test_mock.js` → **451 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 515 đạt, 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
