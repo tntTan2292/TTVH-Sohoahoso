@@ -29,3 +29,4 @@
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
 | 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 23 | Giao diện điện thoại | C2 | ⬜ Chưa làm |
+| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | ⬜ Chưa làm (Sonnet làm sau khi Antigravity xong, trước review) |
