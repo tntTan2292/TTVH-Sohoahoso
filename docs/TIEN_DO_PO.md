@@ -18,7 +18,7 @@
 | 10 | Xóa người giả "Thử nghiệm 01–11" | B5b | ✅ Xong (chủ dự án xác nhận 10/11) |
 | 11 | Ban chỉ đạo: vai trò Lãnh đạo, hiện chức vụ, import được | B5c | ✅ Xong (chủ dự án xác nhận 10/11) |
 | 12 | Bộ lọc Đơn vị/Vai trò/Trạng thái ở danh sách nhân sự | B5d | ✅ Xong (chủ dự án xác nhận 10/11) |
-| 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ⚠️ Đã lên link chính (phiên bản 26) nhưng CHƯA bấm Xem trước/Áp dụng; chờ chủ dự án đồng ý |
+| 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ✅ Chủ dự án báo thử OK (10/11, phiên bản 28) |
 | 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟢 Đã lên link chính (phiên bản 26); chờ chủ dự án xác nhận |
 | 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | ✅ Xong (chủ dự án xác nhận 10/11) |
 | 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
@@ -27,9 +27,12 @@
 | 19 | Tab Đối soát hộp | H2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
-| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | ✅ Xong (chủ dự án xác nhận 10/11, phiên bản 28) |
 | 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
-| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | ✅ Xong (chủ dự án xác nhận 10/11, phiên bản 28) |
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
-| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử (chưa nạp dữ liệu DK1, chưa ghi Sheet thật) |
+| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), Xem trước trên link đạt (61 dòng, 0 lỗi, 0 lệch); chờ chủ dự án bấm Áp dụng, sau đó nạp lại khi phiếu xác nhận về |
 | 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 28 | Hộp xác nhận tự vẽ, thay popup trình duyệt có dòng đường link lạ | XN1 | ⬜ Có phiếu, chờ giao Sonnet (cùng đợt mục 30) |
+| 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
+| 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ | CC1 | ⬜ Có phiếu, chờ giao Sonnet (làm trước mục 28) |

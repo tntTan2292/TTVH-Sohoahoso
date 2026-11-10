@@ -88,6 +88,15 @@ Mọi prompt cho Antigravity **phải chép nguyên khối này**:
 
 Chỉ được mở trình duyệt khi prompt **ghi rõ cho phép** và nêu đúng một màn hình cần xem. Nghiệm thu giao diện là việc của chủ dự án trên link thật, không phải của Antigravity.
 
+## 3c. Việc nạp hoặc sửa dữ liệu chỉ làm một lần
+Từ 10/11/2026 (Opus chốt theo đề nghị của chủ dự án), việc dữ liệu một lần **không làm thành chức năng trong ứng dụng**, trừ khi có một trong hai lý do: người không phải chủ dự án phải tự làm, hoặc dự kiến lặp từ 3 lần.
+
+Mặc định làm **tập lệnh chạy một lần** trong `Code.gs`, không có action, không có giao diện (tiền lệ: `suaMaHopNgay`):
+- Tên hàm không có `_` cuối thì mới chọn được ở trình soạn Apps Script; làm hai hàm: một hàm xem trước (chỉ đọc, in kết quả), một hàm áp dụng.
+- Dữ liệu từ ngoài: chủ dự án dán vào tab tạm trên Sheet, tập lệnh đọc tab đó. Không đưa dữ liệu thật vào mã hoặc Git.
+- Vẫn bắt buộc: chạy trong khóa, đọc thẳng Sheet (không qua đệm), đối chiếu, sao lưu, ghi nhật ký, kiểm thử mock.
+- Dùng xong xóa hàm trong commit riêng. Chức năng một lần đã làm trong ứng dụng thì dọn theo `docs/prompts/PROMPT_SONNET_DON1_CHUC_NANG_MOT_LAN.md`; riêng việc dọn này, số kiểm tra mock được giảm đúng phần của chức năng bị xóa.
+
 ## 4. Prompt đầu tiên và prompt tiếp nối (delta)
 **Chat mới** (developer chưa biết gì): prompt phải có dòng đọc chuỗi khởi động
 `AGENTS.md → docs/SNAPSHOT.md → phiếu giao việc (nếu có)`.

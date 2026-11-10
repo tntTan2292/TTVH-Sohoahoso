@@ -24,7 +24,7 @@ Chỉ `apps-script/Code.gs`, `apps-script/Index.html`, `apps-script/appsscript.j
 3. **Một việc một commit**, ghi mã chức năng: ví dụ `F-BC-08: sửa ghi kèm Tách khi Scan lỗi`.
 4. Trước khi sửa: `git status` phải sạch (hoặc biết rõ thay đổi đang dở là gì). Việc lớn: tạo nhánh mới, không sửa thẳng `main`.
 5. Sau khi sửa, bắt buộc:
-   - `node tools/test_mock.js` → `0 lỗi`, **số kiểm tra không giảm**. Thêm chức năng backend = thêm kiểm tra vào mock.
+   - `node tools/test_mock.js` → `0 lỗi`, **số kiểm tra không giảm** (ngoại lệ duy nhất: dọn chức năng một lần đã được chủ dự án đồng ý, chỉ giảm đúng phần của chức năng đó, xem `docs/CHUAN_PROMPT.md` mục 3c). Thêm chức năng backend = thêm kiểm tra vào mock.
    - `node --check` cho `Code.gs` (chép sang `.js` tạm) và cho khối `<script>` của `Index.html`.
    - Xem `git diff --stat`: nếu `Index.html` bị xóa hàng trăm dòng mà việc chỉ là sửa nhỏ → **dừng lại, kiểm tra**.
    - Đi lại bảng kiểm tra cuối `docs/CHUC_NANG.md` cho các phần liên quan.
