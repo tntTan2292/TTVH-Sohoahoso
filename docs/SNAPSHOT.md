@@ -40,6 +40,11 @@
 - **Còn lại (chủ dự án làm):** dán `Index.html` lên Apps Script → Triển khai phiên bản mới trên link `…MlRA` (Quản lý triển khai → ✏️ → Phiên bản mới); thử thật: Tổ trưởng → Quản lý ca → Nhập hộ → Scan, tick, gửi → Nhật ký có 2 dòng SCAN + TACH loại NHẬP HỘ. Có thể gộp vào lần triển khai sau khi chuẩn hóa.
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
+**▶ NÂNG CẤP SAU TRIỂN KHAI CHÍNH THỨC (10/11/2026) — ƯU TIÊN CAO NHẤT.** Phiếu: `docs/prompts/PROMPT_NANG_CAP_SAU_TRIEN_KHAI.md` (nguyên nhân V1–V6 Opus đã khoanh, quyết định mặc định QĐ1–QĐ5, 3 đợt). Hệ thống đang chạy thật: không đổi link, không đổi cột, sửa dữ liệu thật phải xem trước → chủ dự án duyệt → sao lưu → log.
+- ☐ **Đợt A khẩn (Sonnet):** A1 khóa báo cáo cá nhân khi đã có nhóm · A2 công cụ chuẩn hóa cá nhân → nhóm (xem trước/áp dụng) · A3 tab Nhân sự cho TT/TP quản lý tổ viên + ADMIN mở khóa · ☐ Opus review · ☐ triển khai · ☐ A2 xem trước dữ liệu ca Sáng 10/11 · ☐ chủ dự án duyệt · ☐ áp dụng
+- ☐ **Đợt B (Sonnet):** danh mục Đơn vị · chuẩn hóa đơn vị trùng · import nhân sự Excel · ☐ Opus review · ☐ triển khai
+- ☐ **Đợt C:** C1 biểu đồ tiến độ hằng ngày 30 ngày (Sonnet) → C2 giao diện điện thoại (Antigravity) · ☐ Opus review (kiểm khổ 375px) · ☐ triển khai
+
 0. **[Sonnet XONG chức năng, Antigravity XONG giao diện 10/11/2026, mock 261/0, giao diện 381/0, chưa triển khai → việc kế: Opus review tổng thể → triển khai] DASHBOARD CHIA TAB CON + THỐNG KÊ NHÂN SỰ (10/11/2026, chủ dự án yêu cầu)** — phiếu `docs/prompts/PROMPT_SONNET_DASHBOARD_TAB.md`. 5 tab: Tổng quan · Theo ngày · Ca – Nhóm · Nhân sự (mới, chọn khoảng ngày, action `thongKeNhanSu`) · Nhật ký nhập. Luồng: ☑ Sonnet (chức năng) · ☑ Antigravity (giao diện) · ☑ Opus review tổng thể (10/11/2026, `79532f5..77c73fa`): **ĐẠT – GO triển khai sau 1 delta nhỏ** · ☐ Sonnet sửa delta N1 · ☐ triển khai · ☐ chủ dự án thử.
    - Opus đã kiểm: `dash_` chỉ tách hàm dùng chung (`nhatKyRows_`, `thanhVienBanGhi_`, `congCaNhan_`), so từng dòng logic giữ nguyên; `thongKeNhanSu_` dùng đúng quy tắc chia công/`dv`/loại hủy-THỬ NGHIỆM-TN-xx, khoảng 1 ngày khớp `canhan` (mock). Mock 261/0, giao diện 381/0. Vẽ thử cả 5 tab trong trình duyệt với dữ liệu thật từ mock: không lỗi JS.
    - "gomThu dao động giữa các lần chạy mock": **không phải lỗi** — `taoMau_` sinh số ngẫu nhiên (`Math.random`), so sánh trong cùng một lần chạy vẫn nhất quán.
