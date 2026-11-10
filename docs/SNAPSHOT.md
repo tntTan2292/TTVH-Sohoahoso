@@ -49,7 +49,7 @@
     - **D2:** `tools/kiem_tra_giao_dien.js` báo 50 lỗi giả trên thư mục làm việc vì `core.autocrlf=true` (file có CRLF) → bỏ `\r` khi đọc file. Phải chạy được trực tiếp, không cần bản LF.
     - ☑ D1 (`e75b6a1`) + D2 (`5ccfbbc`) xong, ☑ triển khai phiên bản 22 (10/11/2026 14:24).
     - ☑ **A2 Xem trước ca Sáng 10/11/2026 (ADMIN, CHƯA ÁP DỤNG):** quét 17 dòng báo cáo; **đổi sang nhóm 2 dòng**; hủy trùng 0; xung đột 0; giữ nguyên cá nhân 0. Cả hai dòng cùng người Dương Thị Hòe (cá nhân) → Nhóm 2 (Dương Thị Hòe + Nguyễn Thanh Hà), lý do "Người báo cáo thuộc Nhóm 2 trong ca này": `R826de79d` 07:44 Nhận hộp **2.1.83** (0 hs/0 trang/0 tờ); `R46c238d8` 07:44 Nhận hộp **2.1.88** (0 hs/0 trang/0 tờ). Cả hai là Nhận hộp (không có số liệu) nên Dashboard Scan/Tách/OCR **không đổi**; chỉ đổi Nhom + ThanhVien. Chưa so Dashboard trước/sau vì chưa áp dụng.
-    - ⏸ **DỪNG chờ chủ dự án duyệt** 2 dòng trên; duyệt thì mới bấm Áp dụng (gõ NHOM) rồi so Dashboard ca Sáng trước/sau.
+    - ☑ **Chủ dự án DUYỆT, đã ÁP DỤNG (10/11/2026, ADMIN, chủ dự án gõ `NHOM` vào hộp thoại):** đổi 2 dòng `R826de79d`, `R46c238d8` sang Nhóm 2; có sao lưu `SaoLuuXoa` và log `CHUAN_HOA_NHOM` (tự ghi bởi máy chủ, chưa đọc lại ở tab Nhật ký). **Kiểm sau áp dụng:** Xem trước lại ca Sáng 10/11 → "Không có dòng nào cần đổi" (đã quét 17 dòng, xung đột 0). Chưa so Dashboard trước/sau bằng số (2 dòng đều 0 hồ sơ/trang/tờ nên Scan/Tách/OCR không thể đổi). Đợt A kết thúc; việc kế: Đợt B.
 - ☐ **Đợt B (Sonnet):** danh mục Đơn vị · chuẩn hóa đơn vị trùng · import nhân sự Excel · ☐ Opus review · ☐ triển khai
 - ☐ **Đợt C:** C1 biểu đồ tiến độ hằng ngày 30 ngày (Sonnet) → C2 giao diện điện thoại (Antigravity) · ☐ Opus review (kiểm khổ 375px) · ☐ triển khai
 

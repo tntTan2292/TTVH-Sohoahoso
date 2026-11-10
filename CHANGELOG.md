@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- A2 · **Đã áp dụng** `chuanHoaNhom` trên dữ liệu thật ca Sáng 10/11/2026 sau khi chủ dự án duyệt: đổi 2 dòng Nhận hộp (2.1.83, 2.1.88) của Dương Thị Hòe sang Nhóm 2, có sao lưu `SaoLuuXoa` + log. Xem trước lại: 0 dòng cần đổi.
 - A2 · Chạy **Xem trước** `chuanHoaNhom` trên dữ liệu thật ca Sáng 10/11/2026 (ADMIN, không áp dụng): quét 17 dòng, đổi nhóm 2 (Nhận hộp 2.1.83 và 2.1.88 của Dương Thị Hòe → Nhóm 2), hủy trùng 0, xung đột 0, giữ cá nhân 0. Chờ chủ dự án duyệt.
 - Triển khai **phiên bản 22** lên `…MlRA` (commit `5ccfbbc`: Đợt A F-BC-20, F-DL-07, F-NS-04/05 + D1 + D2). Bản trước: phiên bản 21 (`96db7c6`). Bản cũ trên Apps Script khớp `96db7c6` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp `main`. Mở `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca", hiện màn hình đăng nhập. A2 Xem trước dữ liệu thật chưa chạy (chờ ADMIN đăng nhập).
 - **D2** · `tools/kiem_tra_giao_dien.js` bỏ ký tự CR khi đọc file; chạy thẳng trên thư mục làm việc (CRLF) ra 420 đạt / 0 lỗi (trước đó 48 lỗi giả ở regex `route_`).
