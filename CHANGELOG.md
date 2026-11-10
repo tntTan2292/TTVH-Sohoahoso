@@ -3,6 +3,9 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-DB-15 · **LOC1** (mục 31) Tab Nhân sự: hai ô Từ ngày – Đến ngày luôn hiện, các lựa chọn nhanh tính đến ngày đang xem, sửa tay tự chuyển Tùy chọn, chống kết quả cũ về muộn. Commit `85bf4be`. Giao diện 664/0.
+- F-HT-10 · **XN1** (mục 28) `hoiXacNhan` thay 18 `confirm`/`prompt` (từ khóa MAHRM, DAUKY, NHOM, DONVI, IMPORT, XOA, Mã HRM; hai hộp liên tiếp ở xóa theo ngày). Commit `8a7b7e4`.
+- F-QL-12 · **CC1** (mục 30) Chốt ca = đã kiểm tra: mốc 2026-11-10, `cas[].trangThaiChot`, `soCaChuaChot`, action `caChuaChot`, hiển thị ca chưa chốt; không đổi số, `chot_`, `caState_`. Commit `8d2dff6`. Mock 571/0.
 - **Triển khai phiên bản 28** (commit `848b751`: đợt gộp mục 16–20, 22–24 + DK1 mục 26 + NS12 mục 27) lên link chính, thay phiên bản 27 (`b94e4c8`). Đối chiếu trước khi đẩy: bản Apps Script khớp `b94e4c8`; sau khi đẩy băm khớp `848b751`. Chưa nạp DK1, chưa chạy F-NS-11.
 - F-NS-12 · **NS12** (mục 27) Tổ trưởng/Tổ phó thêm tổ viên mới: `luuNhanSu` + `taoMoi:true` → `taoToVien_` (chỉ vai trò Tổ viên, bỏ qua email/thứ tự, trùng mã bỏ số 0 đầu với mọi dòng NhanSu, PIN tạm, log không PIN); nút `#nsThem`, `NS_THEM_MOI`, `#nsClear`="Hủy" cho TT/TP. Không có `taoMoi` vẫn từ chối như cũ. Mock 550/0 (+32). Chưa triển khai.
 - F-DK-01, F-DK-02 · **DK1** (mục 26) Số 02–08/11 theo từng người: tab `DauKyNguoi`, action `nhapDauKyNguoi` (xem trước + đối chiếu tổng với `DauKy` + áp dụng gõ `DAUKY`, chuyển ca dòng Tách 766 tờ 08/11 sang ca Ngày), `thongKeNhanSu_` cộng thêm (chia đều theo ô, giờ từ `Gio`, `chuaRo`), khung giao diện thô. `dash_`/`NhatKy` không đổi. Mock 518/0, giao diện 582/0. Commit `f8fd221`, `3c43bfb`; chưa triển khai, chờ Opus review.
