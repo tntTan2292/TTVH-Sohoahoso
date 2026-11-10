@@ -2480,6 +2480,14 @@ button.sm.bad:hover, button.bad:hover {
       <div id="chMsg"></div>
       <div id="chKq"></div>
     </div>
+    <div class="card" id="dkCard">
+      <h2>Số đầu kỳ 02–08/11 theo từng người (DK1)</h2>
+      <div class="muted">Dán dữ liệu dạng bảng (Tab) với cột: Ngay, Ca, Buoc, SoTo, ThanhVien (Mã HRM cách nhau dấu phẩy), Gio, TenGoc, Nguon, GhiChu. Luôn <b>Xem trước</b> (có bảng đối chiếu tổng với số đầu kỳ đang có) rồi mới <b>Áp dụng</b>; áp dụng có sao lưu và ghi nhật ký.</div>
+      <textarea id="dkDan" rows="5" placeholder="Dán từ file TSV (có thể kèm dòng tiêu đề)"></textarea>
+      <p style="margin-top:12px;"><button class="pri" id="dkXem">Xem trước</button></p>
+      <div id="dkMsg"></div>
+      <div id="dkKq"></div>
+    </div>
     <div class="card hide" id="dlEdit"></div>
     <div class="card">
       <h2>Bản ghi báo cáo chi tiết</h2>
@@ -3740,7 +3748,7 @@ function doKhoiTao() {
 function initDL() {
   if (!$('dlNgay').value) $('dlNgay').value = ME.ngay;
   doKhoiTao();
-  $('dlLoad').onclick = loadDL; initCH();
+  $('dlLoad').onclick = loadDL; initCH(); $('dkXem').onclick = function () { dkCall(false); };
   $('dlMau').onclick = function () { call('taoMau', { ngay: $('dlNgay').value, cas: $('dlMauCa').value.split(','), soNguoi: 6 }).then(function (r) { msg('dlMsg', 'Đã tạo ' + r.soBanGhi + ' bản ghi mẫu cho ' + r.soCa + ' ca ngày ' + r.ngay + ' (mỗi ca ' + r.soNguoi + ' người, thêm ' + r.soThem + ' người giả TN-xx). Ở Dashboard tick "gồm dữ liệu thử nghiệm" để xem.', 'ok'); loadDL(); }).catch(function (e) { msg('dlMsg', e); }); };
   $('dlThu').onclick = function () {
     if (confirm('Xóa mọi bản ghi đánh dấu THỬ NGHIỆM?')) call('resetDuLieu', { phamVi: 'THU' }).then(function (r) {
@@ -3767,6 +3775,43 @@ function initDL() {
     }).catch(function (e) { msg('dlMsg', e); });
   };
   loadDL();
+}
+/* ---------- DK1: số đầu kỳ 02–08/11 theo từng người (ADMIN: dán TSV → xem trước/đối chiếu → áp dụng) ---------- */
+var DK_DONG = [];
+function dkDocDan(txt) {
+  var cot = ['ngay', 'ca', 'buoc', 'soTo', 'thanhVien', 'gio', 'tenGoc', 'nguon', 'ghiChu'], out = [];
+  String(txt || '').split(/\r?\n/).forEach(function (ln) {
+    if (!ln.replace(/\s/g, '')) return;
+    var c = ln.split('\t').map(function (x) { return x.trim(); });
+    if (c[0].toLowerCase() === 'ngay') return;      // dòng tiêu đề
+    var o = {}; cot.forEach(function (k, i) { o[k] = c[i] || ''; });
+    out.push(o);
+  });
+  return out;
+}
+function dkCall(apDung) {
+  var p = { apDung: apDung };
+  if (apDung) { var t = prompt('Ghi số đầu kỳ theo từng người (thay toàn bộ tab DauKyNguoi, chuyển ca dòng Tách 766 tờ ngày 08/11 sang ca Ngày; có sao lưu). Gõ DAUKY để xác nhận:'); if (!t) return; p.xacNhan = t; DK_DONG = DK_DONG || []; }
+  else DK_DONG = dkDocDan($('dkDan').value);
+  if (!DK_DONG.length) { msg('dkMsg', 'Chưa có dòng nào – dán dữ liệu vào ô trên'); return; }
+  p.dong = DK_DONG;
+  $('dkXem').disabled = true; msg('dkMsg', apDung ? 'Đang ghi…' : 'Đang đối chiếu…', 'warn');
+  call('nhapDauKyNguoi', p).then(function (r) {
+    if (apDung) { msg('dkMsg', 'Đã ghi ' + r.daGhi + ' dòng; chuyển ca ' + r.daChuyenCa + ' dòng DauKy' + (r.saoLuu && r.saoLuu.dauKyNguoi ? ' (sao lưu: ' + r.saoLuu.dauKyNguoi + ')' : '') + '.', 'ok'); $('dkKq').innerHTML = ''; }
+    else { msg('dkMsg', ''); veDkXem(r); }
+  }).catch(function (e) { msg('dkMsg', e); }).then(function () { $('dkXem').disabled = false; });
+}
+function veDkXem(r) {
+  var h = '<div class="muted" style="margin-top:12px;">' + r.soDong + ' dòng · <b>' + r.soLoi + '</b> lỗi · <b>' + r.soLech + '</b> mục tổng lệch' + (r.canChuyenCa ? ' · sẽ chuyển ca dòng Tách 766 tờ ngày 08/11 từ Tối sang Ngày' : '') + '</div>';
+  h += '<h3 style="margin:14px 0 6px;">Đối chiếu tổng với số đầu kỳ đang có</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ngày</th><th>Ca</th><th>Khâu</th><th>Nhập</th><th>Đang có</th><th>Lệch</th></tr>' + r.doiChieu.map(function (x) {
+    return '<tr' + (x.khop ? '' : ' style="background:rgba(220,38,38,.08)"') + '><td>' + esc(x.ngay) + '</td><td data-label="Ca">' + esc(x.ca) + '</td><td data-label="Khâu">' + esc(x.buoc) + '</td><td data-label="Nhập">' + nfi(x.nhap) + '</td><td data-label="Đang có">' + nfi(x.daCo) + '</td><td data-label="Lệch">' + (x.khop ? '<span class="chip ok">Khớp</span>' : '<span class="chip bad">' + nfi(x.lech) + '</span>') + '</td></tr>';
+  }).join('') + '</table></div>';
+  var loi = r.dong.filter(function (x) { return x.trangThai === 'LOI'; });
+  if (loi.length) h += '<h3 style="margin:14px 0 6px;">Dòng lỗi (' + loi.length + ')</h3>' + loi.map(function (x) { return '<div class="msg err"><span>Dòng ' + x.stt + ' (' + esc(x.ngay) + ' · ' + esc(x.ca) + ' · ' + esc(x.buoc) + '): ' + esc(x.loi.join('; ')) + '</span></div>'; }).join('');
+  if (r.soLoi || r.soLech) h += '<div class="msg err"><span>Còn lỗi hoặc tổng lệch – sửa dữ liệu rồi Xem trước lại. Chưa ghi gì.</span></div>';
+  else h += '<p style="margin-top:14px;"><button class="pri bad" id="dkApDung">Áp dụng (' + r.soDong + ' dòng)</button></p>';
+  $('dkKq').innerHTML = h;
+  if ($('dkApDung')) $('dkApDung').onclick = function () { dkCall(true); };
 }
 /* ---------- Chuẩn hóa báo cáo cá nhân → nhóm (A2, ADMIN) ---------- */
 var CH_XEM = null;
@@ -4217,7 +4262,7 @@ function dashNsBang() {
       '<span class="step-pill step-pill-ocr">OCR: <b>' + nfi(r.tong.ocrDV) + '</b></span>' +
     '</div></div>' +
     '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất = tờ (cộng cả 3 khâu Scan + Tách + OCR) / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
-    (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '') + '</div>' +
+    (r.coDauKyNguoi ? '<br>⚠️ Số ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' lấy theo tên trên bảng cũ, đang chờ người phụ trách xác nhận; giai đoạn này không có số hồ sơ, số hộp.' + (r.chuaRo && (r.chuaRo.scanDV || r.chuaRo.tachDV || r.chuaRo.ocrDV) ? '<br>Chưa rõ người làm: ' + nfi(r.chuaRo.scanDV) + ' tờ Scan · ' + nfi(r.chuaRo.tachDV) + ' tờ Tách · ' + nfi(r.chuaRo.ocrDV) + ' tờ OCR (không chia cho ai, không nằm trong bảng này).' : '') : (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '')) + '</div>' +
     '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ (cả 3 khâu) / giờ-người') + '</tr>' +
     (ds.map(function (x) {
       var rk = rank[x.ma], rkCls = rk === 1 ? 'rank-1' : (rk === 2 ? 'rank-2' : (rk === 3 ? 'rank-3' : 'rank-other'));
