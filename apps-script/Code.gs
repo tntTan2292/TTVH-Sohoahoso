@@ -335,6 +335,7 @@ function route_(u, action, p) {
     case 'dsDonVi': need_(u); return dsDonVi_();            // B1: TT/TP cần danh sách chọn đơn vị khi sửa tổ viên
     case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
     case 'chuanHoaDonVi': needSuper_(u); return chuanHoaDonVi_(u, p);   // B2
+    case 'xoaNhanSu': needSuper_(u); return xoaNhanSu_(u, p);           // B5
     case 'importNhanSu': needSuper_(u); return importNhanSu_(u, p);     // B3
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
     case 'luuNhanSu': need_(u); return luuNhanSu_(u, p);     // QĐ2: TT/TP chỉ sửa tổ viên (hàm tự kiểm)
@@ -982,6 +983,39 @@ function importNhanSu_(u, p) {
   log_(u.ma, 'IMPORT_NHAN_SU', 'thêm ' + objs.length + ' nhân sự, bỏ qua ' + soBoQua + ' mã đã có | mã: ' + maDS.slice(0, 40).join(', ') + (maDS.length > 40 ? ' …' : ''));      // KHÔNG ghi PIN
   kq.daGhi = objs.length; kq.pin = pins;
   return kq;
+}
+
+/* ---------- B5: ADMIN xóa tài khoản tạo nhầm (chỉ khi CHƯA TỪNG DÙNG; đã dùng → Ngừng hoạt động) ---------- */
+// payload { ma, xacNhan: <gõ lại đúng mã> }. Dấu vết = NhatKy (NguoiNhap, ThanhVien, NguoiHuy), PhanCa, PhanNhom (MaHRM, NguoiPhan), ChotCa (NguoiXacNhan).
+// Người giả TN-xx luôn xóa được, kèm dòng PhanCa/PhanNhom của họ. Không xóa chính mình, không xóa ADMIN hoạt động cuối cùng.
+// Sao lưu vào SaoLuuXoa chỉ gồm [mã, họ tên, chức vụ, đơn vị, email, vai trò] — KHÔNG có PinHash/Salt/PinTam. Log XOA_NHAN_SU.
+function xoaNhanSu_(u, p) {
+  const ma = s_(p.ma);
+  if (!ma) throw 'Chọn tài khoản cần xóa';
+  if (s_(p.xacNhan) !== ma) throw 'Gõ lại đúng Mã HRM "' + ma + '" để xác nhận xóa';
+  const cu = read_('NhanSu').filter(function (r) { return s_(r.MaHRM) === ma; })[0];
+  if (!cu) throw 'Không tìm thấy nhân sự';
+  if (ma === u.ma) throw 'Không tự xóa chính mình';
+  if (s_(cu.VaiTro) === 'ADMIN' && !read_('NhanSu').some(function (r) { return s_(r.MaHRM) !== ma && s_(r.VaiTro) === 'ADMIN' && b_(r.HoatDong); })) throw 'Không xóa Quản trị hệ thống (ADMIN) hoạt động cuối cùng';
+  const gia = /^TN-/.test(ma);
+  if (!gia) {
+    const dau = [];
+    if (read_('NhatKy').some(function (r) { return s_(r.NguoiNhap) === ma || s_(r.ThanhVien).split(',').map(s_).indexOf(ma) >= 0 || s_(r.NguoiHuy).split(' ')[0] === ma; })) dau.push('báo cáo trong Nhật ký');
+    if (read_('PhanCa').some(function (r) { return s_(r.MaHRM) === ma; })) dau.push('danh sách vào ca');
+    if (read_('PhanNhom').some(function (r) { return s_(r.MaHRM) === ma || s_(r.NguoiPhan) === ma; })) dau.push('phân nhóm');
+    if (read_('ChotCa').some(function (r) { return s_(r.NguoiXacNhan) === ma; })) dau.push('chốt ca');
+    if (dau.length) throw 'Tài khoản ' + s_(cu.HoTen) + ' (' + ma + ') đã được dùng (' + dau.join(', ') + ') nên không xóa được để giữ lịch sử. Dùng "Sửa" → bỏ tick "Đang hoạt động" (Ngừng hoạt động)';
+  }
+  let pc = 0, pn = 0;
+  if (gia) {
+    pc = rewrite_('PhanCa', function (o) { return s_(o.MaHRM) === ma; }, u.ma);
+    pn = rewrite_('PhanNhom', function (o) { return s_(o.MaHRM) === ma; }, u.ma);
+  }
+  const saoLuu = saoLuuDong_('NhanSu(xóa)', [[ma, s_(cu.HoTen), s_(cu.ChucVu), s_(cu.DonVi), s_(cu.Email), s_(cu.VaiTro)]], u.ma);
+  ss_().getSheetByName('NhanSu').deleteRow(cu._row);
+  memoClear_('NhanSu');
+  log_(u.ma, 'XOA_NHAN_SU', ma + ' ' + s_(cu.HoTen) + ' | ' + s_(cu.VaiTro) + ' | ' + s_(cu.DonVi) + (gia ? ' | người giả TN-xx, kèm ' + pc + ' dòng phân ca, ' + pn + ' dòng phân nhóm' : ' | chưa từng dùng') + ' | sao lưu ' + saoLuu);
+  return { ma: ma, ten: s_(cu.HoTen), daXoa: 1, phanCa: pc, phanNhom: pn, saoLuu: saoLuu };
 }
 
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */

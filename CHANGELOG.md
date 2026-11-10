@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-NS-09 · **B5** ADMIN xóa tài khoản tạo nhầm: action `xoaNhanSu {ma, xacNhan}` + nút Xóa ở tab Nhân sự; chỉ khi chưa từng dùng (NhatKy/PhanCa/PhanNhom/ChotCa), `TN-xx` luôn xóa được; không tự xóa/ADMIN cuối; sao lưu không PIN; log `XOA_NHAN_SU`. Mock +16 (395/0), giao diện 483/0. Chưa triển khai.
 - F-NS-08 · **B5c** Ban chỉ đạo = vai trò LANHDAO (không thêm vai trò, không đổi quyền): import nhận LANHDAO/"Lãnh đạo" (ADMIN vẫn bị từ chối); `hSub` và cột vai trò tab Nhân sự hiện Chức vụ cho LANHDAO có chức vụ, cắt "…" ở 375px; file mẫu + hướng dẫn cập nhật. Mock +5 (379/0), giao diện 482/0. Chưa triển khai.
 - F-DL-05 · **B5b** "Xóa dữ liệu thử nghiệm" xóa người giả `TN-xx` theo tiền tố `TN-` (trước đây còn đòi `ChucVu = 'THỬ NGHIỆM'` nên bỏ sót), kèm PhanCa/PhanNhom; trả `nguoiGia`; sao lưu NhanSu không kèm cột PIN. Mock +3 (374/0). Chưa triển khai. Nguyên nhân thật trên Sheet chưa đọc được (cần ADMIN đăng nhập, xem SNAPSHOT).
 - F-NS-07 · Chạy **Xem trước** `chuanHoaDonVi` trên Sheet thật (ADMIN, không áp dụng, danh mục DonVi rỗng): quét 29 nhân sự, 6 nhóm tên chưa có trong danh mục (trùng thật: "Trung tâm kinh doanh" 4 người + "Trung tâm Kinh doanh" 1 người). Chờ chủ dự án chọn tên chuẩn.

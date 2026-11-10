@@ -1094,5 +1094,57 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === '00109501'), 2); ctx.memoClear_();
 }
 
+// ===== B5: ADMIN xóa tài khoản tạo nhầm (chỉ khi chưa từng dùng) =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const tao = (ma, vai) => api(tAdmin, 'luuNhanSu', { ma, ten: 'Người ' + ma, chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế', vaiTro: vai || 'TOVIEN', hoatDong: true });
+  const xoa = (ma, xn, t) => api(t || tAdmin, 'xoaNhanSu', { ma, xacNhan: xn === undefined ? ma : xn });
+  // quyền
+  tao('DEL0');
+  ok(!xoa('DEL0', undefined, tTT).ok && !xoa('DEL0', undefined, tA).ok && !xoa('DEL0', undefined, tLD).ok && !!nsRow('DEL0'), 'B5: chỉ ADMIN xóa tài khoản (TT/TP, tổ viên, Lãnh đạo bị chặn)');
+  // xác nhận gõ lại mã
+  ok(!xoa('DEL0', '').ok && !xoa('DEL0', 'del0').ok && !xoa('DEL0', 'DEL').ok && !!nsRow('DEL0'), 'B5: thiếu hoặc gõ sai mã xác nhận bị từ chối, không xóa');
+  ok(!xoa('KHONG-CO').ok && !xoa('').ok, 'B5: mã không tồn tại / trống bị từ chối');
+  // xóa người chưa dùng + sao lưu không có PIN + log
+  const pin0 = nsRow('DEL0')[8], sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length, lg0 = sh('LogHeThong').rows.length, n0 = sh('NhanSu').rows.length, tv = sh('NhanSu').rows.filter(x => x[0] !== '').length;
+  const r0 = xoa('DEL0');
+  ok(r0.ok && !nsRow('DEL0') && sh('NhanSu').rows.filter(x => x[0] !== '').length === tv - 1 && nsRow('A1') && nsRow('TT1'), 'B5: xóa được tài khoản chưa từng dùng; người khác không bị đụng', r0);
+  const sl = sh('SaoLuuXoa').rows.slice(sl0);
+  ok(sl.length === 1 && sl[0][1] === 'NhanSu(xóa)' && /"DEL0"/.test(sl[0][3]) && pin0 && sl[0][3].indexOf(pin0) < 0 && !/PinHash|PinTam|Salt/.test(sl[0][3]), 'B5: sao lưu vào SaoLuuXoa không kèm PinHash/Salt/PinTam', sl.map(x => x[3]));
+  const lg = sh('LogHeThong').rows.slice(lg0).filter(x => x[4] === 'XOA_NHAN_SU');
+  ok(lg.length === 1 && /DEL0/.test(lg[0][6]) && pin0 && lg[0][6].indexOf(pin0) < 0, 'B5: log XOA_NHAN_SU có mã, không có PIN', lg.map(x => x[6]));
+  // đã có dấu vết → từ chối
+  const ck = (ma, re, ten) => { const k = xoa(ma); ok(!k.ok && /đã được dùng/.test(k.err) && re.test(k.err) && /Ngừng hoạt động/.test(k.err) && !!nsRow(ma), 'B5: từ chối ' + ten + ' (có dấu vết), gợi ý Ngừng hoạt động', k); };
+  ['DEL1', 'DEL2', 'DEL3', 'DEL4', 'DEL5'].forEach(m => tao(m));
+  const nk = { ThoiGian: '2026-11-09 09:00:00', Ngay: '2026-11-09', Ca: 'Sáng', Buoc: 'SCAN', MaHop: 'DEL-H', SoHoSo: 1, SoTrang: 5, SoTo: 0, HetHop: false, Loai: 'THƯỜNG', Huy: false };
+  ctx.append_('NhatKy', Object.assign({ ID: 'DX1', NguoiNhap: 'DEL1', ThanhVien: 'DEL1' }, nk));
+  ctx.append_('NhatKy', Object.assign({ ID: 'DX2', NguoiNhap: 'A1', ThanhVien: 'A1,DEL2' }, nk));
+  sh('PhanCa').rows.push(['2026-11-09', 'Sáng', 'DEL3', 'Người DEL3', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Sáng', '6', 'A1', 'Nhân viên A', 'DEL4', '']);
+  sh('ChotCa').rows.push(['2026-11-09', 'Sáng', 'CHOT', 'DEL5', '', '']);
+  ctx.memoClear_();
+  ck('DEL1', /Nhật ký/, 'người đã báo cáo (NguoiNhap)'); ck('DEL2', /Nhật ký/, 'người chỉ có trong ThanhVien'); ck('DEL3', /vào ca/, 'người đã vào ca'); ck('DEL4', /phân nhóm/, 'người từng xếp nhóm (NguoiPhan)'); ck('DEL5', /chốt ca/, 'người từng chốt ca');
+  // tự xóa / ADMIN cuối
+  ok(!xoa('ADMIN').ok && /chính mình/.test(xoa('ADMIN').err) && !!nsRow('ADMIN'), 'B5: không tự xóa chính mình');
+  let loi = ''; try { ctx.xoaNhanSu_({ ma: 'ZZ', vaiTro: 'ADMIN' }, { ma: 'ADMIN', xacNhan: 'ADMIN' }); } catch (e) { loi = String(e); }
+  ok(/cuối cùng/.test(loi) && !!nsRow('ADMIN'), 'B5: không xóa ADMIN hoạt động cuối cùng', loi);
+  tao('ADM2', 'ADMIN');
+  ok(xoa('ADM2').ok && !nsRow('ADM2'), 'B5: còn ADMIN khác thì xóa được ADMIN tạo nhầm (chưa dùng)');
+  // TN-xx luôn xóa được, kèm PhanCa/PhanNhom; người thật cùng tên không đụng
+  sh('NhanSu').rows.push(['TN-55', 'Giả 55', 'Tổ viên', 'X', '', 'TOVIEN', 'H', 'S', 'P', false, 0, false, true]);
+  sh('PhanCa').rows.push(['2026-11-09', 'Sáng', 'TN-55', 'Giả 55', '', ''], ['2026-11-09', 'Sáng', 'A1', 'Nhân viên A', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Sáng', '6', 'TN-55', 'Giả 55', 'MAU', '']);
+  ctx.append_('NhatKy', Object.assign({ ID: 'DX3', NguoiNhap: 'TN-55', ThanhVien: 'TN-55' }, nk));
+  ctx.memoClear_();
+  const pcA1 = sh('PhanCa').rows.filter(x => x[2] === 'A1').length;
+  const rg = xoa('TN-55');
+  ok(rg.ok && rg.data.phanCa === 1 && rg.data.phanNhom === 1 && !nsRow('TN-55') && !sh('PhanCa').rows.some(x => x[2] === 'TN-55') && !sh('PhanNhom').rows.some(x => x[3] === 'TN-55') && sh('PhanCa').rows.filter(x => x[2] === 'A1').length === pcA1, 'B5: TN-xx luôn xóa được (dù có dấu vết), kèm PhanCa/PhanNhom; người thật không bị đụng', rg);
+  const sl2 = sh('SaoLuuXoa').rows.filter(x => /TN-55/.test(x[3]));
+  ok(sl2.length >= 1 && !sl2.some(x => /"H"|"S"|"P"/.test(x[3]) && x[1] === 'NhanSu(xóa)'), 'B5: sao lưu TN-xx cũng không kèm PIN');
+  // dọn
+  ['DEL1', 'DEL2', 'DEL3', 'DEL4', 'DEL5'].forEach(m => { const i = sh('NhanSu').rows.findIndex(x => x[0] === m); if (i > 0) sh('NhanSu').rows.splice(i, 1); });
+  sh('NhatKy').rows = sh('NhatKy').rows.filter(x => !/^DX\d$/.test(x[0])); sh('PhanCa').rows = sh('PhanCa').rows.filter(x => !/^DEL/.test(x[2])); sh('PhanNhom').rows = sh('PhanNhom').rows.filter(x => x[5] !== 'DEL4'); sh('ChotCa').rows = sh('ChotCa').rows.filter(x => x[3] !== 'DEL5'); ctx.memoClear_();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

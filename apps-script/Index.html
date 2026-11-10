@@ -2920,7 +2920,7 @@ function veNS() {
   $('nsList').innerHTML = '<table><tr><th>Họ và tên</th><th>Mã HRM</th>' + (sup ? '<th>Vai trò</th>' : '') + '<th>Đơn vị</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (rs.length ? rs.map(function (o) {
     var x = o.x;
     return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td>' + (sup ? '<td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span>' + (x.vaiTro === 'LANHDAO' && x.chucVu ? '<br><small class="muted">' + esc(x.chucVu) + '</small>' : '') + '</td>' : '') + '<td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
-      '<td><button class="sm" data-e="' + o.i + '">Sửa</button> <button class="sm" data-p="' + esc(x.ma) + '">Cấp PIN mới</button> <button class="sm' + (x.khoa ? ' pri' : '') + '" data-k="' + esc(x.ma) + '">Mở khóa</button></td></tr>';
+      '<td><button class="sm" data-e="' + o.i + '">Sửa</button> <button class="sm" data-p="' + esc(x.ma) + '">Cấp PIN mới</button> <button class="sm' + (x.khoa ? ' pri' : '') + '" data-k="' + esc(x.ma) + '">Mở khóa</button>' + (sup ? ' <button class="sm bad" data-x="' + o.i + '">Xóa</button>' : '') + '</td></tr>';
   }).join('') : '<tr><td colspan="6" class="muted">Không có người nào khớp.</td></tr>') + '</table>';
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
     b.onclick = function () {
@@ -2930,6 +2930,13 @@ function veNS() {
   });
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-p]'), function (b) {
     b.onclick = function () { if (confirm('Cấp PIN tạm mới cho tài khoản này? PIN cũ mất hiệu lực, người đó phải đổi PIN khi đăng nhập.')) call('resetPin', { ma: b.dataset.p }).then(function (r) { msg('nsMsg2', 'PIN tạm của ' + r.ten + ': ' + r.pin + ' (đưa trực tiếp cho người đó)', 'ok'); loadNS(); }).catch(function (e) { msg('nsMsg2', e); }); };
+  });
+  Array.prototype.forEach.call($('nsList').querySelectorAll('[data-x]'), function (b) {      // B5: xóa tài khoản tạo nhầm (chỉ ADMIN, chỉ khi chưa từng dùng)
+    b.onclick = function () {
+      var x = NS_DS[+b.dataset.x], t = prompt('Xóa tài khoản ' + x.ten + ' (' + x.ma + ')? Chỉ xóa được khi chưa từng được dùng (đã dùng thì chọn Sửa → bỏ tick Đang hoạt động). Gõ lại đúng Mã HRM để xác nhận:');
+      if (!t) return;
+      call('xoaNhanSu', { ma: x.ma, xacNhan: t }).then(function (r) { msg('nsMsg2', 'Đã xóa tài khoản ' + r.ten + ' (' + r.ma + ')' + (r.phanCa || r.phanNhom ? ' cùng ' + r.phanCa + ' dòng phân ca, ' + r.phanNhom + ' dòng phân nhóm' : '') + (r.saoLuu ? ' (sao lưu: ' + r.saoLuu + ')' : ''), 'ok'); loadNS(); loadDV(); }).catch(function (e) { msg('nsMsg2', e); });
+    };
   });
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-k]'), function (b) {
     b.onclick = function () { call('moKhoaTK', { ma: b.dataset.k }).then(function (r) { msg('nsMsg2', r, 'ok'); loadNS(); }).catch(function (e) { msg('nsMsg2', e); }); };
