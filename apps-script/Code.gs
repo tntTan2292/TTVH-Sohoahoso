@@ -335,6 +335,7 @@ function route_(u, action, p) {
     case 'dsDonVi': need_(u); return dsDonVi_();            // B1: TT/TP cần danh sách chọn đơn vị khi sửa tổ viên
     case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
     case 'chuanHoaDonVi': needSuper_(u); return chuanHoaDonVi_(u, p);   // B2
+    case 'importNhanSu': needSuper_(u); return importNhanSu_(u, p);     // B3
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
     case 'luuNhanSu': need_(u); return luuNhanSu_(u, p);     // QĐ2: TT/TP chỉ sửa tổ viên (hàm tự kiểm)
     case 'dsCa': need_(u); return dsCa_(p);
@@ -909,6 +910,79 @@ function chuanHoaDonVi_(u, p) {
   return kq;
 }
 
+/* ---------- B3: Import nhân sự từ Excel/CSV/dán (QĐ4; chỉ ADMIN): xem trước rồi mới ghi một lần ---------- */
+// payload { dong: [{ma, ten, chucVu, donVi, vaiTro}], apDung, xacNhan:'IMPORT' }.
+// Mã HRM phải là CHUỖI (giữ số 0 đầu): số thuần bị từ chối. Mã đã có → bỏ qua và báo; có dòng lỗi → không ghi gì.
+// Vai trò chỉ TOVIEN/TOTRUONG/TOPHO (nhận cả "Tổ viên/Tổ trưởng/Tổ phó"). PIN tạm sinh ngẫu nhiên, LƯU DẠNG BĂM (PinHash+Salt, DoiPin=TRUE),
+// trả về MỘT LẦN trong kết quả; không ghi vào log, không ghi ở nơi nào khác.
+const IMPORT_TOI_DA_ = 300;
+const IMPORT_VAI_TRO_ = { tovien: 'TOVIEN', totruong: 'TOTRUONG', topho: 'TOPHO' };
+function boDau_(v) { let x = s_(v); try { x = x.normalize('NFD'); } catch (e) { } return x.replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function pinTamMoi_(ma) {
+  for (let i = 0; i < 50; i++) { const pin = '' + Math.floor(100000 + Math.random() * 900000); if (!pinYeu_(pin, ma)) return pin; }
+  return '' + Math.floor(100000 + Math.random() * 900000);
+}
+function importNhanSu_(u, p) {
+  const apDung = p.apDung === true;
+  if (!Array.isArray(p.dong) || !p.dong.length) throw 'Không có dòng nào để import';
+  if (p.dong.length > IMPORT_TOI_DA_) throw 'Mỗi lần import tối đa ' + IMPORT_TOI_DA_ + ' dòng';
+  if (apDung && s_(p.xacNhan) !== 'IMPORT') throw 'Gõ đúng chữ IMPORT để xác nhận ghi nhân sự';
+  const ns = read_('NhanSu'), coMa = {}, coMaKhongSo0 = {};
+  ns.forEach(function (r) { const m = s_(r.MaHRM); coMa[m] = 1; coMaKhongSo0[m.replace(/^0+/, '')] = m; });
+  const trongFile = {}, trongFileKhongSo0 = {};
+  const out = [], hop = [];
+  p.dong.forEach(function (x, i) {
+    x = x || {};
+    const stt = i + 1, loi = [];
+    const maRaw = x.ma, ma = s_(maRaw), ten = chuanTen_(x.ten), chucVu = chuanTen_(x.chucVu) || 'Tổ viên', donViNhap = chuanTen_(x.donVi);
+    if (!ma && !ten && !donViNhap && !chuanTen_(x.chucVu) && !s_(x.vaiTro)) return;      // dòng trống hoàn toàn: bỏ qua im lặng
+    let st = 'OK', vai = 'TOVIEN', dv = donViNhap;
+    if (typeof maRaw === 'number') loi.push('Mã HRM là kiểu số (mất số 0 đầu) – đặt cột Mã HRM dạng văn bản rồi chọn lại file');
+    else if (!ma) loi.push('Thiếu Mã HRM');
+    else if (!/^[A-Za-z0-9][A-Za-z0-9._\-]{0,29}$/.test(ma)) loi.push('Mã HRM chỉ gồm chữ, số, . _ - (tối đa 30 ký tự)');
+    else if (/^TN-/i.test(ma)) loi.push('Mã bắt đầu TN- dành cho dữ liệu thử nghiệm');
+    if (!ten) loi.push('Thiếu Họ tên'); else if (ten.length > 100) loi.push('Họ tên quá dài');
+    if (chucVu.length > 100) loi.push('Chức vụ quá dài');
+    const vaiRaw = s_(x.vaiTro);
+    if (vaiRaw) {
+      vai = IMPORT_VAI_TRO_[boDau_(vaiRaw)] || (VAI_TRO_ALL.indexOf(vaiRaw.toUpperCase()) >= 0 ? vaiRaw.toUpperCase() : '');
+      if (vai !== 'TOVIEN' && vai !== 'TOTRUONG' && vai !== 'TOPHO') loi.push(vai === 'ADMIN' || vai === 'LANHDAO' ? 'Import không tạo tài khoản Quản trị / Lãnh đạo' : 'Vai trò "' + vaiRaw + '" không hợp lệ (chỉ Tổ viên / Tổ trưởng / Tổ phó)');
+    }
+    if (!donViNhap) loi.push('Thiếu Đơn vị');
+    else {
+      const d = donViTim_(donViNhap);
+      if (!d) loi.push('Đơn vị "' + donViNhap + '" chưa có trong danh mục');
+      else if (!d.hoatDong) loi.push('Đơn vị "' + d.ten + '" đang bị ẩn');
+      else dv = d.ten;
+    }
+    if (!loi.length) {
+      const k0 = ma.replace(/^0+/, '');
+      if (trongFile[ma]) loi.push('Mã trùng với dòng ' + trongFile[ma] + ' trong file');
+      else if (trongFileKhongSo0[k0] && trongFileKhongSo0[k0].ma !== ma) loi.push('Mã giống dòng ' + trongFileKhongSo0[k0].stt + ' trong file (chỉ khác số 0 đầu)');
+      else if (coMa[ma]) st = 'BO_QUA';
+      else if (coMaKhongSo0[k0] && coMaKhongSo0[k0] !== ma) loi.push('Giống mã ' + coMaKhongSo0[k0] + ' đã có (chỉ khác số 0 đầu)');
+      if (!trongFile[ma]) { trongFile[ma] = stt; if (!trongFileKhongSo0[k0]) trongFileKhongSo0[k0] = { ma: ma, stt: stt }; }
+    }
+    if (loi.length) st = 'LOI';
+    out.push({ stt: stt, ma: ma, ten: ten, chucVu: chucVu, donVi: dv, vaiTro: vai, trangThai: st, loi: loi, ghiChu: st === 'BO_QUA' ? 'Mã đã có trong hệ thống – bỏ qua, không ghi đè' : '' });
+  });
+  const soOk = out.filter(function (x) { return x.trangThai === 'OK'; }).length, soLoi = out.filter(function (x) { return x.trangThai === 'LOI'; }).length, soBoQua = out.filter(function (x) { return x.trangThai === 'BO_QUA'; }).length;
+  const kq = { apDung: apDung, dong: out, soOk: soOk, soLoi: soLoi, soBoQua: soBoQua };
+  if (!apDung) return kq;
+  if (soLoi) throw 'Còn ' + soLoi + ' dòng lỗi – chưa ghi gì. Sửa file rồi Xem trước lại';
+  if (!soOk) { kq.pin = []; kq.daGhi = 0; return kq; }
+  const pins = [], objs = [];
+  out.filter(function (x) { return x.trangThai === 'OK'; }).forEach(function (x) {
+    const pin = pinTamMoi_(x.ma), salt = Utilities.getUuid().slice(0, 8);
+    objs.push({ MaHRM: x.ma, HoTen: x.ten, ChucVu: x.chucVu, DonVi: x.donVi, Email: '', VaiTro: x.vaiTro, PinHash: hash_(salt, pin), Salt: salt, PinTam: '', DoiPin: true, SaiPin: 0, Khoa: false, HoatDong: true });
+    pins.push({ ma: x.ma, ten: x.ten, donVi: x.donVi, vaiTro: x.vaiTro, pin: pin });
+  });
+  appendMany_('NhanSu', objs);
+  const maDS = objs.map(function (o) { return o.MaHRM; });
+  log_(u.ma, 'IMPORT_NHAN_SU', 'thêm ' + objs.length + ' nhân sự, bỏ qua ' + soBoQua + ' mã đã có | mã: ' + maDS.slice(0, 40).join(', ') + (maDS.length > 40 ? ' …' : ''));      // KHÔNG ghi PIN
+  kq.daGhi = objs.length; kq.pin = pins;
+  return kq;
+}
 
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */
 function appendMany_(name, objs) {

@@ -1948,6 +1948,19 @@ tbody tr:last-child td { border-bottom: none; }
       <div id="dvChMsg"></div>
       <div id="dvChKq"></div>
     </div>
+    <div class="card hide" id="imCard">
+      <h2>Import nhân sự từ Excel</h2>
+      <div class="muted">Cột: <b>Mã HRM, Họ tên, Chức vụ, Đơn vị, Vai trò</b>. Đơn vị phải có trong danh mục; Vai trò: Tổ viên / Tổ trưởng / Tổ phó (để trống = Tổ viên). Mã HRM đã có thì bỏ qua, không ghi đè. Còn dòng lỗi thì không ghi gì. Giữ cột Mã HRM dạng <b>Văn bản</b> (không mất số 0 đầu). PIN tạm chỉ hiện <b>một lần</b> sau khi ghi, in/giao tận tay.</div>
+      <div class="row" style="margin-top:12px;">
+        <div><label>Chọn file (.xlsx / .csv)</label><input type="file" id="imFile" accept=".xlsx,.xls,.csv"></div>
+        <div style="align-self:end"><button id="imMau" style="width:100%;">Tải file mẫu</button></div>
+      </div>
+      <label style="margin-top:12px;">Hoặc dán từ Excel (có thể kèm dòng tiêu đề)</label>
+      <textarea id="imDan" rows="5" placeholder="Mã HRM, Họ tên, Chức vụ, Đơn vị, Vai trò (mỗi người một dòng, cách nhau bằng Tab)"></textarea>
+      <p style="margin-top:12px;"><button class="pri" id="imXem">Xem trước</button></p>
+      <div id="imMsg"></div>
+      <div id="imKq"></div>
+    </div>
   </section>
 
   <!-- TAB 4: DỮ LIỆU -->
@@ -2879,6 +2892,7 @@ function initNS() {
   loadDV();      // B1: danh sách chọn Đơn vị (cả ADMIN và TT/TP)
   $('dvCard').classList.toggle('hide', !sup); $('dvLuu').onclick = saveDV;      // B1
   $('dvChCard').classList.toggle('hide', !sup); $('dvChXem').onclick = function () { dvChCall(false); };      // B2
+  $('imCard').classList.toggle('hide', !sup); $('imXem').onclick = imXem; $('imMau').onclick = imTaiMau;      // B3
 }
 function clearNS() {
   ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; fillNsDv(''); msg('nsMsg', '');
@@ -2989,6 +3003,96 @@ function veDvCh(r) {
   Array.prototype.forEach.call($('dvChKq').querySelectorAll('[data-dvk]'), function (s) { s.onchange = function () { if (s.value) { DVCH_ANHXA[s.dataset.dvk] = s.value; dvChCall(false); } }; });
   Array.prototype.forEach.call($('dvChKq').querySelectorAll('[data-dvb]'), function (b) { b.onclick = function () { delete DVCH_ANHXA[b.dataset.dvb]; dvChCall(false); }; });
   if ($('dvChApDung')) $('dvChApDung').onclick = function () { dvChCall(true); };
+}
+
+/* ---------- B3: Import nhân sự từ Excel / CSV / dán (ADMIN: xem trước → ghi một lần → PIN tạm hiện một lần) ---------- */
+var SHEETJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';      // phiên bản cố định, chỉ nạp khi cần
+var IM_DONG = [], IM_COT = ['ma', 'ten', 'chucVu', 'donVi', 'vaiTro'];
+function imNapSheetJS() {
+  return new Promise(function (res, rej) {
+    if (window.XLSX) { res(); return; }
+    var s = document.createElement('script'); s.src = SHEETJS_URL;
+    s.onload = function () { res(); };
+    s.onerror = function () { rej('Không tải được thư viện đọc Excel (cdnjs). Dán dữ liệu từ Excel vào ô bên dưới thay thế.'); };
+    document.head.appendChild(s);
+  });
+}
+function imKhoaCot(s) { s = String(s == null ? '' : s); try { s = s.normalize('NFD'); } catch (e) { } return s.replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function imDoiDong(aoa) {      // bảng ô → [{ma, ten, chucVu, donVi, vaiTro}] (toàn chuỗi; nhận dòng tiêu đề theo tên cột, nếu không có thì theo thứ tự cột)
+  aoa = aoa.filter(function (r) { return r.some(function (c) { return String(c == null ? '' : c).trim() !== ''; }); });
+  if (!aoa.length) return [];
+  var ten = { mahrm: 0, ma: 0, hoten: 1, hovaten: 1, ten: 1, chucvu: 2, donvi: 3, vaitro: 4 }, map = [0, 1, 2, 3, 4];
+  var dau = aoa[0].map(imKhoaCot);
+  if (dau.some(function (k) { return ten[k] !== undefined; })) {
+    map = [-1, -1, -1, -1, -1];
+    dau.forEach(function (k, i) { if (ten[k] !== undefined && map[ten[k]] < 0) map[ten[k]] = i; });
+    aoa = aoa.slice(1);
+  }
+  return aoa.map(function (r) { var o = {}; IM_COT.forEach(function (k, j) { o[k] = map[j] >= 0 && r[map[j]] != null ? String(r[map[j]]).trim() : ''; }); return o; });
+}
+function imDocFile(f) {
+  return imNapSheetJS().then(function () {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader(), csv = /\.csv$/i.test(f.name);
+      fr.onerror = function () { rej('Không đọc được file'); };
+      fr.onload = function () {
+        try {
+          var wb = csv ? XLSX.read(fr.result, { type: 'string', raw: true }) : XLSX.read(fr.result, { type: 'array', cellText: true });
+          res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }));      // raw:false = lấy đúng chữ hiển thị trong ô → giữ số 0 đầu của Mã HRM dạng văn bản
+        } catch (e) { rej('Không đọc được file: ' + (e && e.message ? e.message : e)); }
+      };
+      if (csv) fr.readAsText(f, 'UTF-8'); else fr.readAsArrayBuffer(f);
+    });
+  });
+}
+function imDocDan(txt) { return txt.split(/\r?\n/).map(function (l) { return l.indexOf('\t') >= 0 ? l.split('\t') : (l.indexOf(';') >= 0 ? l.split(';') : l.split(',')); }); }
+function imTaiMau() {
+  imNapSheetJS().then(function () {
+    var ws = XLSX.utils.aoa_to_sheet([['Mã HRM', 'Họ tên', 'Chức vụ', 'Đơn vị', 'Vai trò']]), i;
+    for (i = 2; i <= 300; i++) ws['A' + i] = { t: 's', v: '', z: '@' };      // cột Mã HRM dạng văn bản
+    ws['!ref'] = 'A1:E300'; ws['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 20 }, { wch: 32 }, { wch: 14 }];
+    var hd = [['Hướng dẫn'], ['1. Điền từ dòng 2 của sheet NhanSu, mỗi người một dòng.'], ['2. Mã HRM: giữ dạng Văn bản (ví dụ 00109101), không đổi định dạng cột A.'], ['3. Đơn vị: chỉ dùng tên có trong danh sách dưới đây.'], ['4. Vai trò: Tổ viên / Tổ trưởng / Tổ phó (trống = Tổ viên).'], ['5. Mã HRM đã có trong hệ thống sẽ bị bỏ qua, không ghi đè.'], [''], ['Đơn vị trong danh mục:']];
+    DV_DS.forEach(function (x) { if (x.hoatDong) hd.push([x.ten]); });
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'NhanSu'); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hd), 'HuongDan');
+    XLSX.writeFile(wb, 'mau_import_nhan_su.xlsx');
+  }).catch(function (e) { msg('imMsg', e); });
+}
+function imXem() {
+  msg('imMsg', 'Đang đọc dữ liệu…', 'warn'); $('imKq').innerHTML = '';
+  var f = $('imFile').files && $('imFile').files[0];
+  var nguon = f ? imDocFile(f) : Promise.resolve(imDocDan($('imDan').value || ''));
+  nguon.then(function (aoa) {
+    IM_DONG = imDoiDong(aoa);
+    if (!IM_DONG.length) throw 'Không có dòng nào để import';
+    return call('importNhanSu', { dong: IM_DONG, apDung: false });
+  }).then(function (r) { msg('imMsg', ''); veImXem(r); }).catch(function (e) { msg('imMsg', e); });
+}
+function veImXem(r) {
+  var nhan = { OK: '<span class="chip ok">Sẽ thêm</span>', BO_QUA: '<span class="chip chip-mut">Bỏ qua</span>', LOI: '<span class="chip bad">Lỗi</span>' };
+  var h = '<div class="muted" style="margin-top:12px;">' + r.dong.length + ' dòng: <b>' + r.soOk + '</b> sẽ thêm · <b>' + r.soBoQua + '</b> bỏ qua (mã đã có) · <b>' + r.soLoi + '</b> lỗi</div>' +
+    '<div class="scroll"><table><tr><th>#</th><th>Mã HRM</th><th>Họ tên</th><th>Chức vụ</th><th>Đơn vị</th><th>Vai trò</th><th>Kết quả</th></tr>' + r.dong.map(function (x) {
+      return '<tr' + (x.trangThai === 'LOI' ? ' style="background:rgba(220,38,38,.08)"' : '') + '><td>' + x.stt + '</td><td><code>' + esc(x.ma) + '</code></td><td>' + esc(x.ten) + '</td><td>' + esc(x.chucVu) + '</td><td>' + esc(x.donVi) + '</td><td>' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</td><td>' + nhan[x.trangThai] + (x.loi.length ? '<br>' + esc(x.loi.join('; ')) : '') + (x.ghiChu ? '<br><small class="muted">' + esc(x.ghiChu) + '</small>' : '') + '</td></tr>';
+    }).join('') + '</table></div>';
+  if (r.soLoi) h += '<div class="msg err"><span>Còn ' + r.soLoi + ' dòng lỗi – sửa file (hoặc dữ liệu dán) rồi bấm Xem trước lại. Chưa ghi gì.</span></div>';
+  else if (r.soOk) h += '<p style="margin-top:14px;"><button class="pri bad" id="imGhi">Ghi ' + r.soOk + ' nhân sự và cấp PIN tạm</button></p>';
+  else h += '<div class="msg ok"><span>Không có nhân sự mới để thêm.</span></div>';
+  $('imKq').innerHTML = h;
+  if ($('imGhi')) $('imGhi').onclick = imGhi;
+}
+function imGhi() {
+  var t = prompt('Ghi nhân sự mới và sinh PIN tạm. PIN chỉ hiện MỘT lần ngay sau khi ghi. Gõ IMPORT để xác nhận:');
+  if (!t) return;
+  $('imGhi').disabled = true; msg('imMsg', 'Đang ghi…', 'warn');
+  call('importNhanSu', { dong: IM_DONG, apDung: true, xacNhan: t }).then(function (r) {
+    IM_DONG = []; $('imFile').value = ''; $('imDan').value = '';
+    msg('imMsg', 'Đã thêm ' + r.daGhi + ' nhân sự' + (r.soBoQua ? ', bỏ qua ' + r.soBoQua + ' mã đã có' : '') + '. Ghi lại PIN tạm bên dưới NGAY – đóng hoặc làm mới trang là mất.', 'ok');
+    $('imKq').innerHTML = r.pin.length ? '<div class="scroll" id="imPin"><table><tr><th>Mã HRM</th><th>Họ tên</th><th>Đơn vị</th><th>PIN tạm</th></tr>' + r.pin.map(function (x) {
+      return '<tr><td><code>' + esc(x.ma) + '</code></td><td>' + esc(x.ten) + '</td><td>' + esc(x.donVi) + '</td><td><b style="font-size:1.1em;letter-spacing:2px;">' + esc(x.pin) + '</b></td></tr>';
+    }).join('') + '</table></div><p style="margin-top:12px;"><button id="imIn">In danh sách PIN</button> <button id="imXoaPin">Đã ghi xong, ẩn danh sách</button></p>' : '';
+    if ($('imIn')) $('imIn').onclick = function () { window.print(); };
+    if ($('imXoaPin')) $('imXoaPin').onclick = function () { $('imKq').innerHTML = ''; msg('imMsg', ''); };
+    loadNS(); loadDV();
+  }).catch(function (e) { msg('imMsg', e); if ($('imGhi')) $('imGhi').disabled = false; });
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */

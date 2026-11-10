@@ -1006,6 +1006,59 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ctx.memoClear_();
 }
 
+// ===== B3: import nhân sự (QĐ4) =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const nsRowsStr = () => JSON.stringify(sh('NhanSu').rows);
+  sh('NhanSu').simulaSo0 = true;      // từ đây giả lập Sheets cắt số 0 đầu ở ô chưa đặt '@'
+  const dong = [
+    { ma: '00109201', ten: ' Nguyễn  Văn   Một ', chucVu: '', donVi: 'trung tâm  vận hành', vaiTro: '' },                  // 1 OK (mặc định Tổ viên, tên chuẩn hóa)
+    { ma: '00109202', ten: 'Trần Thị Hai', chucVu: 'Tổ trưởng ca', donVi: 'Phòng Tổ chức hành chính', vaiTro: 'Tổ trưởng' }, // 2 OK TOTRUONG
+    { ma: 'A1', ten: 'Trùng mã đã có', donVi: 'Phòng Tổ chức hành chính', vaiTro: 'TOVIEN' },                                  // 3 bỏ qua
+    { ma: '00109203', ten: 'Đơn vị lạ', donVi: 'Phòng tự bịa', vaiTro: 'TOVIEN' },                                              // 4 lỗi đơn vị
+    { ma: '00109204', ten: 'Muốn ADMIN', donVi: 'Trung tâm vận hành', vaiTro: 'ADMIN' },                                        // 5 lỗi vai trò
+    { ma: 109205, ten: 'Mã kiểu số', donVi: 'Trung tâm vận hành', vaiTro: 'TOVIEN' },                                           // 6 lỗi mã số
+    { ma: '00109201', ten: 'Trùng trong file', donVi: 'Trung tâm vận hành', vaiTro: 'TOVIEN' },                                  // 7 lỗi trùng trong file
+    { ma: '109201', ten: 'Cùng mã khác số 0', donVi: 'Trung tâm vận hành', vaiTro: 'TOVIEN' },                                   // 8 lỗi khác số 0 đầu
+    { ma: '76603', ten: 'Giống mã có sẵn', donVi: 'Trung tâm vận hành', vaiTro: 'TOVIEN' },                                       // 9 lỗi giống 00076603 đã có
+    { ma: '', ten: '', chucVu: '', donVi: '', vaiTro: '' }                                                                        // 10 dòng trống: bỏ qua im lặng
+  ];
+  const truoc = nsRowsStr(), lg0 = sh('LogHeThong').rows.length;
+  ok(!api(tTT, 'importNhanSu', { dong }).ok && !api(tA, 'importNhanSu', { dong }).ok && !api(tLD, 'importNhanSu', { dong }).ok && nsRowsStr() === truoc, 'B3: chỉ ADMIN import (TT/TP, tổ viên, Lãnh đạo bị chặn)');
+  ok(!api(tAdmin, 'importNhanSu', { dong: [] }).ok && !api(tAdmin, 'importNhanSu', { dong: new Array(301).fill({ ma: 'X', ten: 'X' }) }).ok, 'B3: rỗng hoặc quá 300 dòng bị từ chối');
+  const pv = api(tAdmin, 'importNhanSu', { dong }), D = pv.data || {}, st = i => (D.dong || [])[i].trangThai;
+  ok(pv.ok && D.apDung === false && nsRowsStr() === truoc && sh('LogHeThong').rows.length === lg0 && !D.pin, 'B3: xem trước KHÔNG ghi gì và KHÔNG sinh PIN', pv.err);
+  ok(D.dong.length === 9 && st(0) === 'OK' && st(1) === 'OK' && st(2) === 'BO_QUA' && [3, 4, 5, 6, 7, 8].every(i => st(i) === 'LOI') && D.soOk === 2 && D.soLoi === 6 && D.soBoQua === 1, 'B3: xem trước phân loại từng dòng (OK / bỏ qua mã đã có / lỗi), bỏ dòng trống', D.dong.map(x => x.trangThai));
+  ok(D.dong[0].ten === 'Nguyễn Văn Một' && D.dong[0].chucVu === 'Tổ viên' && D.dong[0].donVi === 'Trung tâm vận hành' && D.dong[0].vaiTro === 'TOVIEN' && D.dong[1].vaiTro === 'TOTRUONG' && D.dong[0].ma === '00109201', 'B3: tên/đơn vị chuẩn hóa, chức vụ mặc định Tổ viên, vai trò "Tổ trưởng" → TOTRUONG, mã giữ số 0 đầu');
+  ok(/danh mục/.test(D.dong[3].loi[0]) && /Quản trị/.test(D.dong[4].loi[0]) && /văn bản/.test(D.dong[5].loi[0]) && /dòng 1/.test(D.dong[6].loi[0]) && /số 0 đầu/.test(D.dong[7].loi[0]) && /00076603/.test(D.dong[8].loi[0]) && /bỏ qua|không ghi đè/.test(D.dong[2].ghiChu), 'B3: thông báo lỗi từng dòng rõ ràng (đơn vị, ADMIN, mã kiểu số, trùng trong file, khác số 0 đầu, giống mã có sẵn)', D.dong.map(x => x.loi));
+  let r3 = api(tAdmin, 'importNhanSu', { dong, apDung: true, xacNhan: 'IMPORT' });
+  ok(!r3.ok && /6 dòng lỗi/.test(r3.err) && nsRowsStr() === truoc && sh('LogHeThong').rows.length === lg0, 'B3: còn dòng lỗi thì áp dụng KHÔNG ghi gì (cả dòng hợp lệ)', r3);
+  // file sạch
+  const sach = [dong[0], dong[1], dong[2], { ma: '00109206', ten: 'Lê Tổ Phó', donVi: 'Phòng Tài chính kế hoạch', vaiTro: 'tổ phó' }];
+  const a1Truoc = JSON.stringify(nsRow('A1'));
+  r3 = api(tAdmin, 'importNhanSu', { dong: sach, apDung: true });
+  ok(!r3.ok && /IMPORT/.test(r3.err) && nsRowsStr() === truoc, 'B3: thiếu chữ IMPORT bị từ chối, không ghi gì', r3);
+  r3 = api(tAdmin, 'importNhanSu', { dong: sach, apDung: true, xacNhan: 'IMPORT' });
+  const R = r3.data || {};
+  ok(r3.ok && R.daGhi === 3 && R.pin.length === 3 && R.soBoQua === 1 && R.pin.every(x => /^\d{6}$/.test(x.pin)), 'B3: áp dụng: ghi 3 người, bỏ qua 1 mã đã có, trả 3 PIN tạm 6 số (một lần)', r3.err || R);
+  ok(['00109201', '00109202', '00109206'].every(m => nsRow(m) && typeof nsRow(m)[0] === 'string'), 'B3: Mã HRM toàn số giữ dạng VĂN BẢN có số 0 đầu sau khi ghi (đã đặt @ trước khi ghi)', sh('NhanSu').rows.slice(-3).map(x => [x[0], typeof x[0]]));
+  const n1 = nsRow('00109201'), n2 = nsRow('00109202'), n6 = nsRow('00109206');
+  ok(n1[1] === 'Nguyễn Văn Một' && n1[2] === 'Tổ viên' && n1[3] === 'Trung tâm vận hành' && n1[5] === 'TOVIEN' && n2[5] === 'TOTRUONG' && n6[5] === 'TOPHO' && n1[9] === true && n1[10] === 0 && n1[11] === false && n1[12] === true, 'B3: đúng cột (đơn vị chuẩn, vai trò, DoiPin=TRUE, hoạt động)', n1);
+  ok(n1[6] !== '' && n1[7] !== '' && n1[8] === '' && n1[6] !== R.pin[0].pin, 'B3: PIN tạm lưu dạng BĂM (PinHash+Salt), cột PinTam để trống', n1);
+  ok(JSON.stringify(nsRow('A1')) === a1Truoc, 'B3: mã đã có (A1) không bị ghi đè');
+  const lgI = sh('LogHeThong').rows.slice(lg0).filter(x => x[4] === 'IMPORT_NHAN_SU');
+  const moi = sh('LogHeThong').rows.slice(lg0).map(x => x[6]).join('|') + JSON.stringify((sh('SaoLuuXoa') || { rows: [] }).rows);
+  ok(lgI.length === 1 && /thêm 3 nhân sự, bỏ qua 1/.test(lgI[0][6]) && R.pin.every(x => moi.indexOf(x.pin) < 0), 'B3: log IMPORT_NHAN_SU có số lượng + mã, KHÔNG chứa PIN (không có ở log/sao lưu)', lgI.map(x => x[6]));
+  const lgn = ctx.login('00109201', R.pin[0].pin);
+  ok(lgn.ok && lgn.mustChange === true && !ctx.login('00109201', '000000').ok, 'B3: người mới đăng nhập được bằng PIN tạm và bị buộc đổi PIN lần đầu');
+  const tN = lgn.token;
+  ok(api(tN, 'doiPin', { pin: '482157' }).ok && ctx.login('00109201', '482157').ok && nsRow('00109201')[10] === 0, 'B3: đổi PIN lần đầu xong dùng PIN mới');
+  const r4 = api(tAdmin, 'importNhanSu', { dong: sach, apDung: true, xacNhan: 'IMPORT' });
+  ok(r4.ok && r4.data.daGhi === 0 && r4.data.soBoQua === 4 && r4.data.pin.length === 0, 'B3: nhập lại cùng file → bỏ qua hết (không ghi đè, không sinh PIN)', r4.data);
+  ok(api(tAdmin, 'dsNhanSu').data.find(x => x.ma === '00109202').vaiTro === 'TOTRUONG' && !/PinHash|"pin"/.test(JSON.stringify(api(tAdmin, 'dsNhanSu').data)), 'B3: người mới hiện trong tab Nhân sự, danh sách không lộ PIN/băm');
+  sh('NhanSu').simulaSo0 = false;
+  sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === '00109201'), 3); ctx.memoClear_();      // dọn
+}
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

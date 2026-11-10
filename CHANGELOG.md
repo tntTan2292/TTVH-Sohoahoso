@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-NS-08 · **B3** Import nhân sự từ Excel/CSV/dán (ADMIN): action `importNhanSu` (xem trước từng dòng → ghi một lần), mã HRM giữ văn bản (số 0 đầu), vai trò chỉ TOVIEN/TOTRUONG/TOPHO, mã đã có bỏ qua, có dòng lỗi thì không ghi gì; PIN tạm lưu dạng băm, hiện một lần, không vào log. SheetJS 0.18.5 từ cdnjs, nạp khi cần. Mock +18 (371/0), giao diện 482/0. Chưa triển khai.
 - F-NS-07 · **B2** Chuẩn hóa đơn vị đang trùng (ADMIN): action `chuanHoaDonVi` xem trước → áp dụng (gõ `DONVI`), có sao lưu (không PIN) + log từng cặp cũ → mới. **CHƯA chạy trên Sheet thật** (chờ Opus GO). Mock +17 (353/0), giao diện 458/0. Chưa triển khai.
 - F-NS-06 · **B1** Danh mục Đơn vị: tab `DonVi` tự tạo; actions `dsDonVi`, `luuDonVi`; `#nsDv` thành danh sách chọn ở form ADMIN và form TT/TP; máy chủ từ chối đơn vị ngoài danh mục (trừ giữ nguyên giá trị cũ). Mock +23 (336/0), giao diện 445/0. Chưa triển khai.
 - Triển khai **phiên bản 23** lên `…MlRA` (commit `6692d34`: F-DB-06). Bản trước: phiên bản 22 (`5ccfbbc`). Bản trên Apps Script khớp `5ccfbbc` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp `main`. Mở `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca", hiện màn hình đăng nhập. Chưa tự nghiệm thu giao diện (chủ dự án xem).
