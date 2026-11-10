@@ -1558,6 +1558,61 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows.length = nk0; memo2();
 }
 
+// ===== NS12 / F-NS-12 (mục 27): TT/TP thêm tổ viên mới =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const nNs0 = sh('NhanSu').rows.length, lg0 = sh('LogHeThong').rows.length;
+  const DV = 'Trung tâm vận hành';
+  // tạo một Tổ phó thử (qua ADMIN) rồi đổi PIN lần đầu
+  const rTP = api(tAdmin, 'luuNhanSu', { ma: 'NS12TP', ten: 'Tổ phó thử', chucVu: 'Tổ phó', donVi: DV, vaiTro: 'TOPHO', hoatDong: true });
+  const tTP = ctx.login('NS12TP', rTP.data.pin).token; api(tTP, 'doiPin', { pin: '3957' }); const tTP2 = ctx.login('NS12TP', '3957').token;
+  ok(!!tTP2, 'F-NS-12: có token Tổ phó để thử');
+  const nsN = () => sh('NhanSu').rows.length;
+  // Tổ trưởng tạo được
+  let r1 = api(tTT, 'luuNhanSu', { taoMoi: true, ma: 'NS12A', ten: 'Tổ viên mới A', chucVu: '', donVi: DV });
+  const a = nsRow('NS12A');
+  ok(r1.ok && r1.data.moi === true && /^\d{6}$/.test(r1.data.pin) && r1.data.ma === 'NS12A', 'F-NS-12: Tổ trưởng thêm tổ viên, nhận PIN tạm 6 số', Object.keys(r1.data || {}));
+  ok(a && a[1] === 'Tổ viên mới A' && a[2] === 'Tổ viên' && a[3] === DV && a[4] === '' && a[5] === 'TOVIEN' && a[8] === r1.data.pin && a[9] === true && a[10] === 0 && a[11] === false && a[12] === true, 'F-NS-12: ghi đúng cột (Tổ viên, chức vụ mặc định, Email trống, DoiPin bật, hoạt động)', a);
+  // Tổ phó tạo được
+  const r2 = api(tTP2, 'luuNhanSu', { taoMoi: true, ma: 'NS12B', ten: 'Tổ viên mới B', chucVu: 'Scan viên', donVi: DV });
+  ok(r2.ok && r2.data.moi === true && nsRow('NS12B')[2] === 'Scan viên' && nsRow('NS12B')[5] === 'TOVIEN', 'F-NS-12: Tổ phó cũng thêm được', r2);
+  // thấy trong dsNhanSu của TT và dsLogin
+  ok(api(tTT, 'dsNhanSu').data.some(x => x.ma === 'NS12A') && ctx.dsLogin().nhanSu.some(x => x.ma === 'NS12A'), 'F-NS-12: người mới có trong dsNhanSu của TT và dsLogin');
+  // đăng nhập bằng PIN tạm, bị buộc đổi PIN
+  const tN = ctx.login('NS12A', r1.data.pin).token;
+  ok(!!tN && api(tN, 'me').ok && !api(tN, 'dashboard', {}).ok && /đổi PIN lần đầu/.test(api(tN, 'dashboard', {}).err || ''), 'F-NS-12: đăng nhập bằng PIN tạm, bị buộc đổi PIN lần đầu');
+  // từ chối
+  const tu = (p, re, ten) => { const n = nsN(); const r = api(tTT, 'luuNhanSu', Object.assign({ taoMoi: true, ma: 'NS12X', ten: 'X', donVi: DV }, p)); ok(!r.ok && re.test(r.err) && nsN() === n, 'F-NS-12: từ chối ' + ten, r); return r; };
+  tu({ ma: '' }, /Mã HRM/, 'thiếu mã'); tu({ ten: '' }, /Họ tên/, 'thiếu tên');
+  tu({ ma: 'NS 12' }, /khoảng trắng/, 'mã có khoảng trắng');
+  tu({ ma: 'TN-99' }, /không hợp lệ/, 'mã TN-'); tu({ ma: 'tn-99' }, /không hợp lệ/, 'mã tn-');
+  tu({ donVi: 'Phòng bịa' }, /danh mục/, 'đơn vị ngoài danh mục'); tu({ donVi: '' }, /Đơn vị/, 'thiếu đơn vị');
+  for (const v of ['TOTRUONG', 'ADMIN', 'LANHDAO']) tu({ vaiTro: v }, /chỉ được thêm tổ viên/, 'vaiTro ' + v);
+  // trùng mã
+  const ten = ['Tổ viên mới A', 'Quản trị', 'Nhân viên A'];
+  for (const ma of ['NS12A', 'ADMIN', 'TT1']) { const r = tu({ ma }, /đã có trong hệ thống/, 'trùng mã ' + ma); ok(!/Tổ viên mới A|Quản trị|Trưởng|ADMIN|TOVIEN|Tổ trưởng/.test(r.err.replace('Mã HRM này đã có trong hệ thống', '')), 'F-NS-12: câu lỗi trùng mã không lộ tên/vai trò (' + ma + ')', r.err); }
+  tu({ ma: '0NS12A' }, /đã có trong hệ thống/, 'trùng mã khác số 0 đầu');
+  { const x = nsRow('NS12A'); const rr = api(tTT, 'luuNhanSu', { taoMoi: true, ma: '00' + 'NS12A', ten: 'Dup', donVi: DV }); ok(!rr.ok, 'F-NS-12: mã thêm số 0 đầu vẫn bị coi là trùng', rr); }
+  // email, thứ tự không ghi
+  r1 = api(tTT, 'luuNhanSu', { taoMoi: true, ma: 'NS12C', ten: 'Có email', donVi: DV, email: 'x@y.com', thuTu: 5, hoatDong: false });
+  ok(r1.ok && nsRow('NS12C')[4] === '' && nsRow('NS12C')[12] === true && api(tAdmin, 'dsNhanSu').data.find(x => x.ma === 'NS12C').thuTu === '', 'F-NS-12: email, thứ tự không được ghi; luôn hoạt động', nsRow('NS12C'));
+  // tổ viên, lãnh đạo không tạo được
+  for (const [t, nm] of [[tA, 'tổ viên'], [tLD, 'Lãnh đạo']]) { const n = nsN(); const r = api(t, 'luuNhanSu', { taoMoi: true, ma: 'NS12Z', ten: 'Z', donVi: DV }); ok(!r.ok && nsN() === n, 'F-NS-12: ' + nm + ' gửi taoMoi bị từ chối', r); }
+  // không có taoMoi: TT/TP vẫn bị từ chối như cũ
+  { const n = nsN(); const r = api(tTT, 'luuNhanSu', { ma: 'NS12W', ten: 'W', donVi: DV }); ok(!r.ok && /không tạo tài khoản mới/.test(r.err) && nsN() === n, 'F-NS-12: không có taoMoi thì TT vẫn bị từ chối như cũ', r); }
+  // taoMoi dạng chuỗi không được coi là true
+  { const n = nsN(); const r = api(tTT, 'luuNhanSu', { taoMoi: 'true', ma: 'NS12W', ten: 'W', donVi: DV }); ok(!r.ok && nsN() === n, 'F-NS-12: taoMoi không phải true thật thì không tạo', r); }
+  // ADMIN gửi taoMoi vẫn chạy như cũ (nhánh ADMIN không đọc taoMoi)
+  r1 = api(tAdmin, 'luuNhanSu', { taoMoi: true, ma: 'NS12D', ten: 'Admin tạo', donVi: DV, vaiTro: 'TOTRUONG', email: 'a@b.com' });
+  ok(r1.ok && r1.data.moi === true && nsRow('NS12D')[5] === 'TOTRUONG' && nsRow('NS12D')[4] === 'a@b.com', 'F-NS-12: ADMIN gửi taoMoi vẫn chạy đúng như cũ (vai trò, email)', nsRow('NS12D'));
+  // log không có PIN
+  const logs = sh('LogHeThong').rows.slice(lg0).map(x => x.join('|')).join('\n'), pins = [r1.data.pin, nsRow('NS12A')[8], nsRow('NS12B')[8]];
+  ok(/THEM_NHAN_SU\|NS12A TOVIEN \(do TOTRUONG tạo\)/.test(logs.replace(/\|\s*/g, '|')) || /NS12A TOVIEN \(do TOTRUONG tạo\)/.test(logs), 'F-NS-12: log ghi người tạo và vai trò', logs.slice(0, 200));
+  ok(/NS12B TOVIEN \(do TOPHO tạo\)/.test(logs) && !pins.some(p => p && new RegExp('(^|\D)' + p + '(\D|$)').test(logs)), 'F-NS-12: LogHeThong không chứa PIN tạm');
+  // dọn
+  sh('NhanSu').rows.length = nNs0; sh('LogHeThong').rows.length = lg0; ctx.memoClear_();
+}
+
 // ===== DK1 (mục 26): số 02–08/11 theo từng người (tab DauKyNguoi; tên và mã GIẢ) =====
 {
   const { execSync } = require('child_process');

@@ -813,7 +813,25 @@ function thuTuNhap_(v) {      // ô "Thứ tự hiển thị" từ form: trống
   if (!isFinite(x) || x < 0 || Math.floor(x) !== x || x > 100000) throw 'Thứ tự hiển thị phải là số nguyên từ 0 trở lên (để trống = xếp cuối)';
   return x;
 }
-function luuToVien_(u, p) {      // QĐ2 (F-NS-04): TT/TP sửa TỔ VIÊN: họ tên, chức vụ, đơn vị, hoạt động. Không đổi vai trò, không tạo mới, không đụng quản lý/lãnh đạo/ADMIN
+function taoToVien_(u, p) {      // F-NS-12: TT/TP THÊM tổ viên mới (chỉ vai trò Tổ viên). Không nhận email, thứ tự. Không ghi PIN vào log
+  if (!isAdmin_(u)) throw 'Chỉ Tổ trưởng/Tổ phó được thực hiện thao tác này';
+  const ma = s_(p.ma), ten = s_(p.ten);
+  if (!ma || !ten) throw 'Nhập Mã HRM và Họ tên';
+  if (/\s/.test(ma)) throw 'Mã HRM không được có khoảng trắng';
+  if (/^tn-/i.test(ma)) throw 'Mã HRM không hợp lệ';
+  const khoa = maKhopSo0_(ma);
+  if (!khoa) throw 'Mã HRM không hợp lệ';
+  if (s_(p.vaiTro) && s_(p.vaiTro) !== 'TOVIEN') throw 'Tổ trưởng/Tổ phó chỉ được thêm tổ viên';
+  if (read_('NhanSu').some(function (r) { return maKhopSo0_(r.MaHRM) === khoa; })) throw 'Mã HRM này đã có trong hệ thống';
+  const dv = donViChon_(p.donVi, undefined);
+  const pin = ('' + Math.floor(100000 + Math.random() * 900000));
+  append_('NhanSu', { MaHRM: ma, HoTen: ten, ChucVu: s_(p.chucVu) || 'Tổ viên', DonVi: dv, Email: '', VaiTro: 'TOVIEN',
+    PinHash: '', Salt: '', PinTam: pin, DoiPin: true, SaiPin: 0, Khoa: false, HoatDong: true, ThuTu: '' });
+  log_(u.ma, 'THEM_NHAN_SU', ma + ' TOVIEN (do ' + s_(u.vaiTro) + ' tạo)');
+  return { moi: true, ma: ma, pin: pin };
+}
+function luuToVien_(u, p) {      // QĐ2 (F-NS-04): TT/TP sửa TỔ VIÊN: họ tên, chức vụ, đơn vị, hoạt động. Không đổi vai trò, không đụng quản lý/lãnh đạo/ADMIN. Thêm mới chỉ khi p.taoMoi === true (F-NS-12)
+  if (p.taoMoi === true) return taoToVien_(u, p);
   if (!isAdmin_(u)) throw 'Chỉ Tổ trưởng/Tổ phó được thực hiện thao tác này';
   const ma = s_(p.ma), ten = s_(p.ten);
   const cu = read_('NhanSu').filter(function (r) { return s_(r.MaHRM) === ma; })[0];

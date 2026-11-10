@@ -32,4 +32,4 @@
 | 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử F5 trong khung Apps Script thật |
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
 | 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT (10/11/2026, `f8fd221`, `3c43bfb`; mock 518/0), chờ chủ dự án đẩy code, nạp dữ liệu; người phụ trách ca điền phiếu xác nhận |
-| 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12 | 🟡 Có phiếu, chờ Sonnet làm, rồi Opus review |
+| 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12 | 🟡 Sonnet XONG trong mã (10/11/2026): mock 550/0, giao diện OK; chờ Opus review, chưa đẩy |

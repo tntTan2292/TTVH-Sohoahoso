@@ -2395,6 +2395,7 @@ button.sm.bad:hover, button.bad:hover {
     </div>
     <div class="card">
       <h2 id="nsListTitle">Danh sách nhân sự hệ thống</h2>
+      <p><button class="pri hide" id="nsThem">+ Thêm tổ viên</button></p>
       <div id="nsMsg2"></div>
       <input id="nsTim" placeholder="Tìm theo tên, mã HRM hoặc đơn vị…" autocomplete="off" style="margin-bottom:10px;">
       <div class="row" id="nsLoc" style="margin-bottom:10px;">
@@ -3458,12 +3459,19 @@ function renderHo(d) {
 }
 
 /* ---------- Tab Nhân sự (ADMIN: toàn bộ; TT/TP: chỉ tổ viên – F-NS-04, F-NS-05) ---------- */
-var NS_DS = [];
+var NS_DS = [], NS_THEM_MOI = false;      // F-NS-12: true khi TT/TP đang thêm tổ viên mới
+function nsThemMo() {      // F-NS-12: TT/TP bấm "+ Thêm tổ viên"
+  NS_THEM_MOI = true; $('nsFormCard').classList.remove('hide');
+  ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail', 'nsThuTu'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; fillNsDv(''); msg('nsMsg', '');
+  $('nsTitle').textContent = 'Thêm tổ viên mới'; $('nsAct').parentNode.parentNode.style.display = 'none'; window.scrollTo(0, 0);
+}
 function initNS() {
   var sup = !!ME.isSuper;
+  $('nsThem').classList.toggle('hide', sup); $('nsThem').onclick = nsThemMo;      // F-NS-12
+  $('nsClear').textContent = sup ? 'Nhập mới' : 'Hủy';
   // TT/TP: không có Gmail/vai trò/thêm mới; form chỉ hiện khi bấm Sửa một tổ viên
   ['nsMail', 'nsVai', 'nsThuTu'].forEach(function (i) { $(i).parentNode.style.display = sup ? '' : 'none'; });      // B5e: thứ tự hiển thị chỉ ADMIN
-  $('nsClear').style.display = sup ? '' : 'none';
+  $('nsClear').style.display = '';      // F-NS-12: TT/TP thấy "Hủy"
   $('nsFormCard').classList.toggle('hide', !sup);
   $('nsTitle').textContent = sup ? 'Thêm / Cập nhật thông tin nhân sự' : 'Sửa thông tin tổ viên';
   $('nsListTitle').textContent = sup ? 'Danh sách nhân sự hệ thống' : 'Tổ viên của tổ';
@@ -3476,12 +3484,14 @@ function initNS() {
 }
 function clearNS() {
   ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail', 'nsThuTu'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; fillNsDv(''); msg('nsMsg', '');
-  if (!ME.isSuper) $('nsFormCard').classList.add('hide');
+  NS_THEM_MOI = false; $('nsAct').parentNode.parentNode.style.display = '';
+  if (!ME.isSuper) { $('nsFormCard').classList.add('hide'); $('nsTitle').textContent = 'Sửa thông tin tổ viên'; }
 }
 function saveNS() {
   var p = { ma: $('nsMa').value, ten: $('nsTen').value, chucVu: $('nsCv').value, donVi: $('nsDv').value, email: $('nsMail').value, vaiTro: $('nsVai').value, hoatDong: $('nsAct').checked };
-  if (!ME.isSuper) { p.vaiTro = 'TOVIEN'; p.email = ''; } else p.thuTu = $('nsThuTu').value;      // B5e: chỉ ADMIN gửi thứ tự (trống = xếp cuối)
+  if (!ME.isSuper) { p.vaiTro = 'TOVIEN'; p.email = ''; if (NS_THEM_MOI) p.taoMoi = true; } else p.thuTu = $('nsThuTu').value;      // B5e: chỉ ADMIN gửi thứ tự (trống = xếp cuối); F-NS-12: TT/TP thêm mới gửi taoMoi
   call('luuNhanSu', p).then(function (r) {
+    if (r.moi && !ME.isSuper) { ['nsMa', 'nsTen', 'nsCv', 'nsDv'].forEach(function (i) { $(i).value = ''; }); fillNsDv(''); }      // F-NS-12: xóa ô để thêm người tiếp, giữ dòng PIN tạm (không gọi clearNS)
     msg('nsMsg', r.moi ? 'Đã thêm nhân sự. PIN tạm: ' + r.pin + ' (đưa trực tiếp cho người đó, họ sẽ đổi PIN lần đầu)' : 'Đã cập nhật thông tin', 'ok');
     loadNS();
   }).catch(function (e) { msg('nsMsg', e); });
@@ -3519,7 +3529,7 @@ function veNS() {
   }).join('') : '<tr><td colspan="6" class="muted">Không có người nào khớp.</td></tr>') + '</table>';
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
     b.onclick = function () {
-      var x = NS_DS[+b.dataset.e]; $('nsFormCard').classList.remove('hide'); $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; fillNsDv(x.donVi);
+      var x = NS_DS[+b.dataset.e]; NS_THEM_MOI = false; $('nsAct').parentNode.parentNode.style.display = ''; if (!ME.isSuper) $('nsTitle').textContent = 'Sửa thông tin tổ viên'; $('nsFormCard').classList.remove('hide'); $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; fillNsDv(x.donVi);
       $('nsMail').value = x.email; $('nsThuTu').value = (x.thuTu === '' || x.thuTu === undefined) ? '' : x.thuTu; $('nsVai').value = x.vaiTro; $('nsAct').checked = x.hoatDong; msg('nsMsg', ''); window.scrollTo(0, 0);
     };
   });
