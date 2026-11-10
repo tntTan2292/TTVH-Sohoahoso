@@ -827,5 +827,47 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
 }
 
 
+// ===== A3: quản lý tổ viên cho TT/TP (QĐ2) + ADMIN mở khóa =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const nsCopy = ma => JSON.stringify(nsRow(ma));
+  const ds = api(tTT, 'dsNhanSu');
+  const tvAll = sh('NhanSu').rows.slice(1).filter(x => x[5] === 'TOVIEN' && !/^TN-/.test(x[0])).length;
+  ok(ds.ok && ds.data.length === tvAll && ds.data.every(x => x.vaiTro === 'TOVIEN' && x.email === ''), 'A3: dsNhanSu cho TT/TP chỉ trả tổ viên thật, không trả email', ds.data && ds.data.length);
+  ok(!JSON.stringify(ds.data).match(/PinHash|PinTam|Salt|"pin"/) && !ds.data.some(x => ['ADMIN', 'TT1', 'LD1'].indexOf(x.ma) >= 0), 'A3: dsNhanSu cho TT/TP không có cột PIN và không lộ tài khoản quản lý/lãnh đạo/ADMIN');
+  ok(api(tAdmin, 'dsNhanSu').data.some(x => x.ma === 'ADMIN') && api(tAdmin, 'dsNhanSu').data.some(x => x.ma === 'A1' && 'khoa' in x), 'A3: ADMIN vẫn thấy toàn bộ nhân sự (kèm trạng thái khóa)');
+  ok(!api(tA, 'dsNhanSu').ok && !api(tLD, 'dsNhanSu').ok && !api(tA, 'luuNhanSu', { ma: 'B1', ten: 'X' }).ok && !api(tLD, 'luuNhanSu', { ma: 'B1', ten: 'X' }).ok, 'A3: tổ viên và Lãnh đạo không xem/sửa danh sách nhân sự');
+  // TT/TP sửa tổ viên
+  const lg0 = sh('LogHeThong').rows.length, tenCu = nsRow('A1')[1];
+  let r1 = api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A (sửa)', chucVu: 'Tổ viên scan', donVi: 'Trung tâm vận hành', hoatDong: true });
+  ok(r1.ok && r1.data.moi === false && nsRow('A1')[1] === 'Nhân viên A (sửa)' && nsRow('A1')[2] === 'Tổ viên scan' && nsRow('A1')[3] === 'Trung tâm vận hành' && nsRow('A1')[5] === 'TOVIEN', 'A3: TT/TP sửa được họ tên/chức vụ/đơn vị của tổ viên, giữ VaiTro', r1);
+  const lg = sh('LogHeThong').rows.slice(lg0).filter(x => x[4] === 'SUA_NHAN_SU').map(x => x[6]);
+  ok(lg.length === 1 && /cũ: .*Nhân viên A.*mới: .*Nhân viên A \(sửa\)/.test(lg[0]) && /TOTRUONG/.test(lg[0]), 'A3: log SUA_NHAN_SU có cũ → mới và ghi rõ do TT/TP sửa', lg);
+  // chặn
+  const emailTruoc = nsRow('00076603')[4], vaiTruoc = nsCopy('A1');
+  r1 = api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A', vaiTro: 'TOTRUONG' });
+  ok(!r1.ok && /đổi vai trò/.test(r1.err) && nsCopy('A1') === vaiTruoc, 'A3: TT/TP không đổi được vai trò tổ viên (không ghi gì)', r1);
+  r1 = api(tTT, 'luuNhanSu', { ma: '00076603', ten: 'E', email: 'hack@x.com' });
+  ok(r1.ok && nsRow('00076603')[4] === emailTruoc, 'A3: TT/TP không đổi được email (bỏ qua trường ngoài QĐ2)', nsRow('00076603')[4]);
+  for (const ma of ['TT1', 'ADMIN', 'LD1']) { const c = nsCopy(ma); r1 = api(tTT, 'luuNhanSu', { ma, ten: 'Bị sửa', vaiTro: 'TOVIEN' }); ok(!r1.ok && /Quản trị hệ thống/.test(r1.err) && nsCopy(ma) === c, 'A3: TT/TP không sửa được tài khoản ' + ma, r1); }
+  const sl = sh('NhanSu').rows.length; r1 = api(tTT, 'luuNhanSu', { ma: 'MOI-1', ten: 'Người mới' });
+  ok(!r1.ok && sh('NhanSu').rows.length === sl, 'A3: TT/TP không tạo được tài khoản mới', r1);
+  r1 = api(tTT, 'luuNhanSu', { ma: 'A1', ten: '' });
+  ok(!r1.ok, 'A3: thiếu họ tên bị từ chối');
+  ok(api(tTT, 'luuNhanSu', { ma: 'A1', ten: tenCu, chucVu: 'Tổ viên', donVi: 'Phòng Tổ chức hành chính', hoatDong: false }).ok && nsRow('A1')[12] === false, 'A3: TT/TP đặt tổ viên ngưng hoạt động được');
+  api(tTT, 'luuNhanSu', { ma: 'A1', ten: tenCu, chucVu: 'Tổ viên', donVi: 'Phòng Tổ chức hành chính', hoatDong: true });
+  ok(nsRow('A1')[12] === true && nsRow('A1')[1] === tenCu, '(dọn) khôi phục A1');
+  // Cấp PIN / Mở khóa
+  nsRow('C1')[11] = true; nsRow('C1')[10] = 20; ctx.memoClear_();
+  ok(api(tAdmin, 'dsNhanSu').data.find(x => x.ma === 'C1').khoa === true && api(tTT, 'dsNhanSu').data.find(x => x.ma === 'C1').khoa === true, 'A3: danh sách cho thấy trạng thái khóa (ADMIN và TT/TP)');
+  ok(api(tTT, 'moKhoaTK', { ma: 'C1' }).ok && nsRow('C1')[11] === false && nsRow('C1')[10] === 0, 'A3: TT/TP mở khóa tổ viên từ danh sách');
+  nsRow('TT1')[11] = true; ctx.memoClear_();
+  ok(!api(tTT, 'moKhoaTK', { ma: 'TT1' }).ok && nsRow('TT1')[11] === true, 'A3: TT/TP không mở khóa được tài khoản quản lý');
+  ok(api(tAdmin, 'moKhoaTK', { ma: 'TT1' }).ok && nsRow('TT1')[11] === false, 'A3: ADMIN mở khóa được tài khoản quản lý từ tab Nhân sự');
+  ok(api(tTT, 'resetPin', { ma: 'A1' }).ok && !api(tTT, 'resetPin', { ma: 'ADMIN' }).ok, 'A3: TT/TP cấp PIN cho tổ viên, không cho ADMIN');
+  ok(api(tAdmin, 'luuNhanSu', { ma: 'A1', ten: tenCu, chucVu: 'Tổ viên', donVi: 'Phòng Tổ chức hành chính', email: '', vaiTro: 'TOVIEN', hoatDong: true }).ok, 'A3: ADMIN vẫn dùng luuNhanSu đầy đủ (đổi vai trò/email/tạo mới như cũ)');
+}
+
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

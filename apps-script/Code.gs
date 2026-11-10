@@ -331,8 +331,8 @@ function route_(u, action, p) {
     case 'resetDuLieu': needSuper_(u); return resetDuLieu_(u, p);
     case 'taoMau': needSuper_(u); return taoMau_(u, p);
     case 'chuanHoaNhom': needSuper_(u); return chuanHoaNhom_(u, p);
-    case 'dsNhanSu': needSuper_(u); return dsNhanSu_();
-    case 'luuNhanSu': needSuper_(u); return luuNhanSu_(u, p);
+    case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
+    case 'luuNhanSu': need_(u); return luuNhanSu_(u, p);     // QĐ2: TT/TP chỉ sửa tổ viên (hàm tự kiểm)
     case 'dsCa': need_(u); return dsCa_(p);
     case 'luuNhom': need_(u); return luuNhom_(u, p);
     case 'suaCa': need_(u); return suaCa_(u, p);
@@ -702,12 +702,29 @@ function lichSu_(u, p) {          // sản lượng của chính người gọi,
 }
 
 /* ---------- Quản trị nhân sự (chỉ ADMIN) ---------- */
-function dsNhanSu_() {
-  return read_('NhanSu').map(function (r) {
-    return { ma: s_(r.MaHRM), ten: s_(r.HoTen), chucVu: s_(r.ChucVu), donVi: s_(r.DonVi), email: s_(r.Email), vaiTro: s_(r.VaiTro), hoatDong: b_(r.HoatDong), khoa: b_(r.Khoa) };
+function dsNhanSu_(u) {
+  const ql = u && u.vaiTro !== 'ADMIN';      // TT/TP: chỉ tổ viên thật (bỏ người giả TN-xx), không trả email; không bao giờ trả cột PIN
+  return read_('NhanSu').filter(function (r) { return !ql || (s_(r.VaiTro) === 'TOVIEN' && !/^TN-/.test(s_(r.MaHRM))); }).map(function (r) {
+    return { ma: s_(r.MaHRM), ten: s_(r.HoTen), chucVu: s_(r.ChucVu), donVi: s_(r.DonVi), email: ql ? '' : s_(r.Email), vaiTro: s_(r.VaiTro), hoatDong: b_(r.HoatDong), khoa: b_(r.Khoa) };
   });
 }
+function luuToVien_(u, p) {      // QĐ2 (F-NS-04): TT/TP sửa TỔ VIÊN: họ tên, chức vụ, đơn vị, hoạt động. Không đổi vai trò, không tạo mới, không đụng quản lý/lãnh đạo/ADMIN
+  if (!isAdmin_(u)) throw 'Chỉ Tổ trưởng/Tổ phó được thực hiện thao tác này';
+  const ma = s_(p.ma), ten = s_(p.ten);
+  const cu = read_('NhanSu').filter(function (r) { return s_(r.MaHRM) === ma; })[0];
+  if (!cu) throw 'Không tìm thấy nhân sự – Tổ trưởng/Tổ phó không tạo tài khoản mới, nhờ Quản trị hệ thống';
+  if (s_(cu.VaiTro) !== 'TOVIEN') throw 'Chỉ Quản trị hệ thống được sửa tài khoản của quản lý, lãnh đạo và quản trị';
+  if (s_(p.vaiTro) && s_(p.vaiTro) !== 'TOVIEN') throw 'Tổ trưởng/Tổ phó không được đổi vai trò tài khoản';
+  if (!ten) throw 'Nhập Họ tên';
+  const hoatDong = p.hoatDong === false ? false : true, chucVu = s_(p.chucVu) || s_(cu.ChucVu);
+  const cuStr = 'tên ' + s_(cu.HoTen) + ', chức vụ ' + s_(cu.ChucVu) + ', đơn vị ' + s_(cu.DonVi) + ', hoạt động ' + b_(cu.HoatDong);
+  setCell_('NhanSu', cu._row, 'HoTen', ten); setCell_('NhanSu', cu._row, 'ChucVu', chucVu);
+  setCell_('NhanSu', cu._row, 'DonVi', s_(p.donVi)); setCell_('NhanSu', cu._row, 'HoatDong', hoatDong);
+  log_(u.ma, 'SUA_NHAN_SU', ma + ' (tổ viên, do ' + s_(u.vaiTro) + ' sửa) | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + chucVu + ', đơn vị ' + s_(p.donVi) + ', hoạt động ' + hoatDong);
+  return { moi: false, ma: ma };
+}
 function luuNhanSu_(u, p) {
+  if (u.vaiTro !== 'ADMIN') return luuToVien_(u, p);
   const ma = s_(p.ma), ten = s_(p.ten), vai = s_(p.vaiTro) || 'TOVIEN';
   if (!ma || !ten) throw 'Nhập Mã HRM và Họ tên';
   if (VAI_TRO_ALL.indexOf(vai) < 0) throw 'Vai trò không hợp lệ';

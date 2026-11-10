@@ -106,6 +106,8 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-NS-01 | Danh sách nhân sự | `dsNhanSu_` | `loadNS` → `#nsList` |
 | F-NS-02 | Thêm / sửa (ghi log cũ → mới) | `luuNhanSu_` | `#nsMa`…`#nsAct`, `#nsSave`, `#nsClear` |
 | F-NS-03 | Cấp PIN mới từ danh sách | `resetPin_` | nút `data-p` |
+| F-NS-04 | **Tab Nhân sự cho Tổ trưởng/Tổ phó (QĐ2):** TT/TP có tab "Nhân sự" chỉ thấy **tổ viên** (không email, không cột PIN, không tài khoản quản lý/LĐ/ADMIN, không người giả TN-xx): ô tìm (`#nsTim`), nút **Sửa** (họ tên, chức vụ, đơn vị, hoạt động), **Cấp PIN mới**, **Mở khóa**. Không đổi vai trò, không tạo mới. Máy chủ: `dsNhanSu_(u)` lọc theo vai trò; `luuToVien_` (gọi từ `luuNhanSu_` khi không phải ADMIN). Khối "Quản lý tài khoản ca" cũ (`#qlNs`…) **giữ nguyên** chờ nghiệm thu | `dsNhanSu_`, `luuToVien_`, `quyenTrenNguoi_` | `#pNS`, `#nsTim`, `#nsMsg2`, `veNS`, `#nsFormCard` |
+| F-NS-05 | ADMIN: nút **Mở khóa** trong bảng tab Nhân sự (gọi `moKhoaTK`, đặt lại bộ đếm sai PIN; ADMIN mở khóa được mọi vai trò) | `moKhoaTK_` | nút `data-k` trong `veNS` |
 
 ## 7. Dữ liệu – chỉ ADMIN (F-DL)
 

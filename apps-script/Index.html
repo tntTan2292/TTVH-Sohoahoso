@@ -1897,8 +1897,8 @@ tbody tr:last-child td { border-bottom: none; }
 
   <!-- TAB 3: NHÂN SỰ -->
   <section id="pNS" class="hide">
-    <div class="card">
-      <h2>Thêm / Cập nhật thông tin nhân sự</h2>
+    <div class="card" id="nsFormCard">
+      <h2 id="nsTitle">Thêm / Cập nhật thông tin nhân sự</h2>
       <div class="row">
         <div><label>Mã HRM</label><input id="nsMa" placeholder="VD: HRM123"></div>
         <div><label>Họ và tên</label><input id="nsTen" placeholder="Họ và tên đầy đủ"></div>
@@ -1925,7 +1925,9 @@ tbody tr:last-child td { border-bottom: none; }
       </p>
     </div>
     <div class="card">
-      <h2>Danh sách nhân sự hệ thống</h2>
+      <h2 id="nsListTitle">Danh sách nhân sự hệ thống</h2>
+      <div id="nsMsg2"></div>
+      <input id="nsTim" placeholder="Tìm theo tên, mã HRM hoặc đơn vị…" autocomplete="off" style="margin-bottom:10px;">
       <div class="scroll" id="nsList"></div>
     </div>
   </section>
@@ -2160,7 +2162,8 @@ function start() {
     var tabs = [];
     if (m.user.vaiTro !== 'LANHDAO' && m.user.vaiTro !== 'XEM') tabs.push(['pBao', 'Báo cáo']);
     if (m.isAdmin) tabs.push(['pQL', 'Quản lý ca']);
-    if (m.isSuper) { tabs.push(['pNS', 'Nhân sự']); tabs.push(['pDL', 'Dữ liệu']); tabs.push(['pLG', 'Nhật ký']); }
+    if (m.isAdmin) tabs.push(['pNS', 'Nhân sự']);      // TT/TP: chỉ quản lý tổ viên (F-NS-04); ADMIN: toàn bộ
+    if (m.isSuper) { tabs.push(['pDL', 'Dữ liệu']); tabs.push(['pLG', 'Nhật ký']); }
     if (m.user.vaiTro !== 'TOVIEN') tabs.push(['pDash', 'Dashboard']);   // tổ viên không xem Dashboard
     var icons = {
       pBao: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>',
@@ -2844,32 +2847,55 @@ function renderHo(d) {
   };
 }
 
-/* ---------- Tab Nhân sự (Quản trị) ---------- */
-function initNS() { $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; loadNS(); }
-function clearNS() { ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; msg('nsMsg', ''); }
+/* ---------- Tab Nhân sự (ADMIN: toàn bộ; TT/TP: chỉ tổ viên – F-NS-04, F-NS-05) ---------- */
+var NS_DS = [];
+function initNS() {
+  var sup = !!ME.isSuper;
+  // TT/TP: không có Gmail/vai trò/thêm mới; form chỉ hiện khi bấm Sửa một tổ viên
+  ['nsMail', 'nsVai'].forEach(function (i) { $(i).parentNode.style.display = sup ? '' : 'none'; });
+  $('nsClear').style.display = sup ? '' : 'none';
+  $('nsFormCard').classList.toggle('hide', !sup);
+  $('nsTitle').textContent = sup ? 'Thêm / Cập nhật thông tin nhân sự' : 'Sửa thông tin tổ viên';
+  $('nsListTitle').textContent = sup ? 'Danh sách nhân sự hệ thống' : 'Tổ viên của tổ';
+  $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; $('nsTim').oninput = veNS; loadNS();
+}
+function clearNS() {
+  ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; msg('nsMsg', '');
+  if (!ME.isSuper) $('nsFormCard').classList.add('hide');
+}
 function saveNS() {
   var p = { ma: $('nsMa').value, ten: $('nsTen').value, chucVu: $('nsCv').value, donVi: $('nsDv').value, email: $('nsMail').value, vaiTro: $('nsVai').value, hoatDong: $('nsAct').checked };
+  if (!ME.isSuper) { p.vaiTro = 'TOVIEN'; p.email = ''; }
   call('luuNhanSu', p).then(function (r) {
     msg('nsMsg', r.moi ? 'Đã thêm nhân sự. PIN tạm: ' + r.pin + ' (đưa trực tiếp cho người đó, họ sẽ đổi PIN lần đầu)' : 'Đã cập nhật thông tin', 'ok');
     loadNS();
   }).catch(function (e) { msg('nsMsg', e); });
 }
 function loadNS() {
-  call('dsNhanSu').then(function (rs) {
-    $('nsList').innerHTML = '<table><tr><th>Họ và tên</th><th>Mã HRM</th><th>Vai trò</th><th>Đơn vị</th><th>Trạng thái</th><th>Thao tác</th></tr>' + rs.map(function (x, i) {
-      return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td><td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span></td><td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
-        '<td><button class="sm" data-e="' + i + '">Sửa</button> <button class="sm" data-p="' + esc(x.ma) + '">Cấp PIN mới</button></td></tr>';
-    }).join('') + '</table>';
-    Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
-      b.onclick = function () {
-        var x = rs[+b.dataset.e]; $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; $('nsDv').value = x.donVi;
-        $('nsMail').value = x.email; $('nsVai').value = x.vaiTro; $('nsAct').checked = x.hoatDong; window.scrollTo(0, 0);
-      };
-    });
-    Array.prototype.forEach.call($('nsList').querySelectorAll('[data-p]'), function (b) {
-      b.onclick = function () { call('resetPin', { ma: b.dataset.p }).then(function (r) { msg('nsMsg', 'PIN tạm của ' + r.ten + ': ' + r.pin, 'ok'); }).catch(function (e) { msg('nsMsg', e); }); };
-    });
-  }).catch(function (e) { $('nsList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+  call('dsNhanSu').then(function (rs) { NS_DS = rs; veNS(); }).catch(function (e) { $('nsList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
+function veNS() {
+  var q = ($('nsTim').value || '').toLowerCase().trim(), sup = !!ME.isSuper;
+  var rs = NS_DS.map(function (x, i) { return { x: x, i: i }; }).filter(function (o) {
+    return !q || (o.x.ten + ' ' + o.x.ma + ' ' + o.x.donVi).toLowerCase().indexOf(q) >= 0;
+  });
+  $('nsList').innerHTML = '<table><tr><th>Họ và tên</th><th>Mã HRM</th>' + (sup ? '<th>Vai trò</th>' : '') + '<th>Đơn vị</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (rs.length ? rs.map(function (o) {
+    var x = o.x;
+    return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td>' + (sup ? '<td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span></td>' : '') + '<td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
+      '<td><button class="sm" data-e="' + o.i + '">Sửa</button> <button class="sm" data-p="' + esc(x.ma) + '">Cấp PIN mới</button> <button class="sm' + (x.khoa ? ' pri' : '') + '" data-k="' + esc(x.ma) + '">Mở khóa</button></td></tr>';
+  }).join('') : '<tr><td colspan="6" class="muted">Không có người nào khớp.</td></tr>') + '</table>';
+  Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
+    b.onclick = function () {
+      var x = NS_DS[+b.dataset.e]; $('nsFormCard').classList.remove('hide'); $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; $('nsDv').value = x.donVi;
+      $('nsMail').value = x.email; $('nsVai').value = x.vaiTro; $('nsAct').checked = x.hoatDong; msg('nsMsg', ''); window.scrollTo(0, 0);
+    };
+  });
+  Array.prototype.forEach.call($('nsList').querySelectorAll('[data-p]'), function (b) {
+    b.onclick = function () { if (confirm('Cấp PIN tạm mới cho tài khoản này? PIN cũ mất hiệu lực, người đó phải đổi PIN khi đăng nhập.')) call('resetPin', { ma: b.dataset.p }).then(function (r) { msg('nsMsg2', 'PIN tạm của ' + r.ten + ': ' + r.pin + ' (đưa trực tiếp cho người đó)', 'ok'); loadNS(); }).catch(function (e) { msg('nsMsg2', e); }); };
+  });
+  Array.prototype.forEach.call($('nsList').querySelectorAll('[data-k]'), function (b) {
+    b.onclick = function () { call('moKhoaTK', { ma: b.dataset.k }).then(function (r) { msg('nsMsg2', r, 'ok'); loadNS(); }).catch(function (e) { msg('nsMsg2', e); }); };
+  });
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */

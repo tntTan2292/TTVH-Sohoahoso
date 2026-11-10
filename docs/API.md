@@ -36,8 +36,8 @@
 | `chot` | TT/TP/ADMIN | `{ngay, ca, ghiChu, SCAN, TACH, OCR}`; mở khóa: `{ngay, ca, mo:true}` | — |
 | `resetPin` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | `{ten, pin}` (PIN tạm, chỉ hiện 1 lần) |
 | `moKhoaTK` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | chuỗi thông báo |
-| `dsNhanSu` | ADMIN | — | danh sách nhân sự |
-| `luuNhanSu` | ADMIN | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong}` | — |
+| `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa}` (không có cột PIN) |
+| `luuNhanSu` | ADMIN (đầy đủ, tạo mới được); TT/TP: chỉ sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, tạo mới, sửa quản lý/LĐ/ADMIN → từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong}` | `{moi, ma, pin?}` |
 | `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
 | `khoiPhuc` | ADMIN | `{id}` | — |
 | `taoMau` | ADMIN | `{ngay, cas:[ca], soNguoi}` | `{soBanGhi, soCa, ngay, soNguoi, soThem}` |
