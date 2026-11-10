@@ -1074,5 +1074,25 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === '00109201'), 3); ctx.memoClear_();      // dọn
 }
 
+// ===== B5c: Ban chỉ đạo = vai trò LANHDAO (import được; ADMIN vẫn bị cấm; không đổi quyền) =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const dong = [
+    { ma: '00109501', ten: 'Trưởng Ban', chucVu: 'Trưởng ban · Quyền Giám đốc BĐTP', donVi: 'Bưu điện TP Huế', vaiTro: 'Lãnh đạo' },
+    { ma: '00109502', ten: 'Phó Ban', chucVu: 'Phó ban', donVi: 'Bưu điện TP Huế', vaiTro: 'LANHDAO' },
+    { ma: '00109503', ten: 'Muốn ADMIN', chucVu: '', donVi: 'Bưu điện TP Huế', vaiTro: 'Quản trị' }
+  ];
+  let q = api(tAdmin, 'importNhanSu', { dong });
+  ok(q.ok && q.data.dong[0].trangThai === 'OK' && q.data.dong[0].vaiTro === 'LANHDAO' && q.data.dong[1].trangThai === 'OK' && q.data.dong[2].trangThai === 'LOI' && /Quản trị/.test(q.data.dong[2].loi[0]), 'B5c: import nhận vai trò "Lãnh đạo"/LANHDAO; ADMIN ("Quản trị") vẫn bị từ chối', q.data && q.data.dong);
+  q = api(tAdmin, 'importNhanSu', { dong: dong.slice(0, 2), apDung: true, xacNhan: 'IMPORT' });
+  ok(q.ok && q.data.daGhi === 2 && nsRow('00109501')[5] === 'LANHDAO' && nsRow('00109502')[5] === 'LANHDAO', 'B5c: ghi 2 tài khoản LANHDAO', q.err);
+  const pin = q.data.pin[0].pin, lg = ctx.login('00109501', pin);
+  ok(lg.ok && api(lg.token, 'doiPin', { pin: '715903' }).ok, 'B5c: tài khoản Ban chỉ đạo đăng nhập, đổi PIN lần đầu');
+  const t2 = ctx.login('00109501', '715903').token, me = api(t2, 'me').data;
+  ok(me.user.vaiTro === 'LANHDAO' && me.user.chucVu === 'Trưởng ban · Quyền Giám đốc BĐTP' && !me.isAdmin && !me.isSuper && !me.duocVaoCa, 'B5c: me trả vaiTro LANHDAO + chucVu; không có quyền quản lý/ADMIN/vào ca', me.user);
+  ok(api(t2, 'dashboard', { ngay: '2026-11-09' }).ok && !api(t2, 'ghi', { buoc: 'SCAN' }).ok && !api(t2, 'dsNhanSu').ok && !api(t2, 'importNhanSu', { dong }).ok, 'B5c: quyền không đổi (xem Dashboard; không ghi, không xem/sửa nhân sự)');
+  sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === '00109501'), 2); ctx.memoClear_();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

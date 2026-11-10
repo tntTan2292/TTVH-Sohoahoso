@@ -148,7 +148,9 @@ h3 { font-size: 14px; font-weight: 600; margin: 0 0 10px; color: var(--tx-sec); 
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(37,99,235,0.3);
 }
-.user-info { display: flex; flex-direction: column; }
+.user-info { display: flex; flex-direction: column; min-width: 0; }
+.brand-area { min-width: 0; }
+.user-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }      /* chức vụ dài (Ban chỉ đạo) không vỡ dòng trên điện thoại */
 .user-name { font-size: 16px; font-weight: 700; color: var(--tx); line-height: 1.2; }
 .user-sub { font-size: 12.5px; color: var(--mut); margin-top: 2px; }
 
@@ -1950,7 +1952,7 @@ tbody tr:last-child td { border-bottom: none; }
     </div>
     <div class="card hide" id="imCard">
       <h2>Import nhân sự từ Excel</h2>
-      <div class="muted">Cột: <b>Mã HRM, Họ tên, Chức vụ, Đơn vị, Vai trò</b>. Đơn vị phải có trong danh mục; Vai trò: Tổ viên / Tổ trưởng / Tổ phó (để trống = Tổ viên). Mã HRM đã có thì bỏ qua, không ghi đè. Còn dòng lỗi thì không ghi gì. Giữ cột Mã HRM dạng <b>Văn bản</b> (không mất số 0 đầu). PIN tạm chỉ hiện <b>một lần</b> sau khi ghi, in/giao tận tay.</div>
+      <div class="muted">Cột: <b>Mã HRM, Họ tên, Chức vụ, Đơn vị, Vai trò</b>. Đơn vị phải có trong danh mục; Vai trò: Tổ viên / Tổ trưởng / Tổ phó / Lãnh đạo (Ban chỉ đạo, chỉ xem; để trống = Tổ viên; không tạo Quản trị). Mã HRM đã có thì bỏ qua, không ghi đè. Còn dòng lỗi thì không ghi gì. Giữ cột Mã HRM dạng <b>Văn bản</b> (không mất số 0 đầu). PIN tạm chỉ hiện <b>một lần</b> sau khi ghi, in/giao tận tay.</div>
       <div class="row" style="margin-top:12px;">
         <div><label>Chọn file (.xlsx / .csv)</label><input type="file" id="imFile" accept=".xlsx,.xls,.csv"></div>
         <div style="align-self:end"><button id="imMau" style="width:100%;">Tải file mẫu</button></div>
@@ -2078,6 +2080,7 @@ var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, f
 var nf = function (n) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 }); };
 var nfi = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN'); };
 var STEP_LABEL = { NHAN: 'Nhận từ TT Lưu trữ', NHAN_NHOM: 'Nhận hộp', SCAN: 'Scan', TACH: 'Tách file PDF', OCR: 'OCR (xử lý TT)', TRA: 'Trả hộp' };
+function vaiHienThi(vaiTro, chucVu) { return vaiTro === 'LANHDAO' && chucVu ? chucVu : (VAI_LABEL[vaiTro] || chucVu || ''); }      // B5c: Lãnh đạo có Chức vụ thì hiện Chức vụ (vd Trưởng ban · Quyền Giám đốc BĐTP)
 var VAI_LABEL = { TOVIEN: 'Tổ viên', TOTRUONG: 'Tổ trưởng', TOPHO: 'Tổ phó', LANHDAO: 'Lãnh đạo', ADMIN: 'Quản trị' };
 var CA_NAME = ['Sáng', 'Chiều', 'Tối'];
 var CA_TIME = { 'Sáng': '07:30–11:30', 'Chiều': '13:00–17:00', 'Tối': '18:00–21:00' };
@@ -2189,7 +2192,7 @@ function start() {
   call('me').then(function (m) {
     ME = m; ME_TS = Date.now();
     $('hName').textContent = m.user.ten;
-    $('hSub').textContent = (VAI_LABEL[m.user.vaiTro] || m.user.chucVu) + ' • ' + (m.user.donVi ? m.user.donVi + ' • ' : '') + 'Ngày ' + m.ngay + ' lúc ' + m.hm;
+    $('hSub').textContent = vaiHienThi(m.user.vaiTro, m.user.chucVu) + ' • ' + (m.user.donVi ? m.user.donVi + ' • ' : '') + 'Ngày ' + m.ngay + ' lúc ' + m.hm; $('hSub').title = $('hSub').textContent;
     var tabs = [];
     if (m.user.vaiTro !== 'LANHDAO' && m.user.vaiTro !== 'XEM') tabs.push(['pBao', 'Báo cáo']);
     if (m.isAdmin) tabs.push(['pQL', 'Quản lý ca']);
@@ -2916,7 +2919,7 @@ function veNS() {
   });
   $('nsList').innerHTML = '<table><tr><th>Họ và tên</th><th>Mã HRM</th>' + (sup ? '<th>Vai trò</th>' : '') + '<th>Đơn vị</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (rs.length ? rs.map(function (o) {
     var x = o.x;
-    return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td>' + (sup ? '<td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span></td>' : '') + '<td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
+    return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td>' + (sup ? '<td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span>' + (x.vaiTro === 'LANHDAO' && x.chucVu ? '<br><small class="muted">' + esc(x.chucVu) + '</small>' : '') + '</td>' : '') + '<td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
       '<td><button class="sm" data-e="' + o.i + '">Sửa</button> <button class="sm" data-p="' + esc(x.ma) + '">Cấp PIN mới</button> <button class="sm' + (x.khoa ? ' pri' : '') + '" data-k="' + esc(x.ma) + '">Mở khóa</button></td></tr>';
   }).join('') : '<tr><td colspan="6" class="muted">Không có người nào khớp.</td></tr>') + '</table>';
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
@@ -3051,7 +3054,7 @@ function imTaiMau() {
     var ws = XLSX.utils.aoa_to_sheet([['Mã HRM', 'Họ tên', 'Chức vụ', 'Đơn vị', 'Vai trò']]), i;
     for (i = 2; i <= 300; i++) ws['A' + i] = { t: 's', v: '', z: '@' };      // cột Mã HRM dạng văn bản
     ws['!ref'] = 'A1:E300'; ws['!cols'] = [{ wch: 14 }, { wch: 28 }, { wch: 20 }, { wch: 32 }, { wch: 14 }];
-    var hd = [['Hướng dẫn'], ['1. Điền từ dòng 2 của sheet NhanSu, mỗi người một dòng.'], ['2. Mã HRM: giữ dạng Văn bản (ví dụ 00109101), không đổi định dạng cột A.'], ['3. Đơn vị: chỉ dùng tên có trong danh sách dưới đây.'], ['4. Vai trò: Tổ viên / Tổ trưởng / Tổ phó (trống = Tổ viên).'], ['5. Mã HRM đã có trong hệ thống sẽ bị bỏ qua, không ghi đè.'], [''], ['Đơn vị trong danh mục:']];
+    var hd = [['Hướng dẫn'], ['1. Điền từ dòng 2 của sheet NhanSu, mỗi người một dòng.'], ['2. Mã HRM: giữ dạng Văn bản (ví dụ 00109101), không đổi định dạng cột A.'], ['3. Đơn vị: chỉ dùng tên có trong danh sách dưới đây.'], ['4. Vai trò: Tổ viên / Tổ trưởng / Tổ phó / Lãnh đạo (Ban chỉ đạo, chỉ xem; trống = Tổ viên). Không tạo được Quản trị.'], ['5. Mã HRM đã có trong hệ thống sẽ bị bỏ qua, không ghi đè.'], [''], ['Đơn vị trong danh mục:']];
     DV_DS.forEach(function (x) { if (x.hoatDong) hd.push([x.ten]); });
     var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'NhanSu'); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hd), 'HuongDan');
     XLSX.writeFile(wb, 'mau_import_nhan_su.xlsx');

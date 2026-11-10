@@ -913,10 +913,10 @@ function chuanHoaDonVi_(u, p) {
 /* ---------- B3: Import nhân sự từ Excel/CSV/dán (QĐ4; chỉ ADMIN): xem trước rồi mới ghi một lần ---------- */
 // payload { dong: [{ma, ten, chucVu, donVi, vaiTro}], apDung, xacNhan:'IMPORT' }.
 // Mã HRM phải là CHUỖI (giữ số 0 đầu): số thuần bị từ chối. Mã đã có → bỏ qua và báo; có dòng lỗi → không ghi gì.
-// Vai trò chỉ TOVIEN/TOTRUONG/TOPHO (nhận cả "Tổ viên/Tổ trưởng/Tổ phó"). PIN tạm sinh ngẫu nhiên, LƯU DẠNG BĂM (PinHash+Salt, DoiPin=TRUE),
+// Vai trò chỉ TOVIEN/TOTRUONG/TOPHO/LANHDAO (nhận cả "Tổ viên/Tổ trưởng/Tổ phó/Lãnh đạo"); ADMIN bị từ chối. PIN tạm sinh ngẫu nhiên, LƯU DẠNG BĂM (PinHash+Salt, DoiPin=TRUE),
 // trả về MỘT LẦN trong kết quả; không ghi vào log, không ghi ở nơi nào khác.
 const IMPORT_TOI_DA_ = 300;
-const IMPORT_VAI_TRO_ = { tovien: 'TOVIEN', totruong: 'TOTRUONG', topho: 'TOPHO' };
+const IMPORT_VAI_TRO_ = { tovien: 'TOVIEN', totruong: 'TOTRUONG', topho: 'TOPHO', lanhdao: 'LANHDAO' };      // B5c: Ban chỉ đạo dùng vai trò LANHDAO (chỉ xem)
 function boDau_(v) { let x = s_(v); try { x = x.normalize('NFD'); } catch (e) { } return x.replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 function pinTamMoi_(ma) {
   for (let i = 0; i < 50; i++) { const pin = '' + Math.floor(100000 + Math.random() * 900000); if (!pinYeu_(pin, ma)) return pin; }
@@ -946,7 +946,7 @@ function importNhanSu_(u, p) {
     const vaiRaw = s_(x.vaiTro);
     if (vaiRaw) {
       vai = IMPORT_VAI_TRO_[boDau_(vaiRaw)] || (VAI_TRO_ALL.indexOf(vaiRaw.toUpperCase()) >= 0 ? vaiRaw.toUpperCase() : '');
-      if (vai !== 'TOVIEN' && vai !== 'TOTRUONG' && vai !== 'TOPHO') loi.push(vai === 'ADMIN' || vai === 'LANHDAO' ? 'Import không tạo tài khoản Quản trị / Lãnh đạo' : 'Vai trò "' + vaiRaw + '" không hợp lệ (chỉ Tổ viên / Tổ trưởng / Tổ phó)');
+      if (vai !== 'TOVIEN' && vai !== 'TOTRUONG' && vai !== 'TOPHO' && vai !== 'LANHDAO') loi.push(vai === 'ADMIN' ? 'Import không tạo tài khoản Quản trị' : 'Vai trò "' + vaiRaw + '" không hợp lệ (chỉ Tổ viên / Tổ trưởng / Tổ phó / Lãnh đạo)');
     }
     if (!donViNhap) loi.push('Thiếu Đơn vị');
     else {

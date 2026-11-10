@@ -46,7 +46,7 @@
 | `dsDonVi` | TT/TP/ADMIN | — | `[{ten, hoatDong, thuTu, soNguoi}]` theo thứ tự; tab `DonVi` chưa có → `[]` (B1) |
 | `luuDonVi` | ADMIN | `{ten, tenCu?, thuTu?, hoatDong?}` — không có `tenCu` = thêm mới; có `tenCu` = sửa/ẩn/đổi tên (đổi tên chỉ khi đơn vị chưa có người dùng; không xóa) | `{moi, ten}` (B1) |
 | `chuanHoaDonVi` | ADMIN | `{apDung:false, anhXa?}` (xem trước, không ghi); `{apDung:true, xacNhan:"DONVI", anhXa?}` (áp dụng). `anhXa` = `{<khóa tên chuẩn hóa>: <tên trong danh mục> \| "+"}` cho tên chưa khớp danh mục (B2) | `{apDung, soNguoiQuet, soDonViChuan, donViTrong, themVaoDanhMuc:[], doi:[{khoa,tenCu,tenMoi,soNguoi,nguon,nguoi:[]}], khongKhop:[{khoa,goiY,soNguoi,cacTen:[{ten,soNguoi}]}], daSua:{nguoi,themDanhMuc}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |
-| `importNhanSu` | ADMIN | `{dong:[{ma,ten,chucVu,donVi,vaiTro}], apDung:false}` (xem trước); `{..., apDung:true, xacNhan:"IMPORT"}` (ghi). `ma` phải là chuỗi; tối đa 300 dòng (B3) | `{apDung, dong:[{stt,ma,ten,chucVu,donVi,vaiTro,trangThai:OK\|BO_QUA\|LOI,loi:[],ghiChu}], soOk, soLoi, soBoQua, daGhi?, pin?:[{ma,ten,donVi,vaiTro,pin}]}` — `pin` chỉ có khi ghi, **hiện một lần**, không vào log |
+| `importNhanSu` | ADMIN | `{dong:[{ma,ten,chucVu,donVi,vaiTro}], apDung:false}` (xem trước); `{..., apDung:true, xacNhan:"IMPORT"}` (ghi). `ma` phải là chuỗi; tối đa 300 dòng; `vaiTro` TOVIEN/TOTRUONG/TOPHO/LANHDAO (B5c), ADMIN bị từ chối (B3) | `{apDung, dong:[{stt,ma,ten,chucVu,donVi,vaiTro,trangThai:OK\|BO_QUA\|LOI,loi:[],ghiChu}], soOk, soLoi, soBoQua, daGhi?, pin?:[{ma,ten,donVi,vaiTro,pin}]}` — `pin` chỉ có khi ghi, **hiện một lần**, không vào log |
 | `nhatKyHT` | ADMIN | `{tu, den, ma, hanhDong}` | dòng log |
 
 ## Kết quả `dashboard` (hàm `dash_`)
