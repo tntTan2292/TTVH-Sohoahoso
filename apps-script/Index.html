@@ -3379,7 +3379,7 @@ function dashTabNgay(d) {
     h += '<div class="tiles">' + d.cas.map(function (c) {
       return '<div class="tile">' +
         '<div class="th"><div class="th-left"><b>Ca ' + esc(c.ca) + '</b> <span class="muted th-time">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div> ' + ttChip(c) + '</div>' +
-        '<div class="mts">' + m('Nhân sự', c.nguoiPhan, 'người') + m('Hộp tồn đầu ca', c.tonDau, 'hộp') + m('Chưa scan', c.chuaScan, 'hộp') + m('Chờ tách file', c.chuaTach, 'hộp') + m('Chờ OCR', c.chuaOcr, 'hộp') + '</div></div>';
+        '<div class="mts">' + m('Nhân sự', c.nguoiPhan, 'người') + m('Hộp tồn đầu ca', c.tonDau, 'hộp') + m('Nhận từ TTLT', c.nhanHop, 'hộp') + m('Chưa scan', c.chuaScan, 'hộp') + m('Chờ tách file', c.chuaTach, 'hộp') + m('Chờ OCR', c.chuaOcr, 'hộp') + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="grid2" style="margin-top:14px;"><div class="card"><h3>Nhận hồ sơ – đầu ca (hộp)</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>' +
       '<div class="card"><h3>Kết quả – khối lượng chờ xử lý đầu ca (hộp)</h3><div class="chartbox"><canvas id="c3"></canvas></div></div></div>';
