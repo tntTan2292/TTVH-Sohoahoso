@@ -1220,16 +1220,19 @@ function dash_(ngayIn, gomThu) {
   const getCN = function (ca, ma) { const k = ca + '|' + ma; return cn[k] = cn[k] || { ca: ca, ma: ma, ten: ns[ma] || ma, nhom: '', coMat: false, soBC: 0, nhanHop: 0, scanDV: 0, scanHs: 0, tachDV: 0, tachHs: 0, ocrDV: 0, ocrHs: 0 }; };
   read_('PhanCa').forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)] && !laTN_(r.MaHRM)) getCN(s_(r.Ca), s_(r.MaHRM)).coMat = true; });
   pn.forEach(function (r) { if (d_(r.Ngay) === ngay && CA[s_(r.Ca)] && !laTN_(r.MaHRM)) getCN(s_(r.Ca), s_(r.MaHRM)).nhom = s_(r.Nhom); });
+  const nnSet = {};      // hộp nhận THEO NHÓM của từng ca: ca → nhóm → {mã hộp}. Đếm theo nhóm (không theo ThanhVien lưu lúc gửi, vì người vào nhóm sau sẽ bị thiếu hộp)
   rows.filter(function (r) { return r.ngay === ngay && ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'].indexOf(r.buoc) >= 0; }).forEach(function (r) {
+    if (r.buoc === 'NHAN_NHOM' && r.nhom) { const m = nnSet[r.ca] = nnSet[r.ca] || {}; (m[r.nhom] = m[r.nhom] || {})[r.hop] = 1; }
     let mem = r.tv ? r.tv.split(',').filter(Boolean) : [];
     if (!mem.length) mem = r.nhom && nhoms[r.ca + '|' + r.nhom] ? nhoms[r.ca + '|' + r.nhom].tv.map(function (x) { return x.ma; }) : [r.nguoi];
     mem.forEach(function (ma) {
       const c = getCN(r.ca, ma), share = 1 / mem.length;
       c.soBC++;
-      if (r.buoc === 'NHAN_NHOM') c.nhanHop++;
+      if (r.buoc === 'NHAN_NHOM') { if (!r.nhom) c.nhanHop++; }      // nhanHop của người = chỉ hộp nhận CÁ NHÂN; hộp nhận nhóm xem cas[].nhanNhom
       else { const b = r.buoc.toLowerCase(); c[b + 'DV'] += r.dv * share; c[b + 'Hs'] += r.hs * share; }
     });
   });
+  cas.forEach(function (c) { const m = nnSet[c.ca] || {}, o = {}; Object.keys(m).forEach(function (k) { o[k] = Object.keys(m[k]).length; }); c.nhanNhom = o; });      // { '1': 2, '2': 2 }
   const caNguoi = Object.keys(cn).map(function (k) {
     const c = cn[k];
     ['scanDV', 'scanHs', 'tachDV', 'tachHs', 'ocrDV', 'ocrHs'].forEach(function (f) { c[f] = Math.round(c[f] * 10) / 10; });

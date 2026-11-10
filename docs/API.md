@@ -50,12 +50,12 @@
 |---|---|
 | `ngay`, `capNhat` | tiêu đề, dòng "cập nhật lúc" |
 | `tienDo`, `luyKe` (`luyKe.dauKyDen`) | widget tiến độ (`widgetHtml`) |
-| `cas[]`: `ca, bd, kt, nguoiPhan, tonDau, chuaScan, chuaTach, chuaOcr, scanDV, tachDV, ocrDV, nhanHop, traHop, nguoiBaoCao, nhomDaBC, tongNhom`, trạng thái chốt | khu ĐẦU CA, CUỐI CA |
+| `cas[]`: `nhanNhom` (`{nhóm: số hộp nhận khác nhau}`, ví dụ `{'1':2}`), `ca, bd, kt, nguoiPhan, tonDau, chuaScan, chuaTach, chuaOcr, scanDV, tachDV, ocrDV, nhanHop, traHop, nguoiBaoCao, nhomDaBC, tongNhom`, trạng thái chốt | khu ĐẦU CA, CUỐI CA |
 | `caGop` `{scanDV, tachDV, ocrDV}` | thẻ "Ca ngày (gộp)" giai đoạn 02–08/11 |
 | `day`: `nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop` | KẾT THÚC NGÀY |
 | `khoangNgay { tu, den, soNgay }`: ngày đầu/cuối có dữ liệu (không tính THỬ NGHIỆM khi không `gomThu`, không tính bản đã hủy, gồm DauKy có `Ngay`, `den` ≤ hôm nay; rỗng thì `tu=den=''`, `soNgay=0`) | dòng "Có dữ liệu" `#dNgayCo`, `#dNgay.min` |
 | `series[]` (10 ngày): `ngay, nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV` | biểu đồ `c2`, `c4` |
-| `caNguoi[]` | khu Từng ca (`tungCaHtml`) |
+| `caNguoi[]` (`nhanHop` = chỉ hộp nhận cá nhân) | khu Từng ca (`tungCaHtml`) |
 | `nhom[]`: `ca, nhom, tv[], scanDV, scanHs, tachDV, ocrDV, scanDVGio, tachDVGio, ocrDVGio, ...` | bảng nhóm |
 | `canhan[]`: `ten, soCa, scanDV, tachDV, ocrDV` | bảng cá nhân |
 | `nguoiNhap[]`, `chiTiet[]` | khu AI NHẬP |

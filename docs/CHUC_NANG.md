@@ -137,7 +137,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-DB-03 | Khu ĐẦU CA: 3 thẻ ca (nhân sự, tồn đầu ca, chưa scan, chờ tách, chờ OCR) + biểu đồ `c1`, `c3` | `cas[]` | `loadDash`, `zone('z1')` |
 | F-DB-04 | Khu CUỐI CA: tờ scan/tách/OCR, hộp nhận/trả, "x/y nhóm đã báo cáo" + biểu đồ `c5` | `cas[].nhomDaBC`, `tongNhom` | `zone('z2')` |
 | F-DB-05 | Khu KẾT THÚC NGÀY: nhận/trả/tồn, tờ + hộp xong 3 khâu, biểu đồ 10 ngày `c2`, `c4` | `day`, `series` | `zone('z3')` |
-| F-DB-06 | Khu "Từng ca": mỗi người trong ca (nhóm, có mặt, số báo cáo, hộp, tờ 3 khâu); người thử nghiệm `TN-xx` không tính (nhân sự ca, `caNguoi`) trừ khi ADMIN bật `gomThu` | `caNguoi` | `tungCaHtml` |
+| F-DB-06 | Khu "Từng ca": mỗi người trong ca (nhóm, có mặt, số báo cáo, hộp, tờ 3 khâu); người thử nghiệm `TN-xx` không tính (nhân sự ca, `caNguoi`) trừ khi ADMIN bật `gomThu`. **Hộp nhận theo nhóm** hiện MỘT số ở tiêu đề nhóm (`cas[].nhanNhom`, đếm `MaHop` khác nhau của dòng `NHAN_NHOM` có nhóm); `caNguoi[].nhanHop` chỉ đếm hộp nhận **cá nhân** (hết lệch "2 hộp / 1 hộp" giữa thành viên cùng nhóm) | `caNguoi`, `cas[].nhanNhom` | `tungCaHtml` |
 | F-DB-07 | Khu CHI TIẾT: bảng nhóm (năng suất tờ/người-giờ theo `*DVGio`) ở tab Ca – Nhóm; bảng cá nhân (chia 50/50) nay nằm ở tab Nhân sự (F-DB-15) | `nhom[]`, `canhan[]` | `zone('z4')`, `dashTabCaNhom` |
 | F-DB-08 | Khu AI NHẬP: tổng hợp theo ca và người nhập + chi tiết từng lần báo cáo | `nguoiNhap`, `chiTiet` | `zone('z4', 'AI NHẬP')` |
 | F-DB-09 | Số đầu kỳ từng ngày 02–08/11 (bảng `DauKy`), ca "Ngày (gộp)" | `caGop`, `luyKe.dauKyDen`, `DAU_KY_CA` | thẻ ca gộp |

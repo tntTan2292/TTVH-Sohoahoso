@@ -3086,7 +3086,7 @@ function tungCaHtml(d) {
     ps.forEach(function (x) { var k = x.nhom || ''; if (nhoms.indexOf(k) < 0) nhoms.push(k); });
     nhoms.forEach(function (k) {
       var ms = ps.filter(function (x) { return (x.nhom || '') === k; });
-      var g = ms.reduce(function (a, x) { a.scanDV += x.scanDV; a.tachDV += x.tachDV; a.ocrDV += x.ocrDV; return a; }, { scanDV: 0, tachDV: 0, ocrDV: 0 });
+      var g = ms.reduce(function (a, x) { a.scanDV += x.scanDV; a.tachDV += x.tachDV; a.ocrDV += x.ocrDV; return a; }, { scanDV: 0, tachDV: 0, ocrDV: 0, nhanHop: k ? ((c.nhanNhom || {})[k] || 0) : 0 });   // nhận hộp của NHÓM: một số chung ở tiêu đề (F-DB-06)
       h += '<div class="nh-block"><div class="nh-title"><span class="team-badge">' + (k ? 'Nhóm ' + esc(k) : 'Cá nhân (không nhóm)') + '</span>' + (k ? so(g) : '') + '</div>';
       ms.forEach(function (x) {
         h += '<div class="ng-row' + (x.soBC ? '' : ' ng-idle') + '"><span class="ng-ten">' + esc(x.ten) + '</span>' +

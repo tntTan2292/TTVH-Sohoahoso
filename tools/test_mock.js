@@ -416,7 +416,29 @@ ok(sh('LogHeThong').rows.slice(1).filter(x => x[4] && x[4] !== 'TEST_DATE').ever
   const b1 = cn.find(x => x.ma === 'B1'), a1 = cn.find(x => x.ma === 'A1');
   ok(cn.length >= 3 && cn.every(x => x.coMat || x.soBC > 0), 'caNguoi: liệt kê người trong ca Chiều (có mặt hoặc có báo cáo)', cn.map(x => x.ma));
   ok(b1 && b1.nhom === '5' && a1 && a1.nhom === '', 'caNguoi: ghi đúng nhóm hiện tại của từng người', [b1 && b1.nhom, a1 && a1.nhom]);
-  ok(a1 && a1.nhanHop >= 1 && b1 && b1.nhanHop >= 2, 'caNguoi: đếm hộp nhận cá nhân / nhóm cho từng người', [a1 && a1.nhanHop, b1 && b1.nhanHop]);
+  ok(a1 && a1.nhanHop >= 1 && b1 && b1.nhanHop === 0, 'caNguoi: nhanHop chỉ đếm hộp nhận CÁ NHÂN (A1 ≥ 1); thành viên nhóm không còn nhanHop', [a1 && a1.nhanHop, b1 && b1.nhanHop]);
+  const caC = dd.cas.find(x => x.ca === 'Chiều');
+  ok(caC.nhanNhom && caC.nhanNhom['5'] >= 3 && Object.keys(dd.cas.find(x => x.ca === 'Sáng').nhanNhom).length === 0, 'cas[].nhanNhom: số hộp nhận theo nhóm của từng ca (nhóm 5 ≥ 3 hộp; ca không có nhóm = {})', [caC.nhanNhom]);
+}
+// F-DB-06: thành viên vào nhóm sau → dòng nhận hộp cũ chỉ có 1 người trong ThanhVien, nhưng nhóm vẫn nhận đủ số hộp
+{
+  const NG = '2026-11-06', CAX = 'Sáng', nk0 = sh('NhatKy').rows.length, pn0 = sh('PhanNhom').rows.length, pc0 = sh('PhanCa').rows.length;
+  sh('PhanCa').rows.push([NG, CAX, 'A1', 'Nhân viên A', '', ''], [NG, CAX, 'B1', 'Nhân viên B', '', ''], [NG, CAX, 'D1', 'Nhân viên D', '', '']);
+  sh('PhanNhom').rows.push([NG, CAX, '7', 'A1', 'Nhân viên A', 'TT1', ''], [NG, CAX, '7', 'B1', 'Nhân viên B', 'TT1', '']);
+  const nn = (id, hop, nhom, tv, nguoi, o) => ctx.append_('NhatKy', Object.assign({ ID: id, ThoiGian: NG + ' 07:30:00', Ngay: NG, Ca: CAX, Nhom: nhom, Buoc: 'NHAN_NHOM', MaHop: hop, SoHoSo: 0, SoTrang: 0, SoTo: 0, HetHop: false, NguoiNhap: nguoi, Loai: 'THƯỜNG', Huy: false, ThanhVien: tv }, o || {}));
+  nn('NN1', 'MX1', '7', 'A1', 'A1');            // gửi lúc B1 chưa vào nhóm
+  nn('NN2', 'MX2', '7', 'A1,B1', 'B1');         // gửi khi đủ 2 người
+  nn('NN3', 'MX2', '7', 'A1,B1', 'A1');         // cùng hộp báo lần nữa: vẫn tính 1 hộp
+  nn('NN4', 'MX3', '', 'D1', 'D1');             // nhận cá nhân
+  nn('NN5', 'MX4', '7', 'A1,B1', 'A1', { Huy: true });           // đã hủy: không tính
+  nn('NN6', 'MX5', '7', 'A1,B1', 'A1', { Loai: 'THỬ NGHIỆM' });   // thử nghiệm: không tính
+  ctx.memoClear_();
+  const d6 = api(tAdmin, 'dashboard', { ngay: NG }).data, cs = d6.cas.find(x => x.ca === CAX), pp = ma => d6.caNguoi.find(x => x.ca === CAX && x.ma === ma);
+  ok(cs.nhanNhom['7'] === 2 && Object.keys(cs.nhanNhom).length === 1, 'F-DB-06: nhóm 7 nhận 2 hộp khác nhau (MX1, MX2; hộp trùng/hủy/THỬ NGHIỆM không tính)', cs.nhanNhom);
+  ok(pp('A1').nhanHop === 0 && pp('B1').nhanHop === 0, 'F-DB-06: thành viên nhóm không còn nhanHop riêng (hết lệch 2 hộp / 1 hộp)', [pp('A1').nhanHop, pp('B1').nhanHop]);
+  ok(pp('D1').nhanHop === 1, 'F-DB-06: nhận hộp cá nhân vẫn đếm đúng cho người đó', pp('D1').nhanHop);
+  ok(pp('A1').soBC >= 1 && d6.day.scanDV === 0, 'F-DB-06: không đổi cách chia Scan/Tách/OCR (soBC giữ, tờ = 0)', [pp('A1').soBC, d6.day.scanDV]);
+  sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; ctx.memoClear_();
 }
 
 // ===== Dashboard: người thử nghiệm TN-xx không tính vào nhân sự ca (trừ khi ADMIN gomThu) =====
