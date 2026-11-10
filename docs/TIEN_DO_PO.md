@@ -35,4 +35,5 @@
 | 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 28 | Hộp xác nhận tự vẽ, thay popup trình duyệt có dòng đường link lạ | XN1 | ⬜ Có phiếu, chờ giao Sonnet (cùng đợt mục 30) |
 | 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
-| 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ | CC1 | ⬜ Có phiếu, chờ giao Sonnet (làm trước mục 28) |
+| 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | ⬜ Có phiếu, chờ giao Sonnet (làm trước mục 28) |
+| 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | ⬜ Có phiếu, chờ giao Sonnet (cùng đợt mục 30) |

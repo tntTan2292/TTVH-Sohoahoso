@@ -1,19 +1,19 @@
-# Phiếu Sonnet: CC1 (mục 30) + XN1 (mục 28)
+# Phiếu Sonnet: CC1 (mục 30) + XN1 (mục 28) + LOC1 (mục 31)
 
-Opus chốt 10/11/2026 theo đề nghị của chủ dự án. Làm liền hai việc, **mỗi việc một commit, CC1 trước, XN1 sau**. Không triển khai, không ghi Sheet thật. Xong thì Sonnet viết prompt Antigravity theo `CHUAN_PROMPT.md` mục 3a; Opus review một lần cuối đợt. C3 (mục 25) vẫn hoãn, làm sau đợt này.
+Opus chốt 10/11/2026 theo đề nghị của chủ dự án. Làm liền ba việc, **mỗi việc một commit, thứ tự CC1 → XN1 → LOC1**. Không triển khai, không ghi Sheet thật. Xong thì Sonnet viết prompt Antigravity theo `CHUAN_PROMPT.md` mục 3a; Opus review một lần cuối đợt. C3 (mục 25) vẫn hoãn, làm sau đợt này.
 
 ## CC1 (mục 30): Chốt ca = "đã kiểm tra", hiện rõ ca chưa chốt (L2)
 
 **Không đổi:** cách tính mọi số; `chot_`; khóa nhập (`caState_`); `chot` trả về trong `cas`; `DauKy`, `DauKyNguoi`. Chốt ca vẫn khóa nhập như cũ.
 
 **Quy tắc đã chốt**
-- Hằng số `CHOT_AP_DUNG_TU` trong `Code.gs`, tạm đặt `'2026-11-12'`; Opus đổi thành ngày triển khai thật khi cho GO. Ca trước mốc này (gồm toàn bộ 02–08/11) **không bao giờ** có nhãn chưa chốt.
+- Hằng số `CHOT_AP_DUNG_TU = '2026-11-10'` trong `Code.gs` (chủ dự án chốt: tính từ ngày triển khai chính thức). **Mọi ca trước mốc này được coi là đã chốt**, kể cả ca không có dữ liệu. Chỉ là cách hiển thị: **không ghi dòng nào vào `ChotCa`**, `c.chot` và việc khóa nhập của các ca đó giữ nguyên.
 - Ca **cần chốt** = ngày ≥ mốc, đã hết giờ ca (`ngay < hôm nay`, hoặc cùng ngày và đã qua giờ kết thúc), và có ít nhất một dòng `PhanCa` không phải `TN-` hoặc một dòng `NhatKy` còn hiệu lực không phải THỬ NGHIỆM.
 - Trạng thái, dùng **một hàm chung** cho mọi nơi:
-  - `da`: dòng `ChotCa` mới nhất là `CHOT`.
+  - `da`: ngày trước mốc, hoặc dòng `ChotCa` mới nhất là `CHOT`.
   - `chua`: cần chốt, chưa `CHOT`, cùng ngày hôm nay. Đã mở khóa (`MO`) mà chưa chốt lại cũng là chưa chốt.
   - `quaHan`: cần chốt, chưa `CHOT`, `ngay < hôm nay` (sang ngày mới là quá hạn).
-  - `''`: các trường hợp khác, gồm ca đang làm và ca trước mốc.
+  - `''`: các trường hợp khác, gồm ca đang làm và ca từ mốc trở đi không có dữ liệu.
 
 **Máy chủ (chỉ thêm, không đổi trường cũ)**
 - `dash_`: thêm `trangThaiChot` vào từng phần tử `cas` và `soCaChuaChot` (đếm `chua` + `quaHan` của ngày đang xem).
@@ -23,12 +23,12 @@ Opus chốt 10/11/2026 theo đề nghị của chủ dự án. Làm liền hai v
 - Thẻ/dòng của đúng ca `chua` hoặc `quaHan`: số Scan/Tách/OCR **của ca đó** hiện màu chữ phụ, luôn kèm nhãn chữ "Chưa chốt ca" hoặc "Quá hạn chốt" (đỏ). Cột tổng, KPI và biểu đồ không mờ. Không dùng `opacity`, vì in và màn hình điện thoại sẽ khó đọc.
 - Tổng ngày ghi "gồm N ca chưa chốt" khi N > 0.
 - Quản lý ca: huy hiệu "Có N ca chưa chốt", bấm thấy danh sách ngày + ca.
-- Sửa hai chỗ đang sai với ý nghĩa mới: dòng `tt = c.chot ? ['Đã chốt', 'bad']` phải là `ok` (xanh); `ttChip` đang hiện đỏ "Hết ca – chưa chốt" cho mọi ca đã qua, kể cả 02–08/11, phải theo `trangThaiChot` (không có trạng thái thì chỉ hiện "Hết ca").
+- Sửa hai chỗ đang sai với ý nghĩa mới: dòng `tt = c.chot ? ['Đã chốt', 'bad']` phải là `ok` (xanh); `ttChip` đang hiện đỏ "Hết ca – chưa chốt" cho mọi ca đã qua, kể cả 02–08/11. Cả hai chỗ này phải lấy theo `trangThaiChot`, không theo `c.chot` (`da` hiện "Đã chốt"; không có trạng thái thì chỉ hiện "Hết ca").
 - Đổi lời nút chốt thành ý "Xác nhận đã kiểm tra số liệu ca này. Sau khi chốt tổ viên không nhập được nữa."
 
 **Không làm:** nhắc qua email/Zalo; cột chốt trong CSV (CSV hiện có là Đối soát theo **hộp**, một hộp đi qua nhiều ca nên cột này không có nghĩa).
 
-**Mock bắt buộc:** so `dash_` với `Code.gs` ở `848b751` trên mọi ngày, có/không `gomThu`: giống hệt sau khi bỏ hai trường mới. Kiểm đủ: CHOT, MO sau CHOT, CHOT sau MO, ca rỗng, ca chỉ có THỬ NGHIỆM, ca trước mốc, ca đang làm, sang ngày, quyền `caChuaChot` (tổ viên và Lãnh đạo bị từ chối).
+**Mock bắt buộc:** so `dash_` với `Code.gs` ở `848b751` trên mọi ngày, có/không `gomThu`: giống hệt sau khi bỏ hai trường mới. Kiểm đủ: CHOT, MO sau CHOT, CHOT sau MO, ca rỗng, ca chỉ có THỬ NGHIỆM, ca trước mốc (ra `da`, không tính vào số chưa chốt, `ChotCa` không thêm dòng), ca ngày 10/11 chưa chốt (ra `quaHan` từ 11/11), ca đang làm, sang ngày, quyền `caChuaChot` (tổ viên và Lãnh đạo bị từ chối).
 
 ## XN1 (mục 28): Hộp xác nhận tự vẽ thay `confirm`/`prompt` (L2)
 
@@ -53,4 +53,19 @@ Chỉ sửa `Index.html`. **Sonnet làm cả phần JS**, không chuyển Antigr
 - Trên DOM giả: nút tắt khi sai từ khóa; Hủy không gọi `call`; đúng từ khóa thì `call` nhận đúng `xacNhan`; bấm đúp một lần; hai hộp liên tiếp chạy được.
 - Mock máy chủ không giảm số kiểm tra.
 
-**Tài liệu:** mỗi việc thêm dòng `CHUC_NANG.md` trong cùng commit; CC1 thêm vào `API.md`; cập nhật `TIEN_DO_PO.md`, `SNAPSHOT.md`, `CHANGELOG.md`.
+## LOC1 (mục 31): Tab Nhân sự lọc rõ từ ngày đến ngày, theo ngày đang xem (L1)
+
+Chỉ sửa `Index.html` (`nsKhoangTinh`, `dashTabNhanSu`, chỗ đổi ngày ở `loadDash`). Máy chủ đã nhận `tu`, `den`, không đổi.
+
+**Hiện trạng:** ô từ–đến đã có nhưng ẩn sau lựa chọn cuối "Tùy chọn"; các lựa chọn khác luôn tính đến hôm nay nên lùi "Ngày xem báo cáo" về 08/11 mà tab vẫn ra số đến hiện tại.
+
+**Làm:**
+- Hai ô Từ ngày, Đến ngày **luôn hiện** (giữ `#nsKhoang`, `#nsTuyChon`, `#nsTu`, `#nsDen`). Giữ nguyên các `value` của lựa chọn.
+- Các lựa chọn nhanh điền sẵn hai ô và **tính đến ngày đang xem** (`#dNgay`, trống thì hôm nay): "Hôm nay" đổi chữ thành "Ngày đang xem" (từ = đến = ngày xem); "7 ngày gần nhất" = 7 ngày kết thúc ở ngày xem; "Tháng này" = đầu tháng của ngày xem đến ngày xem; "Từ đầu dự án" = ngày đầu có dữ liệu đến ngày xem. Ngày xem là hôm nay thì kết quả giống bản hiện tại.
+- Đổi ngày xem: lựa chọn nhanh tự tính lại và tải lại số. Đang ở "Tùy chọn" thì giữ nguyên hai ô.
+- Người dùng sửa tay một trong hai ô: tự chuyển sang "Tùy chọn" và tải số. Từ sau Đến: báo lỗi tại chỗ, không xóa bảng đang có.
+
+**Kiểm tra** thêm vào `tools/kiem_tra_giao_dien.js` trên DOM giả: bốn lựa chọn với ngày xem 08/11; đổi ngày xem; sửa tay chuyển Tùy chọn; đang Tùy chọn đổi ngày xem không mất khoảng đã chọn. Không để kết quả cũ về muộn đè kết quả mới.
+
+## Tài liệu (cả ba việc)
+Mỗi việc thêm hoặc sửa dòng `CHUC_NANG.md` trong cùng commit (LOC1 sửa F-DB-15); CC1 thêm vào `API.md`; cập nhật `TIEN_DO_PO.md`, `SNAPSHOT.md`, `CHANGELOG.md`.
