@@ -9,11 +9,11 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 10/11/2026 — Antigravity: thiết kế giao diện Dashboard chia tab con (F-DB-14, F-DB-15) |
+| Cập nhật lúc | 10/11/2026 — Sonnet: xong Đợt A (A1 F-BC-20, A2 F-DL-07, A3 F-NS-04/05), chưa triển khai, chờ Opus review |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
 | Bản đang chạy | Apps Script **phiên bản 21** (10/11/2026 00:34) trên link chính `…MlRA/exec` = commit `96db7c6` (Dashboard chia 5 tab con + thống kê nhân sự, N1). Phiên bản trước: 20 (`d568321`). Link phụ `…NIQ/exec` không đụng |
 | Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `96db7c6` sau khi lưu và tải lại trang) |
-| Mock | `node tools/test_mock.js` → **261 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 0 lỗi |
+| Mock | `node tools/test_mock.js` → **306 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 410 đạt, 0 lỗi (chạy trên bản LF: máy này checkout CRLF nên regex `route_` báo lỗi giả nếu chạy thẳng) |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
@@ -41,7 +41,9 @@
 
 ## 3. Việc tiếp theo (theo thứ tự ưu tiên)
 **▶ NÂNG CẤP SAU TRIỂN KHAI CHÍNH THỨC (10/11/2026) — ƯU TIÊN CAO NHẤT.** Phiếu: `docs/prompts/PROMPT_NANG_CAP_SAU_TRIEN_KHAI.md` (nguyên nhân V1–V6 Opus đã khoanh, quyết định mặc định QĐ1–QĐ5, 3 đợt). Hệ thống đang chạy thật: không đổi link, không đổi cột, sửa dữ liệu thật phải xem trước → chủ dự án duyệt → sao lưu → log.
-- ☐ **Đợt A khẩn (Sonnet):** A1 khóa báo cáo cá nhân khi đã có nhóm · A2 công cụ chuẩn hóa cá nhân → nhóm (xem trước/áp dụng) · A3 tab Nhân sự cho TT/TP quản lý tổ viên + ADMIN mở khóa · ☐ Opus review · ☐ triển khai · ☐ A2 xem trước dữ liệu ca Sáng 10/11 · ☐ chủ dự án duyệt · ☐ áp dụng
+- ☑ **Đợt A khẩn – Sonnet XONG (10/11/2026), đã đẩy GitHub, CHƯA triển khai, DỪNG ở điểm phải dừng (phân quyền + sửa dữ liệu thật):** A1 `4c0084c` (F-BC-20) · A2 `31c237d` (F-DL-07) · A3 `7b8cbf6` (F-NS-04, F-NS-05). Không viết prompt Antigravity (theo phiếu). Mock 306/0. Giao diện A2/A3 chỉ thêm khung thô, chưa làm đẹp. · ☐ **Opus review L3** · ☐ triển khai (skill `update-code-sohoa`) · ☐ A2 xem trước dữ liệu ca Sáng 10/11 (không áp dụng) · ☐ chủ dự án duyệt · ☐ áp dụng
+  - **Điểm Opus cần soi:** (1) A1 `ghi_`: `kieuNhan='CANHAN'` khi đã có nhóm → từ chối; nhập hộ `nguoiHo` đã có nhóm mà `nhom` trống/khác → từ chối (nhóm của người đó tra theo `ngay`/`ca` nhập hộ). (2) A2 `chuanHoaNhom_`: dòng trùng chỉ hủy khi số liệu GIỐNG (SoHoSo/SoTrang/SoTo/TrangLoi/HetHop); khác → `xungDot`, không đụng; ghi ô bằng `setValue` từng ô (≈2 lệnh/dòng, ca 50 dòng có thể mất vài chục giây trong khóa); `apDung` cần `xacNhan:'NHOM'`. (3) A3 `luuToVien_`: TT/TP chỉ sửa tổ viên có sẵn, bỏ qua email/vai trò gửi lên; `dsNhanSu` cho TT/TP không trả email, bỏ TN-xx.
+  - **Chưa làm / không kiểm được bằng mock:** chạy thật trên Sheet; giao diện trên điện thoại; tốc độ `chuanHoaNhom` trên Apps Script thật. Khối "Quản lý tài khoản ca" cũ giữ nguyên.
 - ☐ **Đợt B (Sonnet):** danh mục Đơn vị · chuẩn hóa đơn vị trùng · import nhân sự Excel · ☐ Opus review · ☐ triển khai
 - ☐ **Đợt C:** C1 biểu đồ tiến độ hằng ngày 30 ngày (Sonnet) → C2 giao diện điện thoại (Antigravity) · ☐ Opus review (kiểm khổ 375px) · ☐ triển khai
 
