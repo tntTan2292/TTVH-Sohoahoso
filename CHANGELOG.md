@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-BC-20 · **A1 (QĐ1)** có nhóm thì chỉ báo cáo theo nhóm: `ghi_` từ chối nhận hộp `CANHAN` khi người đó đã thuộc nhóm trong ca, và từ chối nhập hộ cho người đã có nhóm nếu `nhom` trống/khác (`ghiLo_` kế thừa); giao diện ẩn nút "Cá nhân" khi có nhóm, Nhập hộ tự chọn + khóa nhóm. Mock +8 kiểm tra (269/0). Chưa triển khai.
 - Triển khai **phiên bản 21** lên `…MlRA` (commit `96db7c6`: Dashboard chia 5 tab + thống kê nhân sự + sửa N1). Bản trước: phiên bản 20 (`d568321`). Trước khi đẩy bản trên Apps Script khớp `d568321`; sau khi lưu và tải lại, băm khớp repo. Link `/exec` mở được.
 - F-DB-15 · delta N1 (Opus review `9a17311`): tab Nhân sự bỏ con số cộng gộp 3 khâu; thẻ tổng hiện riêng Scan · Tách · OCR; thẻ năng suất và cột ghi rõ "tờ (cả 3 khâu) / giờ-người". Cách tính không đổi. Mock 261/0, giao diện 381/0.
 - Giao diện F-DB-14, F-DB-15 · Thiết kế giao diện Dashboard chia 5 tab con và tab Nhân sự mới: thanh #dTabs dạng tab bar nổi sticky với icon trực quan, cuộn mượt bằng ngón cái trên 360px; card điều khiển ngày gọn gàng với cụm nút ◀/Hôm nay/▶ và badge trạng thái ngày; lưới KPI 3 cột đều trên mobile 360px; tab Nhân sự có 4 thẻ tổng hợp sản lượng/năng suất toàn dự án, huy hiệu xếp hạng 🥇🥈🥉, sticky 2 cột đầu khi cuộn ngang trên điện thoại; bảng nhật ký có nhãn khâu và trạng thái nổi bật. Mock 261/0, kiểm tra giao diện 381/0.

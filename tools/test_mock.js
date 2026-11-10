@@ -385,9 +385,27 @@ ok(sh('LogHeThong').rows.slice(1).filter(x => x[4] && x[4] !== 'TEST_DATE').ever
   rk = api(tA, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: 'KN1', kieuNhan: 'CANHAN' });
   ok(rk.ok && dong('KN1')[4] === '' && dong('KN1')[18] === 'A1', 'nhận hộp CÁ NHÂN khi chưa có nhóm: ghi cho riêng người đó', rk);
   rk = api(tB, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: 'KN2', kieuNhan: 'CANHAN' });
-  ok(rk.ok && dong('KN2')[4] === '' && dong('KN2')[18] === 'B1', 'đã có nhóm nhưng chọn CÁ NHÂN: vẫn ghi cá nhân', rk);
+  ok(!rk.ok && /đã thuộc Nhóm 5/.test(rk.err) && !dong('KN2'), 'A1/QĐ1: đã có nhóm mà chọn CÁ NHÂN bị từ chối, không ghi gì', rk);
   rk = api(tB, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: 'KN3', kieuNhan: 'NHOM' });
   ok(rk.ok && dong('KN3')[4] === '5', 'đã có nhóm và chọn NHÓM: ghi cho nhóm', rk);
+  rk = api(tB, 'ghi', { buoc: 'NHAN_NHOM', ca: 'Chiều', hop: 'KN4' });
+  ok(rk.ok && dong('KN4')[4] === '5', 'A1: đã có nhóm, không gửi kieuNhan: mặc định ghi theo nhóm', rk);
+  // A1 – QĐ1: nhập hộ phải theo nhóm của người được nhập hộ
+  const hoQ = (o) => api(tTT, 'ghi', Object.assign({ buoc: 'NHAN_NHOM', boSung: true, ngay: '2026-11-09', ca: 'Chiều', hop: 'KH1' }, o));
+  rk = hoQ({ nguoiHo: 'B1', nhom: '' });
+  ok(!rk.ok && /đã thuộc Nhóm 5/.test(rk.err), 'A1: nhập hộ cho người ĐÃ có nhóm mà để trống nhóm bị từ chối', rk);
+  rk = hoQ({ nguoiHo: 'B1', nhom: '4' });
+  ok(!rk.ok, 'A1: nhập hộ cho người đã có nhóm nhưng chọn nhóm khác bị từ chối', rk);
+  rk = hoQ({ nguoiHo: 'B1', nhom: '5' });
+  ok(rk.ok && dong('KH1')[4] === '5', 'A1: nhập hộ đúng nhóm của người đó được ghi', rk);
+  rk = hoQ({ nguoiHo: 'A1', nhom: '', hop: 'KH2' });
+  ok(rk.ok && dong('KH2')[4] === '' && dong('KH2')[18] === 'A1', 'A1: nhập hộ cho người CHƯA có nhóm vẫn ghi cá nhân', rk);
+  rk = api(tTT, 'ghi', { buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nguoiHo: 'B1', nhom: '', hop: 'KH3', soHoSo: 1, soTrang: 5 });
+  ok(!rk.ok && /đã thuộc Nhóm 5/.test(rk.err), 'A1: nhập hộ Scan cho người đã có nhóm mà để trống nhóm cũng bị từ chối', rk);
+  rk = api(tTT, 'ghiLo', { idLo: 'LO-A1-TEST-01', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nguoiHo: 'B1', nhom: '', muc: [{ hop: 'KH4', buoc: 'SCAN', soHoSo: 1, soTrang: 5 }] });
+  ok(rk.ok && rk.data.loi === 1 && /đã thuộc Nhóm 5/.test(rk.data.ketQua[0].err), 'A1: ghiLo kế thừa quy tắc: dòng nhập hộ sai nhóm bị báo lỗi', rk.data);
+  rk = api(tB, 'ghiLo', { idLo: 'LO-A1-TEST-02', ca: 'Chiều', muc: [{ hop: 'KH5', buoc: 'SCAN', soHoSo: 1, soTrang: 5 }] });
+  ok(rk.ok && rk.data.loi === 0 && sh('NhatKy').rows.filter(x => x[6] === 'KH5').every(x => x[4] === '5'), 'A1: tổ viên có nhóm gửi lô: ghi theo nhóm', rk);
 }
 
 // ===== Dashboard TỪNG CA: người trong ca, nhóm, sản lượng =====
@@ -563,7 +581,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(lockCount - l0 === 1, 'ghiLo chạy trong 1 lần khóa (không thuộc READ_ACTIONS)', lockCount - l0);
   const ra = nk().filter(x => x[6] === 'LA' && ['SCAN', 'TACH', 'OCR'].indexOf(x[5]) >= 0);
   ok(ra.length === 3 && ra.every(x => x[18] === 'A1' && x[14] === 'A1' && x[15] === 'THƯỜNG') && ra.find(x => x[5] === 'SCAN')[12] === '470-472' && Number(ra.find(x => x[5] === 'SCAN')[10]) === 1, 'ghiLo: mỗi khâu 1 dòng NhatKy, chốt ThanhVien/Nhóm, lưu mã hồ sơ và trang lỗi như ghi cũ', ra);
-  ok(sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO_LO').length === 1 && sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO' && /^(Scan|Tách file|OCR)/.test(x[6]) && /hộp LA /.test(x[6])).length === 3, 'ghiLo ghi log: 1 dòng BAO_CAO_LO + log BAO_CAO cho từng khâu');
+  ok(sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO_LO' && !/LO-A1-TEST/.test(x[6])).length === 1 && sh('LogHeThong').rows.filter(x => x[4] === 'BAO_CAO' && /^(Scan|Tách file|OCR)/.test(x[6]) && /hộp LA /.test(x[6])).length === 3, 'ghiLo ghi log: 1 dòng BAO_CAO_LO + log BAO_CAO cho từng khâu');
 
   // 2. R1: cả lô 10 hộp × 3 khâu chỉ đọc NhatKy 1 lần
   const muc2 = []; for (let i = 1; i <= 10; i++) ['SCAN', 'TACH', 'OCR'].forEach(b => muc2.push(mk('LX' + i, b, 2, 10, { hetHop: true })));

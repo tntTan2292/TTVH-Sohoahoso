@@ -440,6 +440,10 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
           if (!nm.length) throw 'Nhóm ' + nhom + ' chưa có trong ca ' + ca + ' ngày ' + ngay;
           if (s_(p.nguoiHo) && !nm.some(function (m) { return m.ma === s_(p.nguoiHo); })) throw 'Người được nhập hộ không thuộc nhóm ' + nhom;
         } else if (!s_(p.nguoiHo)) throw 'Chọn người được nhập hộ (hoặc chọn nhóm)';   // không chọn nhóm = báo cáo cá nhân
+        if (s_(p.nguoiHo)) {      // QĐ1 (F-BC-20): người đã có nhóm trong ca đó thì chỉ được nhập hộ THEO NHÓM của họ
+          const nhomNg = nhomOf_(ngay, ca, s_(p.nguoiHo));
+          if (nhomNg && nhomNg !== nhom) throw 'Người này đã thuộc Nhóm ' + nhomNg + ' trong ca ' + ca + ' ngày ' + ngay + ' – nhập hộ theo Nhóm ' + nhomNg + ', không nhập cá nhân hoặc nhóm khác';
+        }
       }
     } else {
       if (!CA[ca]) throw 'Chưa chọn ca';
@@ -449,7 +453,8 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
       if (st.locked) throw 'Ca đã được chốt – liên hệ Tổ trưởng/Tổ phó';
       if (!st.canInput) throw 'Ngoài thời gian nhập ca ' + ca + ' (' + st.tu + '–' + st.den + ')';
       nhom = nhomOf_(ngay, ca, u.ma);      // chưa phân nhóm = báo cáo cá nhân (nhom rỗng, thành viên = chính người báo cáo)
-      if (buoc === 'NHAN_NHOM' && s_(p.kieuNhan) === 'CANHAN') nhom = '';     // chọn nhận cá nhân: chỉ ghi cho riêng người này
+      // QĐ1 (F-BC-20): đã có nhóm trong ca thì CHỈ báo cáo theo nhóm, không còn nhận/báo cáo cá nhân
+      if (buoc === 'NHAN_NHOM' && s_(p.kieuNhan) === 'CANHAN' && nhom) throw 'Bạn đã thuộc Nhóm ' + nhom + ' trong ca ' + ca + ' – báo cáo theo nhóm, không nhận hộp cá nhân';
       if (buoc === 'NHAN_NHOM' && s_(p.kieuNhan) === 'NHOM' && !nhom) throw 'Bạn chưa được phân nhóm trong ca ' + ca + ' – yêu cầu Tổ trưởng/Tổ phó phân nhóm trước khi nhận hộp theo nhóm (hoặc chọn nhận Cá nhân)';
     }
     let nguoiHoTen = '';

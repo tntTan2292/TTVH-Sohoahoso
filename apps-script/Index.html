@@ -2550,8 +2550,10 @@ function buildForm(open, m) {
     var caHT = function () { return $('fCa') ? $('fCa').value : CUR_CA; };
     var nhomCua = function () { var c = (ME.cas || []).filter(function (x) { return x.ca === caHT(); })[0]; return c && c.nhom ? c : null; };
     var veKieuNhan = function () {
-      Array.prototype.forEach.call($('kieuNhan').children, function (b) { b.classList.toggle('on', b.dataset.k === KIEU_NHAN); });
+      // F-BC-20 (QĐ1): đã có nhóm trong ca thì CHỈ nhận theo nhóm; chưa có nhóm thì CHỈ nhận cá nhân – ẩn nút còn lại
       var c = nhomCua(), info = $('kieuNhanInfo');
+      KIEU_NHAN = c ? 'NHOM' : 'CANHAN';
+      Array.prototype.forEach.call($('kieuNhan').children, function (b) { b.classList.toggle('on', b.dataset.k === KIEU_NHAN); b.style.display = b.dataset.k === KIEU_NHAN ? '' : 'none'; });
       if (KIEU_NHAN === 'NHOM' && !c) {
         info.innerHTML = '<div class="msg warn"><span>⚠️ Bạn <b>chưa được phân nhóm</b> trong Ca ' + esc(caHT() || '') + '. Yêu cầu Tổ trưởng/Tổ phó phân nhóm trước, hoặc chọn <b>Cá nhân</b>.</span></div>';
         $('fSend').disabled = true;
@@ -2561,15 +2563,9 @@ function buildForm(open, m) {
         $('fSend').disabled = false;
       }
     };
-    if (!KIEU_NHAN) KIEU_NHAN = nhomCua() ? 'NHOM' : 'CANHAN';
-    Array.prototype.forEach.call($('kieuNhan').children, function (b) {
-      b.onclick = function () {
-        KIEU_NHAN = b.dataset.k; veKieuNhan();
-        if (KIEU_NHAN === 'NHOM' && !nhomCua()) call('me').then(function (m) { ME = m; ME_TS = Date.now(); if ($('kieuNhan')) veKieuNhan(); }).catch(function () {});   // có thể vừa được phân nhóm
-      };
-    });
     if ($('fCa')) $('fCa').addEventListener('change', veKieuNhan);
     veKieuNhan();
+    if (!nhomCua()) call('me').then(function (m2) { ME = m2; ME_TS = Date.now(); if ($('kieuNhan')) veKieuNhan(); }).catch(function () {});   // có thể vừa được phân nhóm: tải lại để đổi sang nhận theo nhóm
   }
   if ($('fKemTach')) { $('fKemTach').checked = KEM_TACH; $('fKemTach').onchange = function () { KEM_TACH = $('fKemTach').checked; }; }
   ($('fLoBox') ? Promise.resolve(null) : call('hopGoiY', { buoc: STEP })).then(function (list) {
@@ -2782,10 +2778,10 @@ function renderHo(d) {
       else if (s === 'NHAN_NHOM') cls += ' step-nhan';
       return '<button type="button" data-s="' + s + '" class="' + cls + (s === HO_STEP ? ' on' : '') + '">' + STEP_LABEL[s] + '</button>';
     }).join('') + '</div>' +
-    '<div class="row"><div><label>Nhóm <small class="muted">(không chọn = báo cáo cá nhân)</small></label><select id="hoNhom"><option value="">— Cá nhân (không nhóm) —</option>' +
+    '<div class="row"><div><label>Nhóm <small class="muted">(người đã có nhóm: tự chọn nhóm; chỉ người chưa có nhóm mới báo cáo cá nhân)</small></label><select id="hoNhom"><option value="">— Cá nhân (chưa có nhóm) —</option>' +
     Object.keys(g).sort().map(function (k) { return '<option value="' + esc(k) + '">Nhóm ' + esc(k) + ' – ' + esc(g[k].map(function (x) { return x.ten; }).join(' + ')) + '</option>'; }).join('') + '</select></div>' +
     '<div><label>Nhập hộ cho</label><select id="hoNg"><option value="">— Chọn người —</option>' +
-    d.nguoi.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('') + '</select></div></div>';
+    d.nguoi.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + (x.nhom ? ' (Nhóm ' + esc(x.nhom) + ')' : '') + '</option>'; }).join('') + '</select></div></div>';
   if (HO_STEP === 'NHAN_NHOM') h += '<label>Mã hộp (mỗi dòng 1 mã)</label><textarea id="hoHop"></textarea>';
   else {
     h += loModeHtml('ho');
@@ -2801,7 +2797,13 @@ function renderHo(d) {
   Array.prototype.forEach.call($('hoSteps').children, function (b) { b.onclick = function () { HO_STEP = b.dataset.s; if ($('hoCard')) $('hoCard').remove(); renderHo(d); }; });
   $('hoNhom').onchange = function () {
     var k = $('hoNhom').value, ps = k ? g[k] : d.nguoi;
-    $('hoNg').innerHTML = '<option value="">— Chọn người —</option>' + ps.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
+    $('hoNg').innerHTML = '<option value="">— Chọn người —</option>' + ps.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + (x.nhom ? ' (Nhóm ' + esc(x.nhom) + ')' : '') + '</option>'; }).join('');
+  };
+  // F-BC-20 (QĐ1): chọn người đã có nhóm → tự chọn nhóm đó và khóa ô Nhóm; người chưa có nhóm → mở khóa, báo cáo cá nhân
+  $('hoNg').onchange = function () {
+    var ma = $('hoNg').value, x = d.nguoi.filter(function (y) { return y.ma === ma; })[0];
+    if (x && x.nhom) { $('hoNhom').value = String(x.nhom); $('hoNhom').disabled = true; }
+    else { $('hoNhom').disabled = false; if (x) $('hoNhom').value = ''; }
   };
   loModeBind('ho', function () { if ($('hoCard')) $('hoCard').remove(); renderHo(d); });
   if ($('hoLoBox')) loPrepare('ho', HO_STEP);

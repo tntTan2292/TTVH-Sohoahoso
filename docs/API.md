@@ -22,7 +22,7 @@
 | `me` | mọi người | — | `{user:{ma,ten,chucVu,vaiTro,donVi}, ngay, hm, isAdmin, isSuper, duocVaoCa, vaoCa:[{ca,bd,kt,daVao,soDaVao}], caMo:[ca], cas:[{ca,bd,kt,den,open,locked,canInput,nhom,thanhVien[]}]}` |
 | `doiPin` | mọi người | `{pin}` | — |
 | `vaoCa` | trừ LANHDAO, ADMIN | `{ca}` | `{moi, soDaVao}` |
-| `ghi` | trừ LANHDAO (NHAN/TRA chỉ quản lý); giữ nguyên, `ghiLo` gọi lại hàm này | `{buoc, ca, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu, maHoSo, kieuNhan:'CANHAN'|'NHOM'}`; nhập hộ thêm `{boSung:true, ngay, nhom, nguoiHo}` | có `warnings[]` |
+| `ghi` | trừ LANHDAO (NHAN/TRA chỉ quản lý); giữ nguyên, `ghiLo` gọi lại hàm này | `{buoc, ca, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu, maHoSo, kieuNhan:'CANHAN'|'NHOM'}`; nhập hộ thêm `{boSung:true, ngay, nhom, nguoiHo}` | có `warnings[]`. **QĐ1 (F-BC-20):** người đã có nhóm trong ca → `kieuNhan:"CANHAN"` bị từ chối; nhập hộ `nguoiHo` đã có nhóm mà `nhom` trống/khác bị từ chối |
 | `ghiLo` | trừ LANHDAO (như `ghi`; chỉ khâu SCAN/TACH/OCR) | `{idLo, ca, muc:[{hop, buoc, soHoSo, soTrang, soTo, trangLoi, hetHop, maHoSo}]}`; nhập hộ thêm `{boSung:true, ngay, nhom, nguoiHo}`; `ghiChu` chung. `idLo` bắt buộc (8–64 ký tự chữ/số/`_`/`-`), tối đa **10 hộp**, **30 dòng** | `{idLo, ketQua:[{hop, buoc, ok, added, warnings[], err}], added, loi, warnings[], guiLai?}`. Mỗi mục đi qua `ghi_` (mọi kiểm tra cũ). Lỗi ở một khâu → các khâu sau của **cùng hộp** bị bỏ qua, hộp khác vẫn ghi. Gửi lại cùng `idLo` (10 phút, theo người gửi) trả kết quả cũ kèm `guiLai: true`, không ghi thêm |
 | `hopGoiY` | mọi người (trừ LANHDAO) | `{buoc}` | danh sách mã hộp |
 | `nhatKy` | mọi người (trừ LANHDAO) | `{ngay, ca, includeHuy}` | bản ghi `{id, gio, buoc, hop, hs, trang, to, loi, het, ghiChu, mine, ...}` |
