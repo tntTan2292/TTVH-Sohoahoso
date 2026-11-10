@@ -6,6 +6,13 @@
 
 ---
 
+> **Opus review đợt CC1+XN1+LOC1 (848b751..c908cb8): ĐẠT — GO triển khai** (10/11/2026, reviewer độc lập). Mock **571/0**, giao diện **664/0**, `node --check` Code.gs + khối `<script>` đạt. Không còn `confirm(`/`prompt(` gốc; không mất `id`/hàm nào so với `848b751` (Index.html +194/−69, không xóa hàng loạt).
+> - **CC1:** `dash_` chỉ thêm `cas[].trangThaiChot` + `soCaChuaChot`; mock so trực tiếp với `git show 848b751` (mọi ngày, có/không `gomThu`, 4 thời điểm) giống hệt sau khi bỏ hai trường. `trangThaiChot_` đúng phiếu (trước mốc 2026-11-10 → `da`; CHOT mới nhất → `da`; MO sau CHOT → chưa; hết giờ cùng ngày → `chua`, sang ngày → `quaHan`; THỬ NGHIỆM/hủy/`TN-` không tính là có dữ liệu, kể cả khi `gomThu`). Đường ghi `ChotCa` vẫn chỉ `chot_` + `resetDuLieu` cũ, không thêm. `caState_`, `chot_` không đổi. `caChuaChot`: trong `READ_ACTIONS` (không khóa), `need_` → chỉ TT/TP/ADMIN; không có trong `LANHDAO_ACTIONS` → Lãnh đạo bị chặn.
+> - **XN1:** đủ 18 chỗ (10 confirm + 8 prompt); từ khóa MAHRM, DAUKY, NHOM, DONVI, IMPORT, XOA×2, Mã HRM khi xóa tài khoản còn đủ; nhánh xem trước (`apDung=false`) không hỏi; `send`/`loGui` chỉ gửi sau Đồng ý, `p`/`idLo` tạo đúng chỗ cũ, gọi thêm khi đang mở → `null` nên không gửi trùng; xóa theo ngày: hộp 1 đóng (`XN_DANG=null`) trước khi hộp 2 mở trong `.then`; Hủy/Esc không gọi máy chủ; máy chủ vẫn kiểm `xacNhan`; `alert` giữ nguyên.
+> - **LOC1:** `nsKhoangTinh` theo `#dNgay`, `nsChonKhoang` giữ khoảng khi chuyển sang Tùy chọn, `nsSuaTay` chuyển Tùy chọn + báo lỗi tại `#nsLoi` không xóa bảng, `dashNsTai` có số thứ tự chống kết quả cũ đè; giữ `#nsKhoang`, `#nsTuyChon`, `#nsTu`, `#nsDen`.
+> - Ghi nhận, KHÔNG phải sửa (để Antigravity/chủ dự án biết): (1) ô tile CUỐI CA của ca chưa chốt làm nhạt cả Hộp nhận/Hộp trả/Nhóm đã báo cáo (`.cc-chua .mt-val`), phiếu chỉ nói Scan/Tách/OCR — chỉnh khi làm đẹp nếu muốn; (2) hộp thứ hai của xóa theo ngày: Hủy/Esc = "Giữ lại" và vẫn xóa (đúng như `confirm` cũ, hộp 1 đã gõ XOA). **Chưa chạy trên trình duyệt thật và Sheet thật.**
+> - Việc kế: triển khai theo phiếu `PROMPT_SONNET_CC1_XN1.md` mục cuối (bản đang chạy phải khớp `848b751`, phiên bản 28), rồi chủ dự án thử mục 28, 30, 31.
+
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
