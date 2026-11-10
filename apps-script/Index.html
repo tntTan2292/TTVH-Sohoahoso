@@ -2010,6 +2010,13 @@ tbody tr:last-child td { border-bottom: none; }
 
   <!-- TAB 4: DỮ LIỆU -->
   <section id="pDL" class="hide">
+    <div class="card" id="doCard">
+      <h2>⏱ Chế độ đo tốc độ (chỉ Quản trị)</h2>
+      <div class="muted" style="font-size:12.5px;margin-bottom:8px;">Bật rồi dùng hệ thống bình thường (báo cáo, xem Dashboard…). Mỗi lệnh của <b>bạn</b> được đo từng phần ở máy chủ (đợi khóa, đọc Sheet, ghi, nhật ký) và ở trình duyệt (cả vòng gửi–nhận). Không ảnh hưởng người khác.</div>
+      <label class="check-label"><input type="checkbox" id="doBat"> <span>Bật chế độ đo</span></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button type="button" class="sm" id="doXem">Xem bảng đo</button><button type="button" class="sm" id="doChep">Sao chép bảng</button><button type="button" class="sm" id="doXoa">Xóa số đo</button></div>
+      <div id="doBody" style="margin-top:10px;"></div>
+    </div>
     <div class="card">
       <h2>Quản lý dữ liệu báo cáo (Kiểm thử &amp; Chỉnh sửa)</h2>
       <div class="row">
@@ -2162,6 +2169,7 @@ function toLogin() {
 var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
 var GUI_ACT = ['ghi', 'vaoCa'];
 var WRITE_BUSY = false, READ_N = 0, BUSY_T0 = 0, BUSY_IV = null, GUI_ID = {};
+var DO_ON = false, DO_LOG = [];      // T2: chế độ đo (chỉ ADMIN)
 function idMoi() { var a = 'abcdefghijklmnopqrstuvwxyz0123456789', r = 'g'; for (var i = 0; i < 18; i++) r += a.charAt(Math.floor(Math.random() * a.length)); return r + Date.now().toString(36); }
 function busyBat() {
   WRITE_BUSY = true; BUSY_T0 = Date.now();
@@ -2194,11 +2202,14 @@ function call(action, p) {
     if (sig) GUI_ID[sig] = { id: q.idGui, t: Date.now() };
     p = q;
   }
+  if (DO_ON && ME && ME.user && ME.user.vaiTro === 'ADMIN') { var q2 = {}; Object.keys(p).forEach(function (k) { q2[k] = p[k]; }); q2.do = true; p = q2; }
+  var tVong = Date.now();
   if (ghi) busyBat(); else topBar(true);
   var xong = function (chacChan) { if (ghi) busyTat(); else topBar(false); if (chacChan && sig) delete GUI_ID[sig]; };
   return new Promise(function (res, rej) {
     google.script.run.withSuccessHandler(function (r) {
       xong(true);
+      if (r && r.do) doGhi(action, r.do, Date.now() - tVong);
       if (r && r.ok === false) {
         if (r.err && /phiên|token|đăng nhập/i.test(r.err)) {
           alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
@@ -3256,8 +3267,34 @@ function veMaXem(r) {
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */
+/* ---------- T2: bảng đo tốc độ (chỉ ADMIN bật; xem ở tab Dữ liệu) ---------- */
+function doGhi(action, d, vong) { DO_LOG.push({ a: action, tong: d.tong, vong: vong, p: d.phan }); if (DO_LOG.length > 300) DO_LOG.shift(); }
+function doTong(p, re) { var t = 0; Object.keys(p).forEach(function (k) { if (re.test(k)) t += p[k].ms; }); return t; }
+function doBang() {
+  var g = {};
+  DO_LOG.forEach(function (x) { var o = g[x.a] = g[x.a] || { n: 0, tong: 0, vong: 0, khoa: 0, doc: 0, ghi: 0, log: 0, auth: 0 }; o.n++; o.tong += x.tong; o.vong += x.vong; o.khoa += doTong(x.p, /^khoa$/); o.doc += doTong(x.p, /^sheet:/); o.ghi += doTong(x.p, /^ghi:/); o.log += doTong(x.p, /^log$/); o.auth += doTong(x.p, /^auth$/); });
+  var rows = [['Lệnh', 'Số lần', 'Máy chủ TB (ms)', 'Vòng gửi–nhận TB (ms)', 'Ngoài máy chủ TB (ms)', 'Xác thực', 'Đợi khóa', 'Đọc Sheet', 'Ghi Sheet', 'Nhật ký']];
+  Object.keys(g).sort().forEach(function (a) { var o = g[a], f = function (v) { return Math.round(v / o.n); }; rows.push([a, o.n, f(o.tong), f(o.vong), f(o.vong - o.tong), f(o.auth), f(o.khoa), f(o.doc), f(o.ghi), f(o.log)]); });
+  return rows;
+}
+function doVe() {
+  var r = doBang();
+  $('doBody').innerHTML = DO_LOG.length ? '<div class="scroll"><table><tr>' + r[0].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>' + r.slice(1).map(function (x) { return '<tr>' + x.map(function (c, i) { return '<td' + (i ? '' : ' style="text-align:left"') + '>' + esc(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div><div class="muted" style="font-size:12px;margin-top:6px;">"Máy chủ" = từ lúc nhận lệnh tới lúc trả (gồm xác thực, đợi khóa, đọc, ghi, nhật ký). "Ngoài máy chủ" = đường truyền + hàng đợi của Google (vòng − máy chủ).</div>' : '<div class="muted">Chưa có số đo. Bật chế độ đo rồi thao tác vài lệnh.</div>';
+}
+function doKhoiTao() {
+  try { DO_ON = localStorage.getItem('sohoa_do') === '1'; } catch (e) { DO_ON = false; }
+  $('doBat').checked = DO_ON;
+  $('doBat').onchange = function () { DO_ON = $('doBat').checked; try { localStorage.setItem('sohoa_do', DO_ON ? '1' : '0'); } catch (e) { } };
+  $('doXem').onclick = doVe;
+  $('doXoa').onclick = function () { DO_LOG = []; doVe(); };
+  $('doChep').onclick = function () {
+    var t = doBang().map(function (r) { return r.join('\t'); }).join('\n');
+    try { navigator.clipboard.writeText(t).then(function () { $('doBody').insertAdjacentHTML('afterbegin', '<div class="msg ok">✔ Đã sao chép bảng</div>'); }); } catch (e) { $('doBody').insertAdjacentHTML('afterbegin', '<pre>' + esc(t) + '</pre>'); }
+  };
+}
 function initDL() {
   if (!$('dlNgay').value) $('dlNgay').value = ME.ngay;
+  doKhoiTao();
   $('dlLoad').onclick = loadDL; initCH();
   $('dlMau').onclick = function () { call('taoMau', { ngay: $('dlNgay').value, cas: $('dlMauCa').value.split(','), soNguoi: 6 }).then(function (r) { msg('dlMsg', 'Đã tạo ' + r.soBanGhi + ' bản ghi mẫu cho ' + r.soCa + ' ca ngày ' + r.ngay + ' (mỗi ca ' + r.soNguoi + ' người, thêm ' + r.soThem + ' người giả TN-xx). Ở Dashboard tick "gồm dữ liệu thử nghiệm" để xem.', 'ok'); loadDL(); }).catch(function (e) { msg('dlMsg', e); }); };
   $('dlThu').onclick = function () {

@@ -12,6 +12,8 @@
 2. Chưa đổi PIN lần đầu → chỉ được `me`, `doiPin`.
 3. `LANHDAO` → chỉ được `me`, `dashboard`, `thongKeNhanSu`, `doiPin`, `lichSu`, `doiSoatHop`, `chiTietCa`.
 4. Action không thuộc `READ_ACTIONS` chạy trong khóa (`withLock_`).
+5. (T2) Mọi action nhận thêm `do:true` (chỉ có tác dụng với ADMIN) → kết quả có thêm trường `do:{action, tong, phan}` (ms từng phần; xem `docs/DO_TOC_DO.md`). Không đổi `data`.
+
 
 `READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','dsDonVi','nhatKyHT','lichSu','thongKeNhanSu','doiSoatHop','chiTietCa']`
 

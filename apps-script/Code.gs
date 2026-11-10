@@ -95,6 +95,9 @@ function now_() {
   const hm = Utilities.formatDate(d, TZ, 'HH:mm');
   return { ngay: Utilities.formatDate(d, TZ, 'yyyy-MM-dd'), hm: hm, min: min_(hm), ts: Utilities.formatDate(d, TZ, 'yyyy-MM-dd HH:mm:ss') };
 }
+// T2 – đo thời gian: chỉ bật khi ADMIN gửi do:true (api() gán PERF_ và trả kèm kết quả đo); người dùng thường: PERF_ = null, pt_ không làm gì.
+let PERF_ = null;
+function pt_(k, t0) { if (PERF_) { const o = PERF_[k] = PERF_[k] || { n: 0, ms: 0 }; o.n++; o.ms += Date.now() - t0; } }
 const MEMO_ = {};
 // Bộ nhớ đệm giữa các lượt gọi cho các tab nhỏ (đọc Sheet chậm). Mỗi lần ghi tab đổi "phiên bản" nên không đọc nhầm dữ liệu cũ.
 const CACHE_TABS = { NhanSu: 1, PhanCa: 1, PhanNhom: 1, ChotCa: 1, DauKy: 1, DonVi: 1 };
@@ -106,12 +109,18 @@ function tabVer_(name) {
   return v;
 }
 function cacheBump_(name) { try { CacheService.getScriptCache().put('ver_' + name, verKey_(), 21600); } catch (e) { } }
-function readValues_(name, sh) {
-  if (!CACHE_TABS[name]) return sh.getDataRange().getValues();
+function readValues_(name, sh) {      // T2: đo "doc:<tab>" (cả đệm lẫn Sheet) và "sheet:<tab>" (đọc thật từ Sheet)
+  const t0 = Date.now(), v = readValues0_(name, sh);
+  pt_('doc:' + name, t0);
+  return v;
+}
+function readValues0_(name, sh) {
+  if (!CACHE_TABS[name]) { const ts0 = Date.now(), vv = sh.getDataRange().getValues(); pt_('sheet:' + name, ts0); return vv; }
   const c = CacheService.getScriptCache(), key = 'tab_' + name + '_' + tabVer_(name);
   const hit = c.get(key);
   if (hit) return JSON.parse(hit, function (k, x) { return x && typeof x === 'object' && x.__d !== undefined ? new Date(x.__d) : x; });
-  const v = sh.getDataRange().getValues();
+  const ts1 = Date.now(), v = sh.getDataRange().getValues();
+  pt_('sheet:' + name, ts1);
   try {
     const txt = JSON.stringify(v.map(function (row) { return row.map(function (x) { return x instanceof Date ? { __d: x.getTime() } : x; }); }));
     if (txt.length < 95000) c.put(key, txt, 300);
@@ -165,6 +174,7 @@ function nsDamBaoCot_() {
   if (doi) memoClear_('NhanSu');
 }
 function append_(name, obj) {
+  const tG = Date.now();
   const sh = ss_().getSheetByName(name);
   if (name === 'NhanSu') nsDamBaoCot_();
   const cols = TAB[name], row = sh.getLastRow() + 1;
@@ -174,6 +184,7 @@ function append_(name, obj) {
   const vals = cols.map(function (k) { return obj[k] === undefined || obj[k] === null ? '' : safe_(obj[k]); });
   rg.setValues([vals]);
   memoThem_(name, row, cols, [vals]);
+  pt_('ghi:' + name, tG);
 }
 // Đặt định dạng văn bản '@' cho các cột văn bản của khối dòng sắp ghi (1 lần cho cả khối), giữ định dạng các cột khác.
 function textFmt_(rg, cols, nRows) {
@@ -190,8 +201,9 @@ function memoThem_(name, firstRow, cols, rowsVals) {
   } else memoClear_(name);
 }
 function withLock_(fn) {
-  const lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock(), tK = Date.now();
   lock.waitLock(25000);
+  pt_('khoa', tK);
   memoClear_();
   try { return fn(); } finally { lock.releaseLock(); }
 }
@@ -207,6 +219,7 @@ function backupTab_(name) {  // sao lưu cả tab sang tab SL_<tên>_<giờ> tr�
   return nm;
 }
 function log_(ma, act, detail) {      // nhật ký hệ thống: ai, lúc nào, ca nào, làm gì
+  const tL = Date.now();
   const t = now_();
   let ten = '', vai = '', ca = '';
   try {
@@ -215,12 +228,13 @@ function log_(ma, act, detail) {      // nhật ký hệ thống: ai, lúc nào,
     CA_LIST.forEach(function (c) { if (caWin_(c, t.ngay, t).open) ca = c; });
   } catch (e) { }
   append_('LogHeThong', { ThoiGian: t.ts, MaHRM: ma, HoTen: ten, VaiTro: vai, HanhDong: act, NgayCa: t.ngay + (ca ? ' · ca ' + ca : ' · ngoài ca'), ChiTiet: detail });
+  pt_('log', tL);
 }
 function hash_(salt, pin) {
   return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + pin));
 }
 function isAdmin_(u) { return VAI_TRO_QL.indexOf(u.vaiTro) >= 0; }
-function setCell_(tab, row, col, val) { if (tab === 'NhanSu' && col === 'ThuTu') nsDamBaoCot_(); ss_().getSheetByName(tab).getRange(row, TAB[tab].indexOf(col) + 1).setValue(safe_(val)); memoClear_(tab); }
+function setCell_(tab, row, col, val) { const tG = Date.now(); if (tab === 'NhanSu' && col === 'ThuTu') nsDamBaoCot_(); ss_().getSheetByName(tab).getRange(row, TAB[tab].indexOf(col) + 1).setValue(safe_(val)); memoClear_(tab); pt_('ghi:' + tab, tG); }
 
 /* ====================== Mã hộp: khóa so sánh và dạng chuẩn (H1, QĐ6) ====================== */
 // Cùng một hộp bị ghi nhiều kiểu (2.1.87 / 02.01.87 / 02.1.87) → mọi chỗ SO SÁNH / GOM theo mã hộp dùng maHopKhoa_, không so chuỗi thô.
@@ -344,14 +358,20 @@ function auth_(token) {
 const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
 const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu', 'doiSoatHop', 'chiTietCa'];
 function api(token, action, p) {
+  const tA = Date.now();
   try {
     const u = auth_(token); p = p || {};
+    PERF_ = (u.vaiTro === 'ADMIN' && p.do === true) ? { auth: { n: 1, ms: Date.now() - tA } } : null;      // T2: chỉ ADMIN bật đo
     if (u.doiPin && action !== 'me' && action !== 'doiPin') throw 'Cần đổi PIN lần đầu trước khi dùng hệ thống';
     if (u.vaiTro === 'LANHDAO' && LANHDAO_ACTIONS.indexOf(action) < 0) throw 'Tài khoản Lãnh đạo chỉ được xem';
     const data = READ_ACTIONS.indexOf(action) >= 0 ? route_(u, action, p) : withLock_(function () { return idGui_(u, action, p, function () { return route_(u, action, p); }); });
-    return { ok: true, data: data };
+    const kq = { ok: true, data: data };
+    if (PERF_) { kq.do = { action: action, tong: Date.now() - tA, ts: now_().ts, phan: PERF_ }; }      // T2: số đo (ms) từng phần, chỉ trả cho ADMIN đã bật
+    return kq;
   } catch (e) {
     return { ok: false, err: String(e && e.message ? e.message : e) };
+  } finally {
+    PERF_ = null;
   }
 }
 // T1: chống ghi trùng khi giao diện gửi lại do không biết kết quả (mạng chậm/đứt): ghi / vaoCa nhận idGui tùy chọn; cùng idGui (cùng người, cùng action) → trả kết quả cũ (guiLai=true), KHÔNG ghi thêm. Không gửi idGui → chạy như cũ. Chạy trong withLock_.
@@ -1147,6 +1167,7 @@ function chuanHoaMaHRM_(u, p) {
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */
 function appendMany_(name, objs) {
   if (!objs.length) return;
+  const tG = Date.now();
   const sh = ss_().getSheetByName(name), h = TAB[name];
   if (name === 'NhanSu') nsDamBaoCot_();
   const vals = objs.map(function (o) { return h.map(function (k) { return o[k] === undefined || o[k] === null ? '' : safe_(o[k]); }); });
@@ -1156,6 +1177,7 @@ function appendMany_(name, objs) {
   textFmt_(rg, h, vals.length);   // thiếu bước này từng làm mã hộp "02.01.85" bị Sheets đổi thành ngày (dòng Nhận hộp)
   rg.setValues(vals);
   memoThem_(name, first, h, vals);
+  pt_('ghi:' + name, tG);
 }
 // Sao lưu các dòng sắp xóa vào tab SaoLuuXoa (nhanh hơn nhiều so với chép cả tab)
 function saoLuuDong_(tab, rows, nguoi) {

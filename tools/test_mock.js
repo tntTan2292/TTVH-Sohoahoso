@@ -1484,5 +1484,45 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; memo2();
 }
 
+// ===== T2: đo thời gian (chỉ ADMIN bật, trả kèm) + bảng số lần đọc/ghi từng action =====
+{
+  const nk0 = sh('NhatKy').rows.length, pn0 = sh('PhanNhom').rows.length, pc0 = sh('PhanCa').rows.length, lg0 = sh('LogHeThong').rows.length;
+  if (!sh('PhanCa').rows.some(x => x[0] === '2026-11-09' && x[1] === 'Chiều' && x[2] === 'A1')) sh('PhanCa').rows.push(['2026-11-09', 'Chiều', 'A1', 'Nhân viên A', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Chiều', '1', 'A1', 'Nhân viên A', 'TT1', '']);
+  // dữ liệu NhatKy vừa đủ để dashboard/hopGoiY có việc làm
+  for (let i = 1; i <= 30; i++) ctx.append_('NhatKy', { ID: 'T2D' + i, ThoiGian: '2026-11-09 10:' + ('0' + (i % 60)).slice(-2) + ':00', Ngay: '2026-11-09', Ca: 'Sáng', Nhom: '', Buoc: i % 3 ? 'NHAN' : 'SCAN', MaHop: 'T2-' + i, SoHoSo: 1, SoTrang: 10, SoTo: 5, TrangLoi: 0, HetHop: true, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' });
+  ctx.memoClear_();
+  // 1) chỉ ADMIN bật mới có số đo; kết quả nghiệp vụ không đổi
+  const d0 = api(tAdmin, 'dashboard', { ngay: '2026-11-09' }); ctx.memoClear_(); const d1 = api(tAdmin, 'dashboard', { ngay: '2026-11-09', do: true });
+  ok(!('do' in d0) && d1.do && d1.do.action === 'dashboard' && d1.do.tong >= 0 && d1.do.phan.auth && d1.do.phan['doc:NhatKy'].n >= 1, 'T2: ADMIN gửi do:true → trả kèm số đo (auth, đọc NhatKy…); không gửi thì không có', d1.do);
+  ok(JSON.stringify(d0.data) === JSON.stringify(d1.data), 'T2: bật đo không làm đổi kết quả nghiệp vụ (dashboard giống hệt)');
+  ok(!('do' in api(tTT, 'dashboard', { ngay: '2026-11-09', do: true })) && !('do' in api(tLD, 'dashboard', { do: true })), 'T2: người không phải ADMIN gửi do:true vẫn KHÔNG nhận số đo');
+  const g = (o) => api(tTT, 'ghi', Object.assign({ buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nhom: '1', nguoiHo: 'A1', hop: 'T2-GHI', soHoSo: 1, soTrang: 7 }, o));
+  const lg1 = sh('LogHeThong').rows.length, w1 = api(tAdmin, 'ghi', { buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nhom: '1', nguoiHo: 'A1', hop: 'T2-GHI', soHoSo: 1, soTrang: 7, do: true });
+  ok(w1.ok && w1.do && w1.do.phan.khoa.n === 1 && w1.do.phan['ghi:NhatKy'].n === 1 && w1.do.phan.log.n === 1 && sh('LogHeThong').rows.length === lg1 + 1, 'T2: action ghi đo được chờ khóa, ghi NhatKy, ghi log (mỗi thứ 1 lần); đo không ghi thêm gì', w1.do);
+  // 2) số lần đọc thật từ Sheet theo bộ đếm của mock = số đo "sheet:<tab>"
+  ctx.memoClear_(); const c0 = Object.assign({}, getValuesBy), r1 = api(tAdmin, 'hopGoiY', { buoc: 'SCAN', do: true });
+  const dNk = (getValuesBy.NhatKy || 0) - (c0.NhatKy || 0), dNs = (getValuesBy.NhanSu || 0) - (c0.NhanSu || 0);
+  ok(r1.ok && (r1.do.phan['sheet:NhatKy'] ? r1.do.phan['sheet:NhatKy'].n : 0) === dNk && ((r1.do.phan['sheet:NhanSu'] ? r1.do.phan['sheet:NhanSu'].n : 0) + 1) >= dNs, 'T2: số lần đọc Sheet đo được khớp bộ đếm độc lập của mock (hopGoiY: NhatKy ' + dNk + ' lần)', [dNk, r1.do.phan]);
+  // 3) bảng số lần đọc / ghi từng action (cold = đệm trống, warm = ngay lần gọi sau)
+  const bang = [];
+  const doAct = (ten, tk, act, p) => {
+    ctx.memoClear_(); const a = api(tk, act, Object.assign({ do: true }, p)); const b = api(tk, act, Object.assign({ do: true }, p));
+    const f = (r) => { const o = r.do ? r.do.phan : {}; const rd = Object.keys(o).filter(k => /^sheet:/.test(k)).map(k => k.slice(6) + '×' + o[k].n).join(' ') || '–'; const wr = Object.keys(o).filter(k => /^ghi:/.test(k)).map(k => k.slice(4) + '×' + o[k].n).join(' ') || '–'; return { doc: Object.keys(o).filter(k => /^doc:/.test(k)).reduce((s, k) => s + o[k].n, 0), rd, wr, khoa: o.khoa ? o.khoa.n : 0, log: o.log ? o.log.n : 0, ok: r.ok }; };
+    bang.push([ten, f(a), f(b)]);
+  };
+  doAct('me', tAdmin, 'me', {});
+  doAct('hopGoiY', tAdmin, 'hopGoiY', { buoc: 'SCAN' });
+  doAct('lichSu', tAdmin, 'lichSu', { tu: '2026-11-09', den: '2026-11-09' });
+  doAct('dashboard', tAdmin, 'dashboard', { ngay: '2026-11-09' });
+  doAct('ghi', tAdmin, 'ghi', { buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nhom: '1', nguoiHo: 'A1', hop: 'T2-B1', soHoSo: 1, soTrang: 7 });
+  doAct('ghiLo', tAdmin, 'ghiLo', { idLo: 'LO-T2-BANG-0001', ca: 'Chiều', boSung: true, ngay: '2026-11-09', nguoiHo: 'A1', nhom: '1', muc: [{ hop: 'T2-L1', buoc: 'SCAN', soHoSo: 1, soTrang: 5 }, { hop: 'T2-L2', buoc: 'SCAN', soHoSo: 1, soTrang: 5 }, { hop: 'T2-L3', buoc: 'SCAN', soHoSo: 1, soTrang: 5 }] });
+  ok(bang.every(b => b[1].ok && b[2].ok !== undefined), 'T2: bảng đo chạy đủ 6 action (me, hopGoiY, lichSu, dashboard, ghi, ghiLo)', bang.map(b => [b[0], b[1].ok]));
+  if (process.env.DO_TOC_DO) { console.log('\n=== BẢNG SỐ LẦN ĐỌC SHEET / GHI (mock, dữ liệu ' + sh('NhatKy').rows.length + ' dòng NhatKy) ==='); bang.forEach(b => console.log(b[0].padEnd(10), '| lạnh: đọc', b[1].rd, '| ghi', b[1].wr, '| khóa', b[1].khoa, '| log', b[1].log, '|| ấm: đọc', b[2].rd)); }
+  // dọn
+  sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; sh('LogHeThong').rows.length = lg0;
+  delete cacheMap['lo_ADMIN_LO-T2-BANG-0001']; ctx.memoClear_();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);
