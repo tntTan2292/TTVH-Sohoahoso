@@ -1930,6 +1930,12 @@ tbody tr:last-child td { border-bottom: none; }
       <h2 id="nsListTitle">Danh sách nhân sự hệ thống</h2>
       <div id="nsMsg2"></div>
       <input id="nsTim" placeholder="Tìm theo tên, mã HRM hoặc đơn vị…" autocomplete="off" style="margin-bottom:10px;">
+      <div class="row" id="nsLoc" style="margin-bottom:10px;">
+        <div><label>Đơn vị</label><select id="nsLocDv"></select></div>
+        <div id="nsLocVaiBox"><label>Vai trò</label><select id="nsLocVai"><option value="">Tất cả vai trò</option><option value="TOVIEN">Tổ viên</option><option value="TOTRUONG">Tổ trưởng</option><option value="TOPHO">Tổ phó</option><option value="LANHDAO">Lãnh đạo</option><option value="ADMIN">Quản trị</option></select></div>
+        <div><label>Trạng thái</label><select id="nsLocTt"><option value="">Tất cả trạng thái</option><option value="hd">Hoạt động</option><option value="khoa">Bị khóa</option><option value="ngung">Ngưng</option></select></div>
+      </div>
+      <div class="muted" id="nsDem" style="margin-bottom:8px;"></div>
       <div class="scroll" id="nsList"></div>
     </div>
     <div class="card hide" id="dvCard">
@@ -2891,7 +2897,7 @@ function initNS() {
   $('nsFormCard').classList.toggle('hide', !sup);
   $('nsTitle').textContent = sup ? 'Thêm / Cập nhật thông tin nhân sự' : 'Sửa thông tin tổ viên';
   $('nsListTitle').textContent = sup ? 'Danh sách nhân sự hệ thống' : 'Tổ viên của tổ';
-  $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; $('nsTim').oninput = veNS; loadNS();
+  $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; $('nsTim').oninput = veNS; ['nsLocDv', 'nsLocVai', 'nsLocTt'].forEach(function (i) { $(i).onchange = veNS; }); loadNS();
   loadDV();      // B1: danh sách chọn Đơn vị (cả ADMIN và TT/TP)
   $('dvCard').classList.toggle('hide', !sup); $('dvLuu').onclick = saveDV;      // B1
   $('dvChCard').classList.toggle('hide', !sup); $('dvChXem').onclick = function () { dvChCall(false); };      // B2
@@ -2912,11 +2918,29 @@ function saveNS() {
 function loadNS() {
   call('dsNhanSu').then(function (rs) { NS_DS = rs; veNS(); }).catch(function (e) { $('nsList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
+function fillLocDv() {      // B5d: ô lọc Đơn vị = danh mục + "(ngoài danh mục)"; giữ lựa chọn đang chọn khi tải lại danh sách
+  var sel = $('nsLocDv'), cur = sel.value, ops = '<option value="">Tất cả đơn vị</option>';
+  DV_DS.forEach(function (x) { ops += '<option value="' + esc(x.ten) + '">' + esc(x.ten) + '</option>'; });
+  ops += '<option value="__NGOAI__">(ngoài danh mục)</option>';
+  if (sel.innerHTML !== ops) { sel.innerHTML = ops; sel.value = cur; if (sel.value !== cur) sel.value = ''; }
+}
 function veNS() {
   var q = ($('nsTim').value || '').toLowerCase().trim(), sup = !!ME.isSuper;
+  $('nsLocVaiBox').style.display = sup ? '' : 'none';
+  fillLocDv();
+  var fDv = $('nsLocDv').value, fVai = sup ? $('nsLocVai').value : '', fTt = $('nsLocTt').value, trongDm = {};
+  DV_DS.forEach(function (x) { trongDm[dvKhoa(x.ten)] = 1; });
   var rs = NS_DS.map(function (x, i) { return { x: x, i: i }; }).filter(function (o) {
-    return !q || (o.x.ten + ' ' + o.x.ma + ' ' + o.x.donVi).toLowerCase().indexOf(q) >= 0;
+    var x = o.x;
+    if (q && (x.ten + ' ' + x.ma + ' ' + x.donVi).toLowerCase().indexOf(q) < 0) return false;
+    if (fDv === '__NGOAI__' ? trongDm[dvKhoa(x.donVi)] : (fDv && dvKhoa(x.donVi) !== dvKhoa(fDv))) return false;
+    if (fVai && x.vaiTro !== fVai) return false;
+    if (fTt === 'hd' && !(x.hoatDong && !x.khoa)) return false;
+    if (fTt === 'khoa' && !x.khoa) return false;
+    if (fTt === 'ngung' && x.hoatDong) return false;
+    return true;
   });
+  $('nsDem').textContent = rs.length + ' / ' + NS_DS.length + ' người';
   $('nsList').innerHTML = '<table><tr><th>Họ và tên</th><th>Mã HRM</th>' + (sup ? '<th>Vai trò</th>' : '') + '<th>Đơn vị</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (rs.length ? rs.map(function (o) {
     var x = o.x;
     return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td>' + (sup ? '<td><span class="chip">' + esc(VAI_LABEL[x.vaiTro] || x.vaiTro) + '</span>' + (x.vaiTro === 'LANHDAO' && x.chucVu ? '<br><small class="muted">' + esc(x.chucVu) + '</small>' : '') + '</td>' : '') + '<td>' + esc(x.donVi) + '</td><td>' + (x.hoatDong ? (x.khoa ? '<span class="chip bad">Khóa</span>' : '<span class="chip ok">Hoạt động</span>') : '<span class="chip chip-mut">Ngưng</span>') + '</td>' +
@@ -2947,7 +2971,7 @@ function veNS() {
 var DV_DS = [], DV_SUA = '';
 function dvKhoa(s) { s = String(s == null ? '' : s); try { s = s.normalize('NFC'); } catch (e) { } return s.replace(/\s+/g, ' ').trim().toLowerCase(); }
 function loadDV() {
-  return call('dsDonVi').then(function (rs) { DV_DS = rs; fillNsDv(); if (ME.isSuper) veDV(); }).catch(function (e) { if (ME.isSuper) $('dvList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+  return call('dsDonVi').then(function (rs) { DV_DS = rs; fillNsDv(); if (ME.isSuper) veDV(); if (NS_DS.length) veNS(); }).catch(function (e) { if (ME.isSuper) $('dvList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
 function fillNsDv(giaTri) {      // danh sách chọn Đơn vị = đơn vị đang hoạt động trong danh mục; giá trị cũ ngoài danh mục vẫn hiện để giữ nguyên
   var sel = $('nsDv'), cur = giaTri !== undefined ? giaTri : sel.value, ops = '<option value="">– Chọn đơn vị –</option>', thay = '';
