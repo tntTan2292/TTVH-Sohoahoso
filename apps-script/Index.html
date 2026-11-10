@@ -2586,8 +2586,16 @@ var VAI_LABEL = { TOVIEN: 'Tổ viên', TOTRUONG: 'Tổ trưởng', TOPHO: 'Tổ
 var CA_NAME = ['Sáng', 'Chiều', 'Tối'];
 var CA_TIME = { 'Sáng': '07:30–11:30', 'Chiều': '13:00–17:00', 'Tối': '18:00–21:00' };
 
+/* F5: mã phiên giữ trong sessionStorage (tải lại trang vẫn đăng nhập, đóng tab thì mất). Không lưu PIN, không dùng localStorage. */
+var KP = false;      // đang khôi phục phiên khi mở trang: lỗi thì im lặng về màn đăng nhập
+function tokenLuu(t) {
+  try { if (t) sessionStorage.setItem('sohoa_token', t); else sessionStorage.removeItem('sohoa_token'); } catch (e) { }
+}
+function tokenDoc() {
+  try { return sessionStorage.getItem('sohoa_token') || ''; } catch (e) { return ''; }
+}
 function toLogin() {
-  TOKEN = null; ME = null; STEP = null;
+  TOKEN = null; ME = null; STEP = null; KP = false; tokenLuu(null);
   if ($('vApp')) $('vApp').classList.add('hide');
   if ($('vPin')) $('vPin').classList.add('hide');
   if ($('modalLS')) $('modalLS').classList.add('hide');
@@ -2649,7 +2657,7 @@ function call(action, p) {
       if (r && r.do) doGhi(action, r.do, Date.now() - tVong);
       if (r && r.ok === false) {
         if (r.err && /phiên|token|đăng nhập/i.test(r.err)) {
-          alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+          if (!KP) alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
           toLogin();
           return;
         }
@@ -2661,7 +2669,7 @@ function call(action, p) {
       xong(false);      // không biết máy chủ đã ghi chưa → giữ idGui để lần gửi lại không ghi trùng
       var errStr = e && e.message ? e.message : String(e);
       if (/phiên|token|đăng nhập/i.test(errStr)) {
-        alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+        if (!KP) alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
         toLogin();
         return;
       }
@@ -2736,21 +2744,21 @@ $('lgBtn').onclick = function () {
     $('lgBtn').disabled = false;
     if (!r.ok) return msg('lgMsg', r.err);
     TOKEN = r.token; $('lgPin').value = ''; lgNho(ma);      // B4: nhớ người vừa đăng nhập
-    if (r.mustChange) { $('vLogin').classList.add('hide'); $('vPin').classList.remove('hide'); } else start();
+    if (r.mustChange) { $('vLogin').classList.add('hide'); $('vPin').classList.remove('hide'); } else { tokenLuu(TOKEN); start(); }      // F5: mustChange chỉ lưu mã sau khi đổi PIN xong
   }).withFailureHandler(function (e) { $('lgBtn').disabled = false; msg('lgMsg', e.message || String(e)); }).login(ma, pin);
 };
 $('lgPin').onkeydown = function (e) { if (e.key === 'Enter') $('lgBtn').click(); };
 $('pinBtn').onclick = function () {
   if ($('npin').value !== $('npin2').value) return msg('pinMsg', 'Hai lần nhập mã PIN không khớp nhau');
-  call('doiPin', { pin: $('npin').value }).then(function () { $('vPin').classList.add('hide'); start(); }).catch(function (e) { msg('pinMsg', e); });
+  call('doiPin', { pin: $('npin').value }).then(function () { $('vPin').classList.add('hide'); tokenLuu(TOKEN); start(); }).catch(function (e) { msg('pinMsg', e); });
 };
 $('btnOut').onclick = function () { toLogin(); };
 
 /* ---------- Khung ứng dụng ---------- */
 function start() {
   $('vLogin').classList.add('hide'); $('vApp').classList.remove('hide');
-  call('me').then(function (m) {
-    ME = m; ME_TS = Date.now();
+  (ME && Date.now() - ME_TS < 5000 ? Promise.resolve(ME) : call('me')).then(function (m) {
+    ME = m; ME_TS = Date.now(); KP = false;
     $('hName').textContent = m.user.ten;
     $('hSub').textContent = vaiHienThi(m.user.vaiTro, m.user.chucVu) + ' • ' + (m.user.donVi ? m.user.donVi + ' • ' : '') + 'Ngày ' + m.ngay + ' lúc ' + m.hm; $('hSub').title = $('hSub').textContent;
     var tabs = [];
@@ -2772,7 +2780,7 @@ function start() {
     }).join('');
     Array.prototype.forEach.call($('tabs').children, function (b) { b.onclick = function () { showTab(b.dataset.p); }; });
     showTab(tabs[0][0]);
-  }).catch(function (e) { alert(e); toLogin(); });
+  }).catch(function (e) { var im = KP; KP = false; if (!im) alert(e); toLogin(); });
 }
 function showTab(p) {
   ['pBao', 'pQL', 'pNS', 'pDL', 'pLG', 'pDash'].forEach(function (x) { $(x).classList.toggle('hide', x !== p); });
@@ -3316,11 +3324,11 @@ function loadQL() {
   call('dsCa', p).then(function (d) {
     var h = '<div class="card"><h2>Nhân sự &amp; phân nhóm – Ca ' + esc(d.ca) + ' ngày ' + esc(d.ngay) + ' · Đã vào: <b style="color:var(--pri)">' + (d.soDaVao || d.nguoi.length) + ' người</b> ' +
       (d.locked ? '<span class="chip bad">Đã chốt</span>' : d.canInput ? '<span class="chip ok">Đang mở</span>' : '<span class="chip warn">Ngoài giờ nhập</span>') + '</h2>';
-    h += '<div class="scroll"><table><tr><th>Họ và tên</th><th>Nhóm</th><th></th></tr>';
+    h += '<div class="scroll"><table class="table-card-mobile"><tr><th>Họ và tên</th><th>Nhóm</th><th></th></tr>';
     d.nguoi.forEach(function (x) {
-      h += '<tr><td><b>' + esc(x.ten) + '</b></td><td><select data-ma="' + esc(x.ma) + '" class="selN" style="width:90px"><option value="">—</option>' +
+      h += '<tr><td><b>' + esc(x.ten) + '</b></td><td data-label="Nhóm"><select data-ma="' + esc(x.ma) + '" class="selN" style="width:90px"><option value="">—</option>' +
         [1, 2, 3, 4, 5, 6].map(function (n) { return '<option' + (String(x.nhom) === String(n) ? ' selected' : '') + '>' + n + '</option>'; }).join('') +
-        '</select></td><td><button class="sm bad" data-rm="' + esc(x.ma) + '">Bỏ khỏi ca</button></td></tr>';
+        '</select></td><td data-label="Thao tác"><button class="sm bad" data-rm="' + esc(x.ma) + '">Bỏ khỏi ca</button></td></tr>';
     });
     h += '</table></div><p style="margin-top:14px;"><button id="qlGhep" class="sm">Tự ghép cặp</button> <button class="pri sm" id="qlLuu">Lưu phân nhóm</button></p>' +
       '<div class="row" style="margin-top:16px;"><div><label>Thêm người vào ca (đổi nhân sự)</label><select id="qlAddSel"><option value="">— Chọn nhân sự —</option>' +
@@ -4393,6 +4401,14 @@ function mk(id, cfg) {
   }, cfg.options || {});
   CHARTS[id] = new Chart($(id), cfg);
 }
+
+/* F5: mở trang có mã phiên thì vào tiếp bằng 'me'; lỗi/hết phiên → xóa mã, hiện đăng nhập (không báo) */
+(function () {
+  var t = tokenDoc();
+  if (!t) return;
+  TOKEN = t; KP = true;
+  start();
+})();
 
 </script>
 </body>
