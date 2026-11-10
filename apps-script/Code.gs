@@ -1012,8 +1012,17 @@ function xoaNhanSu_(u, p) {
     pc = rewrite_('PhanCa', function (o) { return s_(o.MaHRM) === ma; }, u.ma);
     pn = rewrite_('PhanNhom', function (o) { return s_(o.MaHRM) === ma; }, u.ma);
   }
+  // E1: số dòng (_row) lấy từ bộ nhớ đệm có thể lệch so với Sheet thật → trước khi xóa, đọc thẳng ô MaHRM của dòng đó; lệch thì tìm lại dòng trong cột MaHRM; không thấy thì không xóa
+  const shNs = ss_().getSheetByName('NhanSu');
+  let dong = cu._row;
+  if (s_(shNs.getRange(dong, 1).getValue()) !== ma) {
+    dong = 0;
+    const cot = shNs.getRange(1, 1, shNs.getLastRow(), 1).getValues();
+    for (let i = 1; i < cot.length; i++) { if (s_(cot[i][0]) === ma) { dong = i + 1; break; } }
+    if (!dong) throw 'Không tìm thấy dòng của ' + ma + ' trên Sheet (dữ liệu vừa thay đổi) – tải lại danh sách rồi thử lại, chưa xóa gì';
+  }
   const saoLuu = saoLuuDong_('NhanSu(xóa)', [[ma, s_(cu.HoTen), s_(cu.ChucVu), s_(cu.DonVi), s_(cu.Email), s_(cu.VaiTro)]], u.ma);
-  ss_().getSheetByName('NhanSu').deleteRow(cu._row);
+  shNs.deleteRow(dong);
   memoClear_('NhanSu');
   log_(u.ma, 'XOA_NHAN_SU', ma + ' ' + s_(cu.HoTen) + ' | ' + s_(cu.VaiTro) + ' | ' + s_(cu.DonVi) + (gia ? ' | người giả TN-xx, kèm ' + pc + ' dòng phân ca, ' + pn + ' dòng phân nhóm' : ' | chưa từng dùng') + ' | sao lưu ' + saoLuu);
   return { ma: ma, ten: s_(cu.HoTen), daXoa: 1, phanCa: pc, phanNhom: pn, saoLuu: saoLuu };

@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-NS-09 · **E1** (Opus review B5) `xoaNhanSu_` đối chiếu dòng thật trước khi xóa: đọc thẳng ô MaHRM của `cu._row`, lệch → tìm lại trong cột MaHRM, không thấy → từ chối, không xóa. Mock +3 (412/0): đệm lệch dòng không xóa nhầm người khác.
 - F-NS-11 · Khôi phục số 0 đầu Mã HRM (chủ dự án yêu cầu): action `chuanHoaMaHRM` (xem trước → áp dụng gõ `MAHRM`), đệm về 8 chữ số, ghi văn bản, xung đột không đổi, sao lưu không PIN + log; thẻ "Khôi phục số 0 đầu của Mã HRM" ở tab Nhân sự (ADMIN). **CHƯA chạy trên Sheet thật** (cần Opus GO + chủ dự án duyệt bảng xem trước). Mock +14 (409/0), giao diện 506/0.
 - F-NS-10 · **B5d** Danh sách nhân sự: lọc theo Đơn vị / Vai trò (ADMIN) / Trạng thái cạnh ô tìm, hiện "x / y người", giữ lựa chọn khi tải lại. Chỉ sửa `Index.html`. Mock 395/0, giao diện 494/0. Chưa triển khai.
 - F-NS-09 · **B5** ADMIN xóa tài khoản tạo nhầm: action `xoaNhanSu {ma, xacNhan}` + nút Xóa ở tab Nhân sự; chỉ khi chưa từng dùng (NhatKy/PhanCa/PhanNhom/ChotCa), `TN-xx` luôn xóa được; không tự xóa/ADMIN cuối; sao lưu không PIN; log `XOA_NHAN_SU`. Mock +16 (395/0), giao diện 483/0. Chưa triển khai.

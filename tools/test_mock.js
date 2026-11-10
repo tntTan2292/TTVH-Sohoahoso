@@ -31,6 +31,8 @@ class Sheet {
         }
         return this;
       },
+      getValue() { const v = me.rows[r - 1] && me.rows[r - 1][c - 1]; return v === undefined ? '' : v; },
+      getValues() { const o = []; for (let i = 0; i < nr; i++) { const row = []; for (let j = 0; j < nc; j++) { const v = me.rows[r + i - 1] && me.rows[r + i - 1][c - 1 + j]; row.push(v === undefined ? '' : v); } o.push(row); } return o; },
       clearContent() { for (let i = 0; i < nr; i++) if (me.rows[r + i - 1]) for (let j = 0; j < nc; j++) me.rows[r + i - 1][c - 1 + j] = ''; return this; },
       setNumberFormat(f) { fmtLog.push([me.name, me.maxRows]); if (f === '@' && nr * nc <= 4) { me.fmts = me.fmts || {};   // chỉ ghi nhận định dạng ô lẻ (setup đặt cả cột không tính)
  for (let i = 0; i < nr; i++) { me.fmts[r + i] = me.fmts[r + i] || []; for (let j = 0; j < nc; j++) me.fmts[r + i][c - 1 + j] = '@'; } } return this; }, setFontWeight() { return this; },
@@ -1184,6 +1186,32 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(ap2.ok && ap2.data.daSua === 0 && ap2.data.doi.length === 0, 'F-NS-11: chạy lại không còn gì để đổi (idempotent)', ap2.data);
   sh('NhanSu').simulaSo0 = false;
   sh('NhanSu').rows.length = nsRows0; sh('PhanCa').rows = sh('PhanCa').rows.filter(x => String(x[2]) !== '61887'); ctx.memoClear_();
+}
+
+// ===== E1: xoaNhanSu_ đối chiếu dòng thật trước khi xóa (đệm cũ lệch dòng không được xóa nhầm người khác) =====
+{
+  const idx = ma => sh('NhanSu').rows.findIndex(x => String(x[0]) === ma);
+  const dem = () => sh('NhanSu').rows.filter(x => x[0] !== '').length;
+  const them = (ma, ten) => api(tAdmin, 'luuNhanSu', { ma, ten, chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế' });
+  them('E1A', 'Người E1A'); them('E1B', 'Người E1B');
+  const uA = { ma: 'ADMIN', vaiTro: 'ADMIN' };
+  // 1) đệm cũ lệch: chèn 1 dòng TRƯỚC E1B sau khi đệm đã nạp → _row cũ trỏ vào người khác
+  ctx.memoClear_(); ctx.read_('NhanSu');                                     // nạp đệm
+  const truoc = dem(), iB = idx('E1B');
+  sh('NhanSu').rows.splice(iB, 0, ['E1C', 'Người E1C (chen vào)', 'Tổ viên', 'Bưu điện TP Huế', '', 'TOVIEN', '', '', '', false, 0, false, true]);   // E1B bị đẩy xuống 1 dòng, đệm vẫn nhớ dòng cũ
+  const r1 = ctx.xoaNhanSu_(uA, { ma: 'E1B', xacNhan: 'E1B' });
+  ok(r1.ma === 'E1B' && idx('E1B') < 0 && idx('E1C') > 0 && idx('E1A') > 0 && dem() === truoc, 'E1: đệm cũ lệch dòng → vẫn xóa đúng E1B, KHÔNG xóa nhầm E1C đang nằm ở dòng cũ', [r1, dem(), truoc]);
+  // 2) dòng đã biến mất khỏi Sheet nhưng đệm còn nhớ → không xóa gì, báo lỗi
+  ctx.memoClear_(); ctx.read_('NhanSu');
+  const iA = idx('E1A'), copy = sh('NhanSu').rows[iA]; sh('NhanSu').rows.splice(iA, 1);
+  const n2 = dem(), slN = (sh('SaoLuuXoa') || { rows: [] }).rows.length;
+  let loi = ''; try { ctx.xoaNhanSu_(uA, { ma: 'E1A', xacNhan: 'E1A' }); } catch (e) { loi = String(e); }
+  ok(/Không tìm thấy dòng/.test(loi) && dem() === n2 && idx('E1C') > 0 && (sh('SaoLuuXoa') || { rows: [] }).rows.length === slN, 'E1: dòng không còn trên Sheet → từ chối, không xóa người nào, không ghi sao lưu', loi);
+  // 3) đường bình thường (đệm đúng) vẫn xóa bình thường
+  ctx.memoClear_();
+  const r3 = api(tAdmin, 'xoaNhanSu', { ma: 'E1C', xacNhan: 'E1C' });
+  ok(r3.ok && idx('E1C') < 0, 'E1: đệm đúng → xóa bình thường', r3);
+  ctx.memoClear_();
 }
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
