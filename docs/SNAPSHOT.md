@@ -9,11 +9,11 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 10/11/2026 — Sonnet: xong Đợt A (A1 F-BC-20, A2 F-DL-07, A3 F-NS-04/05), chưa triển khai, chờ Opus review |
+| Cập nhật lúc | 10/11/2026 14:30 — Sonnet: triển khai phiên bản 22 (Đợt A + D1 + D2); chờ ADMIN đăng nhập để chạy A2 Xem trước |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 21** (10/11/2026 00:34) trên link chính `…MlRA/exec` = commit `96db7c6` (Dashboard chia 5 tab con + thống kê nhân sự, N1). Phiên bản trước: 20 (`d568321`). Link phụ `…NIQ/exec` không đụng |
-| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs`, `Index.html` khớp `96db7c6` sau khi lưu và tải lại trang) |
-| Mock | `node tools/test_mock.js` → **306 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 410 đạt, 0 lỗi (chạy trên bản LF: máy này checkout CRLF nên regex `route_` báo lỗi giả nếu chạy thẳng) |
+| Bản đang chạy | Apps Script **phiên bản 22** (10/11/2026 14:24) trên link chính `…MlRA/exec` = commit `5ccfbbc` (Đợt A: F-BC-20, F-DL-07, F-NS-04/05 + D1 `e75b6a1` + D2). Phiên bản trước: 21 (`96db7c6`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 21 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` 880737265eba…, `Index.html` 964f87b87663… khớp `main` sau khi lưu và tải lại trang; bản 21 trước khi đẩy đã khớp `96db7c6`) |
+| Mock | `node tools/test_mock.js` → **308 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 420 đạt, 0 lỗi (chạy thẳng trên checkout CRLF sau D2) |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
@@ -47,7 +47,8 @@
   - **☑ Opus review Đợt A (10/11/2026, `4c0084c..7b8cbf6`): ĐẠT CÓ ĐIỀU KIỆN – GO triển khai sau 2 delta.** Đã soi (1)(2)(3): đúng phiếu; phân quyền A3 chặt (TT/TP chỉ tổ viên, không PIN/email, không đổi vai trò); A2 thận trọng đúng QĐ. Vẽ thử giao diện bằng mock: TT/TP có tab Nhân sự (Sửa/Cấp PIN/Mở khóa); tổ viên có nhóm chỉ thấy "Nhóm", chưa nhóm chỉ thấy "Cá nhân"; không lỗi JS. Mock 306/0.
     - **D1 (CHẶN trước khi chạy A2 trên dữ liệu thật):** `chuanHoaNhom_` ghi `Nhom`/`ThanhVien` bằng `setValue` **không đặt định dạng `@` trước** → `ThanhVien` dạng `00109101,00109102` có thể bị Sheet (dấu thập phân là dấu phẩy) đổi thành số, cùng loại lỗi `02.01.85` (F-HT-03). Sửa: đặt `@` cho ô `Nhom`, `ThanhVien` (và `NguoiHuy`) trước khi ghi (dùng `textFmt_`/cùng cơ chế `append_`). Mock: giả lập Sheet đổi chuỗi `số,số` thành số khi ô không `@`; kiểm `chuanHoaNhom` giữ đúng chuỗi.
     - **D2:** `tools/kiem_tra_giao_dien.js` báo 50 lỗi giả trên thư mục làm việc vì `core.autocrlf=true` (file có CRLF) → bỏ `\r` khi đọc file. Phải chạy được trực tiếp, không cần bản LF.
-    - Sau D1+D2: triển khai bằng skill (Opus GO) → chạy A2 **Xem trước** ca Sáng 10/11 → dừng chờ chủ dự án duyệt.
+    - ☑ D1 (`e75b6a1`) + D2 (`5ccfbbc`) xong, ☑ triển khai phiên bản 22 (10/11/2026 14:24).
+    - ☐ **A2 Xem trước ca Sáng 10/11: CHƯA CHẠY** — mở link `…MlRA/exec` bằng Claude in Chrome thì thấy màn hình đăng nhập (ADMIN chưa đăng nhập; Sonnet không được tự nhập PIN). Chủ dự án đăng nhập ADMIN trong tab Chrome đó rồi báo Sonnet làm tiếp: tab Dữ liệu → Chuẩn hóa báo cáo theo nhóm → ngày 10/11/2026, ca Sáng → chỉ bấm Xem trước, chép bảng vào đây, dừng chờ duyệt.
 - ☐ **Đợt B (Sonnet):** danh mục Đơn vị · chuẩn hóa đơn vị trùng · import nhân sự Excel · ☐ Opus review · ☐ triển khai
 - ☐ **Đợt C:** C1 biểu đồ tiến độ hằng ngày 30 ngày (Sonnet) → C2 giao diện điện thoại (Antigravity) · ☐ Opus review (kiểm khổ 375px) · ☐ triển khai
 
