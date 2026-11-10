@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-DL-07 · **D1 (Opus review Đợt A, CHẶN)** `chuanHoaNhom_` đặt định dạng văn bản `@` (hàm `ghiVanBan_`) cho ô Nhom, ThanhVien, NguoiHuy trước khi ghi, để "00109101,00109102" không bị Sheets đổi thành số. Mock giả lập lỗi này (+2 kiểm tra, 308/0); bỏ bản sửa thì kiểm tra FAIL.
 - F-NS-04, F-NS-05 · **A3 (QĐ2)** tab Nhân sự cho TT/TP (chỉ tổ viên: tìm, Sửa họ tên/chức vụ/đơn vị/hoạt động, Cấp PIN, Mở khóa) và nút Mở khóa cho ADMIN. `dsNhanSu`/`luuNhanSu` mở cho TT/TP với quy tắc riêng (`luuToVien_`): không đổi vai trò, không tạo mới, không đụng quản lý/LĐ/ADMIN, không trả email/PIN. Khối "Quản lý tài khoản ca" cũ giữ nguyên. Mock +21 (306/0). Chưa triển khai.
 - F-DL-07 · **A2 (QĐ1)** action mới `chuanHoaNhom` (chỉ ADMIN, `apDung` false = xem trước, true + `xacNhan:'NHOM'` = áp dụng, có sao lưu `SaoLuuXoa` + log từng dòng cũ → mới) và khung "Chuẩn hóa báo cáo theo nhóm" ở tab Dữ liệu. Không đổi action/cột cũ. Mock +16 (285/0). Chưa triển khai; chưa chạy trên dữ liệu thật.
 - F-BC-20 · **A1 (QĐ1)** có nhóm thì chỉ báo cáo theo nhóm: `ghi_` từ chối nhận hộp `CANHAN` khi người đó đã thuộc nhóm trong ca, và từ chối nhập hộ cho người đã có nhóm nếu `nhom` trống/khác (`ghiLo_` kế thừa); giao diện ẩn nút "Cá nhân" khi có nhóm, Nhập hộ tự chọn + khóa nhóm. Mock +8 kiểm tra (269/0). Chưa triển khai.

@@ -831,6 +831,9 @@ function resetDuLieu_(u, p) {
 // đang thuộc MỘT nhóm trong PhanNhom của đúng ngày/ca → đề xuất đổi Nhom + ThanhVien. Sau khi đổi, dòng trùng (cùng nhóm, khâu, hộp) với số liệu GIỐNG nhau
 // → đề xuất hủy mềm dòng thừa; số liệu KHÁC nhau → liệt kê để chủ dự án tự chọn (KHÔNG đổi, KHÔNG hủy).
 // apDung=false: chỉ trả bảng xem trước. apDung=true (cần xacNhan='NHOM'): sao lưu dòng bị đổi/hủy (SaoLuuXoa), sửa, ghi log từng dòng.
+function ghiVanBan_(sh, row, col, val) {      // ghi 1 ô dạng VĂN BẢN: đặt '@' trước, nếu không Sheets đổi "00109101,00109102" thành số
+  const rg = sh.getRange(row, col); rg.setNumberFormat('@'); rg.setValue(safe_(val));
+}
 const CHUAN_HOA_BUOC_ = ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'];
 function chuanHoaNhom_(u, p) {
   const ngay = d_(p.ngay), ca = s_(p.ca), apDung = p.apDung === true;
@@ -905,14 +908,14 @@ function chuanHoaNhom_(u, p) {
   const t = now_();
   doiNhom.forEach(function (x) {
     const r = x.r;
-    sh.getRange(r._row, cNhom).setValue(safe_(x.nhom));
-    sh.getRange(r._row, cTV).setValue(safe_(tv(x.nhom).join(',')));
+    ghiVanBan_(sh, r._row, cNhom, x.nhom);
+    ghiVanBan_(sh, r._row, cTV, tv(x.nhom).join(','));
     log_(u.ma, 'CHUAN_HOA_NHOM', 'ID ' + s_(r.ID) + ' | ' + ngay + ' ca ' + ca + ' | ' + (STEP_NAME_[s_(r.Buoc)] || s_(r.Buoc)) + ' hộp ' + s_(r.MaHop) + ' | cũ: nhóm (cá nhân), thành viên ' + tenDS(nguoiCua(r)) + ' | mới: Nhóm ' + x.nhom + ', thành viên ' + tenDS(tv(x.nhom)) + ' | sao lưu ' + saoLuu);
   });
   huyTrung.forEach(function (x) {
     const r = x.r;
     sh.getRange(r._row, cHuy).setValue(true);
-    sh.getRange(r._row, cNH).setValue(safe_(u.ma + ' ' + t.ts));
+    ghiVanBan_(sh, r._row, cNH, u.ma + ' ' + t.ts);
     log_(u.ma, 'CHUAN_HOA_NHOM_HUY', 'ID ' + s_(r.ID) + ' | ' + ngay + ' ca ' + ca + ' | ' + (STEP_NAME_[s_(r.Buoc)] || s_(r.Buoc)) + ' hộp ' + s_(r.MaHop) + ' ' + n_(r.SoHoSo) + ' hồ sơ ' + n_(r.SoTrang) + ' trang ' + n_(r.SoTo) + ' tờ | cũ: còn hiệu lực (cá nhân ' + tenDS(nguoiCua(r)) + ') | mới: hủy mềm vì trùng dòng ' + x.giuId + ' của Nhóm ' + x.nhom + ' | sao lưu ' + saoLuu);
   });
   memoClear_('NhatKy');

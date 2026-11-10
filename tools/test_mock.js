@@ -18,7 +18,7 @@ class Sheet {
     const me = this; nr = nr || 1; nc = nc || 1;
     const ensure = (rr) => { while (me.rows.length < rr) me.rows.push([]); };
     return {
-      setValue(v) { ensure(r); me.rows[r - 1][c - 1] = v; return this; },
+      setValue(v) { ensure(r); if (typeof v === 'string' && /^\d+(,\d+)+$/.test(v) && !(me.fmts && me.fmts[r] && me.fmts[r][c - 1] === '@')) v = Number(v.replace(',', '.').replace(/,/g, '')); me.rows[r - 1][c - 1] = v; return this; },   // giả lập Sheets đổi "00109101,00109102" thành số khi ô chưa là văn bản
       setValues(vs) {
         for (let i = 0; i < vs.length; i++) {
           ensure(r + i);
@@ -31,7 +31,8 @@ class Sheet {
         return this;
       },
       clearContent() { for (let i = 0; i < nr; i++) if (me.rows[r + i - 1]) for (let j = 0; j < nc; j++) me.rows[r + i - 1][c - 1 + j] = ''; return this; },
-      setNumberFormat() { fmtLog.push([me.name, me.maxRows]); return this; }, setFontWeight() { return this; },
+      setNumberFormat(f) { fmtLog.push([me.name, me.maxRows]); if (f === '@' && nr * nc <= 4) { me.fmts = me.fmts || {};   // chỉ ghi nhận định dạng ô lẻ (setup đặt cả cột không tính)
+ for (let i = 0; i < nr; i++) { me.fmts[r + i] = me.fmts[r + i] || []; for (let j = 0; j < nc; j++) me.fmts[r + i][c - 1 + j] = '@'; } } return this; }, setFontWeight() { return this; },
       getNumberFormats() { return Array.from({ length: nr }, () => Array(nc).fill('')); }, setNumberFormats(f) { me.fmts = me.fmts || {}; for (let i = 0; i < f.length; i++) me.fmts[r + i] = f[i]; return this; }
     };
   }
@@ -791,6 +792,12 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   mk('CH20', { MaHop: 'CH-8', Buoc: 'TRA', SoHoSo: 0, SoTrang: 0, HetHop: false }); // 7) khâu không thuộc diện chuẩn hóa
   ctx.memoClear_();
   const nhom = id => ctx.s_(sh('NhatKy').rows.find(x => x[0] === id)[4]);
+  // D1: mã HRM toàn số → ThanhVien "00109101,00109102" không được bị Sheets đổi thành số khi chuanHoaNhom ghi
+  addUser('00109101', 'Số Một', 'TOVIEN', '135790', false, 'Đơn vị B'); addUser('00109102', 'Số Hai', 'TOVIEN', '246801', false, 'Đơn vị B');
+  sh('PhanNhom').rows.push([NG, CAX, '3', '00109101', 'Số Một', 'TT1', ''], [NG, CAX, '3', '00109102', 'Số Hai', 'TT1', '']);
+  mk('CH30', { MaHop: 'CH-9', NguoiNhap: '00109101', ThanhVien: '00109101' });
+  ctx.memoClear_();
+  sh('NhatKy').fmts = {};      // D1: coi như các ô NhatKy chưa được đặt '@' (dữ liệu cũ / dòng thêm sau setup)
   const snap = () => JSON.stringify([sh('NhatKy').rows, sh('LogHeThong').rows.length]);
   const kPhan = () => api(tAdmin, 'dashboard', { ngay: NG }).data.day.scanDV;
   // quyền
@@ -802,7 +809,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const D = pv.data || {};
   ok(pv.ok && D.apDung === false && snap() === truoc, 'A2: xem trước KHÔNG ghi gì (NhatKy, log không đổi)', pv.err);
   const idDoi = (D.doiNhom || []).map(x => x.id).sort().join(), idHuy = (D.huyTrung || []).map(x => x.id).sort().join();
-  ok(idDoi === 'CH10,CH12' && idHuy === 'CH11,CH19', 'A2: đề xuất đổi CH10,CH12; hủy trùng CH11 (giống CH10) và CH19 (giống dòng nhóm CH18)', { idDoi, idHuy });
+  ok(idDoi === 'CH10,CH12,CH30' && idHuy === 'CH11,CH19', 'A2: đề xuất đổi CH10,CH12; hủy trùng CH11 (giống CH10) và CH19 (giống dòng nhóm CH18)', { idDoi, idHuy });
   ok(D.xungDot.length === 1 && D.xungDot[0].hop === 'CH-3' && D.xungDot[0].dong.length === 2, 'A2: CH-3 khác số liệu → liệt kê xung đột, không tự quyết', D.xungDot);
   ok(D.boQua === 1 && !(D.doiNhom.concat(D.huyTrung).some(x => ['CH15', 'CH16', 'CH17', 'CH20', 'CH13', 'CH14'].indexOf(x.id) >= 0)), 'A2: người chưa có nhóm giữ cá nhân; THỬ NGHIỆM, bản hủy, khâu TRA, dòng xung đột không bị đề xuất sửa', D);
   const x10 = D.doiNhom.find(x => x.id === 'CH10');
@@ -812,13 +819,16 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(!r0.ok && /NHOM/.test(r0.err) && snap() === truoc, 'A2: áp dụng thiếu chữ NHOM bị từ chối, không ghi gì', r0);
   const sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length, lg0 = sh('LogHeThong').rows.length;
   const ap = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX, apDung: true, xacNhan: 'NHOM' });
-  ok(ap.ok && ap.data.daSua.doi === 2 && ap.data.daSua.huy === 2 && ap.data.saoLuu === 'SaoLuuXoa', 'A2: áp dụng: đổi 2, hủy 2, có sao lưu', ap);
+  ok(ap.ok && ap.data.daSua.doi === 3 && ap.data.daSua.huy === 2 && ap.data.saoLuu === 'SaoLuuXoa', 'A2: áp dụng: đổi 2, hủy 2, có sao lưu', ap);
   ok(nhom('CH10') === '1' && nhom('CH12') === '1' && sh('NhatKy').rows.find(x => x[0] === 'CH10')[18] === 'A1,B1', 'A2: dòng được đổi có Nhom = 1 và ThanhVien = cả nhóm');
   ok(sh('NhatKy').rows.find(x => x[0] === 'CH11')[16] === true && sh('NhatKy').rows.find(x => x[0] === 'CH19')[16] === true && /^ADMIN /.test(sh('NhatKy').rows.find(x => x[0] === 'CH11')[17]), 'A2: dòng trùng bị hủy mềm (Huy = TRUE, NguoiHuy ghi người + giờ)');
+  const r30 = sh('NhatKy').rows.find(x => x[0] === 'CH30');
+  ok(r30[18] === '00109101,00109102' && r30[4] === '3' && typeof r30[18] === 'string', 'A2/D1: ThanhVien "00109101,00109102" và Nhom giữ nguyên dạng chuỗi (đã đặt định dạng @ trước khi ghi)', [r30[4], r30[18]]);
+  ok(/^ADMIN /.test(String(sh('NhatKy').rows.find(x => x[0] === 'CH11')[17])), 'A2/D1: NguoiHuy giữ dạng chuỗi');
   ok(nhom('CH13') === '' && nhom('CH14') === '' && nhom('CH15') === '' && sh('NhatKy').rows.find(x => x[0] === 'CH13')[16] === false, 'A2: xung đột và người chưa có nhóm KHÔNG bị đụng');
-  ok(sh('SaoLuuXoa').rows.length - sl0 === 4 && sh('SaoLuuXoa').rows.slice(sl0).every(x => x[1] === 'NhatKy' && /"CH1[0129]"/.test(x[3])), 'A2: sao lưu đúng 4 dòng cũ vào SaoLuuXoa (JSON dòng gốc)');
+  ok(sh('SaoLuuXoa').rows.length - sl0 === 5 && sh('SaoLuuXoa').rows.slice(sl0).every(x => x[1] === 'NhatKy' && /"CH(1[0129]|30)"/.test(x[3])), 'A2: sao lưu đúng 4 dòng cũ vào SaoLuuXoa (JSON dòng gốc)');
   const lgM = sh('LogHeThong').rows.slice(lg0).map(x => x[4] + ':' + x[6]);
-  ok(lgM.filter(x => /^CHUAN_HOA_NHOM:/.test(x)).length === 2 && lgM.filter(x => /^CHUAN_HOA_NHOM_HUY:/.test(x)).length === 2 && lgM.some(x => /^CHUAN_HOA_NHOM_TONG:/.test(x)) && lgM.filter(x => /^CHUAN_HOA_NHOM:.*cũ: .*mới: /.test(x)).length === 2, 'A2: log từng dòng cũ → mới + 1 dòng tổng', lgM);
+  ok(lgM.filter(x => /^CHUAN_HOA_NHOM:/.test(x)).length === 3 && lgM.filter(x => /^CHUAN_HOA_NHOM_HUY:/.test(x)).length === 2 && lgM.some(x => /^CHUAN_HOA_NHOM_TONG:/.test(x)) && lgM.filter(x => /^CHUAN_HOA_NHOM:.*cũ: .*mới: /.test(x)).length === 3, 'A2: log từng dòng cũ → mới + 1 dòng tổng', lgM);
   ok(kTruoc - kPhan() === 80, 'A2: Dashboard ngày giảm đúng phần trùng bị hủy (50 + 30 = 80), không đổi gì khác', [kTruoc, kPhan()]);
   const ap2 = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX, apDung: true, xacNhan: 'NHOM' });
   ok(ap2.ok && ap2.data.daSua.doi === 0 && ap2.data.daSua.huy === 0 && ap2.data.xungDot.length === 1, 'A2: chạy lại không còn gì để đổi (idempotent), xung đột vẫn được nhắc', ap2.data);
