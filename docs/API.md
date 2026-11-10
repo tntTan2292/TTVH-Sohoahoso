@@ -3,7 +3,7 @@
 > `Index.html` chỉ nói chuyện với `Code.gs` qua các hàm dưới đây. **Đổi tên action, đổi tên trường gửi đi hoặc trường trả về = phải sửa cả hai file trong cùng một commit** và cập nhật file này.
 
 ## Cách gọi
-- Công khai (chưa đăng nhập): `google.script.run.dsLogin()`, `google.script.run.login(ma, pin)` → `{ token, doiPin, ... }` hoặc lỗi.
+- Công khai (chưa đăng nhập): `google.script.run.dsLogin()` (trả `{ngay, hm, nhanSu:[{ma,ten,donVi}]}` đã sắp sẵn theo thứ tự hiển thị, KHÔNG có vai trò/thuTu), `google.script.run.login(ma, pin)` → `{ token, doiPin, ... }` hoặc lỗi.
 - Sau đăng nhập: mọi thứ đi qua `api(token, action, payload)` → luôn trả `{ ok: true, data }` hoặc `{ ok: false, err: 'thông báo tiếng Việt' }`.
 - Ở giao diện dùng hàm `call(action, payload)` (trả Promise; lỗi là chuỗi `err`).
 
@@ -36,8 +36,8 @@
 | `chot` | TT/TP/ADMIN | `{ngay, ca, ghiChu, SCAN, TACH, OCR}`; mở khóa: `{ngay, ca, mo:true}` | — |
 | `resetPin` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | `{ten, pin}` (PIN tạm, chỉ hiện 1 lần) |
 | `moKhoaTK` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | chuỗi thông báo |
-| `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa}` (không có cột PIN) |
-| `luuNhanSu` | ADMIN (đầy đủ, tạo mới được; `donVi` phải thuộc danh mục — B1); TT/TP: chỉ sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, tạo mới, sửa quản lý/LĐ/ADMIN → từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong}` | `{moi, ma, pin?}` |
+| `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa,thuTu}` (không có cột PIN; `thuTu` = số hoặc `''`; sắp theo đơn vị → thuTu → tên — B5e) |
+| `luuNhanSu` | ADMIN (đầy đủ, tạo mới được; `donVi` phải thuộc danh mục — B1); TT/TP: chỉ sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, tạo mới, sửa quản lý/LĐ/ADMIN → từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong, thuTu?}` (`thuTu`: chỉ ADMIN; số nguyên ≥ 0, `''` = xếp cuối, bỏ qua = giữ nguyên; sai → lỗi, không ghi — B5e) | `{moi, ma, pin?}` |
 | `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
 | `khoiPhuc` | ADMIN | `{id}` | — |
 | `taoMau` | ADMIN | `{ngay, cas:[ca], soNguoi}` | `{soBanGhi, soCa, ngay, soNguoi, soThem}` |

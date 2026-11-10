@@ -24,7 +24,7 @@ const CA = {
   'Tối':   { bd: '18:00', kt: '21:00', o: 3, gio: 3 }
 };
 const TAB = {
-  NhanSu:   ['MaHRM','HoTen','ChucVu','DonVi','Email','VaiTro','PinHash','Salt','PinTam','DoiPin','SaiPin','Khoa','HoatDong'],
+  NhanSu:   ['MaHRM','HoTen','ChucVu','DonVi','Email','VaiTro','PinHash','Salt','PinTam','DoiPin','SaiPin','Khoa','HoatDong','ThuTu'],      // B5e: ThuTu = cột CUỐI (N), tab cũ 13 cột được thêm cột tự động (nsDamBaoCot_)
   PhanCa:   ['Ngay','Ca','MaHRM','HoTen','GioBD','GioKT'],
   PhanNhom: ['Ngay','Ca','Nhom','MaHRM','HoTen','NguoiPhan','ThoiGian'],
   NhatKy:   ['ID','ThoiGian','Ngay','Ca','Nhom','Buoc','MaHop','SoHoSo','SoTrang','SoTo','TrangLoi','HetHop','MaHoSo','GhiChu','NguoiNhap','Loai','Huy','NguoiHuy','ThanhVien'],
@@ -152,8 +152,21 @@ function read_(name) {
   }
   return out;
 }
+// B5e: tab NhanSu cũ (13 cột, chưa có ThuTu) → thêm cột + tiêu đề ThuTu ở CUỐI (không đụng cột cũ), rồi đổi phiên bản đệm. Chỉ gọi trên đường GHI (append_, appendMany_, setCell_ cột ThuTu), KHÔNG gọi ở dsLogin (công khai, chỉ đọc).
+function nsDamBaoCot_() {
+  const sh = ss_().getSheetByName('NhanSu');
+  if (!sh) return;
+  const c = TAB.NhanSu.length;
+  let doi = false;
+  if (sh.getMaxColumns() < c) { sh.insertColumnsAfter(sh.getMaxColumns(), c - sh.getMaxColumns()); doi = true; }
+  const rg = sh.getRange(1, c), tieuDe = s_(rg.getValue());
+  if (tieuDe === '') { rg.setValue('ThuTu'); doi = true; }
+  else if (tieuDe !== 'ThuTu') throw 'Cột ' + c + ' của tab NhanSu đã có tiêu đề "' + tieuDe + '" – không thể thêm cột ThuTu, chưa ghi gì. Nhờ người phụ trách kiểm tra tab NhanSu';
+  if (doi) memoClear_('NhanSu');
+}
 function append_(name, obj) {
   const sh = ss_().getSheetByName(name);
+  if (name === 'NhanSu') nsDamBaoCot_();
   const cols = TAB[name], row = sh.getLastRow() + 1;
   if (row > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), 1000);   // hết dòng dựng sẵn: thêm dòng (appendRow trước đây tự làm việc này)
   const rg = sh.getRange(row, 1, 1, cols.length);
@@ -207,7 +220,7 @@ function hash_(salt, pin) {
   return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + pin));
 }
 function isAdmin_(u) { return VAI_TRO_QL.indexOf(u.vaiTro) >= 0; }
-function setCell_(tab, row, col, val) { ss_().getSheetByName(tab).getRange(row, TAB[tab].indexOf(col) + 1).setValue(safe_(val)); memoClear_(tab); }
+function setCell_(tab, row, col, val) { if (tab === 'NhanSu' && col === 'ThuTu') nsDamBaoCot_(); ss_().getSheetByName(tab).getRange(row, TAB[tab].indexOf(col) + 1).setValue(safe_(val)); memoClear_(tab); }
 
 /* ====================== Mã hộp: khóa so sánh và dạng chuẩn (H1, QĐ6) ====================== */
 // Cùng một hộp bị ghi nhiều kiểu (2.1.87 / 02.01.87 / 02.1.87) → mọi chỗ SO SÁNH / GOM theo mã hộp dùng maHopKhoa_, không so chuỗi thô.
@@ -268,11 +281,21 @@ function membersOf_(ngay, ca, nhom) {
 }
 
 /* ====================== Đăng nhập ====================== */
-function dsLogin() {      // công khai: chỉ mã, tên, đơn vị của người đang hoạt động (không có vai trò)
+// B5e: thứ tự người dùng chung cho dsLogin và danh sách nhân sự: đơn vị (ThuTu danh mục; ngoài danh mục xếp sau, ABC) → ThuTu người (trống xếp sau) → họ tên ABC.
+function thuTuNguoi_(v) { if (v === '' || v === undefined || v === null) return ''; const x = Number(v); return isFinite(x) && x >= 0 ? Math.floor(x) : ''; }
+function nhanSuSapXep_(ds) {      // ds: [{donVi, ten, thuTu ('' hoặc số)}] → sắp tại chỗ
+  const tt = {}; donViList_().forEach(function (x) { tt[khoaTen_(x.ten)] = x.thuTu; });
+  const so = function (a, b) { return a < b ? -1 : (a > b ? 1 : 0); };
+  const dv = function (x) { const k = khoaTen_(x.donVi); return tt[k] === undefined ? Infinity : tt[k]; };
+  const nt = function (x) { return x.thuTu === '' ? Infinity : x.thuTu; };
+  ds.sort(function (a, b) { return so(dv(a), dv(b)) || a.donVi.localeCompare(b.donVi, 'vi') || so(nt(a), nt(b)) || a.ten.localeCompare(b.ten, 'vi'); });
+  return ds;
+}
+function dsLogin() {      // công khai: chỉ mã, tên, đơn vị của người đang hoạt động (không có vai trò, không có thứ tự)
   const t = now_();
-  const ds = read_('NhanSu').filter(function (r) { return b_(r.HoatDong); })
-    .map(function (r) { return { ma: s_(r.MaHRM), ten: s_(r.HoTen), donVi: s_(r.DonVi) }; });
-  ds.sort(function (a, b) { return a.donVi.localeCompare(b.donVi, 'vi') || a.ten.localeCompare(b.ten, 'vi'); });
+  const ds = nhanSuSapXep_(read_('NhanSu').filter(function (r) { return b_(r.HoatDong); })
+    .map(function (r) { return { ma: s_(r.MaHRM), ten: s_(r.HoTen), donVi: s_(r.DonVi), thuTu: thuTuNguoi_(r.ThuTu) }; }))
+    .map(function (x) { return { ma: x.ma, ten: x.ten, donVi: x.donVi }; });
   return { ngay: t.ngay, hm: t.hm, nhanSu: ds };
 }
 
@@ -738,9 +761,15 @@ function lichSu_(u, p) {          // sản lượng của chính người gọi,
 /* ---------- Quản trị nhân sự (chỉ ADMIN) ---------- */
 function dsNhanSu_(u) {
   const ql = u && u.vaiTro !== 'ADMIN';      // TT/TP: chỉ tổ viên thật (bỏ người giả TN-xx), không trả email; không bao giờ trả cột PIN
-  return read_('NhanSu').filter(function (r) { return !ql || (s_(r.VaiTro) === 'TOVIEN' && !/^TN-/.test(s_(r.MaHRM))); }).map(function (r) {
-    return { ma: s_(r.MaHRM), ten: s_(r.HoTen), chucVu: s_(r.ChucVu), donVi: s_(r.DonVi), email: ql ? '' : s_(r.Email), vaiTro: s_(r.VaiTro), hoatDong: b_(r.HoatDong), khoa: b_(r.Khoa) };
-  });
+  return nhanSuSapXep_(read_('NhanSu').filter(function (r) { return !ql || (s_(r.VaiTro) === 'TOVIEN' && !/^TN-/.test(s_(r.MaHRM))); }).map(function (r) {
+    return { ma: s_(r.MaHRM), ten: s_(r.HoTen), chucVu: s_(r.ChucVu), donVi: s_(r.DonVi), email: ql ? '' : s_(r.Email), vaiTro: s_(r.VaiTro), hoatDong: b_(r.HoatDong), khoa: b_(r.Khoa), thuTu: thuTuNguoi_(r.ThuTu) };
+  }));
+}
+function thuTuNhap_(v) {      // ô "Thứ tự hiển thị" từ form: trống → '' (xếp cuối); số nguyên ≥ 0 → số; còn lại → lỗi
+  if (v === undefined || v === null || s_(v) === '') return '';
+  const x = Number(s_(v));
+  if (!isFinite(x) || x < 0 || Math.floor(x) !== x || x > 100000) throw 'Thứ tự hiển thị phải là số nguyên từ 0 trở lên (để trống = xếp cuối)';
+  return x;
 }
 function luuToVien_(u, p) {      // QĐ2 (F-NS-04): TT/TP sửa TỔ VIÊN: họ tên, chức vụ, đơn vị, hoạt động. Không đổi vai trò, không tạo mới, không đụng quản lý/lãnh đạo/ADMIN
   if (!isAdmin_(u)) throw 'Chỉ Tổ trưởng/Tổ phó được thực hiện thao tác này';
@@ -763,6 +792,7 @@ function luuNhanSu_(u, p) {
   const ma = s_(p.ma), ten = s_(p.ten), vai = s_(p.vaiTro) || 'TOVIEN';
   if (!ma || !ten) throw 'Nhập Mã HRM và Họ tên';
   if (VAI_TRO_ALL.indexOf(vai) < 0) throw 'Vai trò không hợp lệ';
+  const thuTu = p.thuTu === undefined ? undefined : thuTuNhap_(p.thuTu);      // B5e: không gửi = giữ nguyên; '' = xếp cuối; kiểm TRƯỚC khi ghi
   const cu = read_('NhanSu').filter(function (r) { return s_(r.MaHRM) === ma; })[0];
   const hoatDong = p.hoatDong === false ? false : true;
   if (cu) {
@@ -772,13 +802,15 @@ function luuNhanSu_(u, p) {
     setCell_('NhanSu', cu._row, 'HoTen', ten); setCell_('NhanSu', cu._row, 'ChucVu', s_(p.chucVu));
     setCell_('NhanSu', cu._row, 'DonVi', dv); setCell_('NhanSu', cu._row, 'Email', s_(p.email));
     setCell_('NhanSu', cu._row, 'VaiTro', vai); setCell_('NhanSu', cu._row, 'HoatDong', hoatDong);
-    log_(u.ma, 'SUA_NHAN_SU', ma + ' | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + s_(p.chucVu) + ', đơn vị ' + dv + ', email ' + s_(p.email) + ', vai trò ' + vai + ', hoạt động ' + hoatDong);
+    const ttCu = thuTuNguoi_(cu.ThuTu);
+    if (thuTu !== undefined && thuTu !== ttCu) setCell_('NhanSu', cu._row, 'ThuTu', thuTu);
+    log_(u.ma, 'SUA_NHAN_SU', ma + ' | cũ: ' + cuStr + ', thứ tự ' + (ttCu === '' ? '(trống)' : ttCu) + ' | mới: tên ' + ten + ', chức vụ ' + s_(p.chucVu) + ', đơn vị ' + dv + ', email ' + s_(p.email) + ', vai trò ' + vai + ', hoạt động ' + hoatDong + ', thứ tự ' + (thuTu === undefined ? 'giữ nguyên' : (thuTu === '' ? '(trống)' : thuTu)));
     return { moi: false, ma: ma };
   }
   const dvMoi = donViChon_(p.donVi, undefined);   // B1: tạo mới bắt buộc chọn đơn vị trong danh mục
   const pin = ('' + Math.floor(100000 + Math.random() * 900000));
   append_('NhanSu', { MaHRM: ma, HoTen: ten, ChucVu: s_(p.chucVu) || 'Tổ viên', DonVi: dvMoi, Email: s_(p.email), VaiTro: vai,
-    PinHash: '', Salt: '', PinTam: pin, DoiPin: true, SaiPin: 0, Khoa: false, HoatDong: hoatDong });
+    PinHash: '', Salt: '', PinTam: pin, DoiPin: true, SaiPin: 0, Khoa: false, HoatDong: hoatDong, ThuTu: thuTu === undefined ? '' : thuTu });
   log_(u.ma, 'THEM_NHAN_SU', ma + ' ' + vai);
   return { moi: true, ma: ma, pin: pin };
 }
@@ -1096,6 +1128,7 @@ function chuanHoaMaHRM_(u, p) {
 function appendMany_(name, objs) {
   if (!objs.length) return;
   const sh = ss_().getSheetByName(name), h = TAB[name];
+  if (name === 'NhanSu') nsDamBaoCot_();
   const vals = objs.map(function (o) { return h.map(function (k) { return o[k] === undefined || o[k] === null ? '' : safe_(o[k]); }); });
   const first = sh.getLastRow() + 1;
   if (first + vals.length - 1 > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), Math.max(1000, vals.length));

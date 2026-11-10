@@ -7,15 +7,16 @@ let getValuesCalls = 0, lockCount = 0;
 const getValuesBy = {};   // số lần đọc từng tab (đếm R1)
 const fmtLog = [], appendRowCalls = {};
 class Sheet {
-  constructor(name, header) { this.name = name; this.rows = [header.slice()]; this.maxRows = 1000; }
+  constructor(name, header) { this.name = name; this.rows = [header.slice()]; this.maxRows = 1000; this.maxCols = 26; }
   getDataRange() { const me = this; return { getValues() { getValuesCalls++; getValuesBy[me.name] = (getValuesBy[me.name] || 0) + 1; return me.rows.map(r => r.slice()); } }; }
   appendRow(a) { appendRowCalls[this.name] = (appendRowCalls[this.name] || 0) + 1; this.rows.push(a.slice()); }
   getLastRow() { return this.rows.length; }
-  getMaxRows() { return this.maxRows; } getMaxColumns() { return 26; }
+  getMaxRows() { return this.maxRows; } getMaxColumns() { return this.maxCols; } insertColumnsAfter(pos, n) { this.maxCols += n; }
   insertRowsAfter(pos, n) { this.maxRows += n; }
   deleteRow(r) { this.rows.splice(r - 1, 1); }
   getRange(r, c, nr, nc) {
     const me = this; nr = nr || 1; nc = nc || 1;
+    if (c - 1 + nc > me.maxCols) throw new Error('Mock: vùng vượt số cột của tab ' + me.name + ' (' + (c - 1 + nc) + ' > ' + me.maxCols + ')');   // như Sheets thật
     const ensure = (rr) => { while (me.rows.length < rr) me.rows.push([]); };
     return {
       setValue(v) { ensure(r); if (typeof v === 'string' && /^\d+(,\d+)+$/.test(v) && !(me.fmts && me.fmts[r] && me.fmts[r][c - 1] === '@')) v = Number(v.replace(',', '.').replace(/,/g, '')); me.rows[r - 1][c - 1] = v; return this; },   // giả lập Sheets đổi "00109101,00109102" thành số khi ô chưa là văn bản
@@ -53,6 +54,7 @@ const TABS = {
 };
 const ss = { sheets: [], getSheetByName(n) { return this.sheets.find(s => s.name === n) || null; }, insertSheet(n) { const s = new Sheet(n, []); this.sheets.push(s); return s; }, getId() { return 'X'; }, setSpreadsheetTimeZone() { } };
 Object.keys(TABS).forEach(n => ss.sheets.push(new Sheet(n, TABS[n])));
+ss.getSheetByName('NhanSu').maxCols = 13;   // B5e: tab NhanSu CŨ chỉ có 13 cột (chưa có ThuTu) → mọi kiểm thử chạy trên dạng cũ, mã tự thêm cột khi ghi
 { const dv = new Sheet('DonVi', ['TenDV', 'HoatDong', 'ThuTu']); ['Bưu điện TP Huế', 'Trung tâm vận hành', 'Phòng Tổ chức hành chính', 'Phòng Tài chính kế hoạch', 'Lãnh đạo BĐTP', 'Đơn vị B'].forEach((t, i) => dv.rows.push([t, true, i + 1])); ss.sheets.push(dv); }   // B1: danh mục đơn vị
 const fmt = (d, tz, f) => {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(d).map(x => [x.type, x.value]));
@@ -100,7 +102,7 @@ const dl = ctx.dsLogin();
 ok(dl.ngay === '2026-11-09' && dl.hm === '15:30' && Array.isArray(dl.nhanSu) && !('trongCa' in dl), 'dsLogin trả {ngay,hm,nhanSu}', Object.keys(dl));
 ok(dl.nhanSu.length === 8 && dl.nhanSu.every(x => Object.keys(x).sort().join() === 'donVi,ma,ten'), 'dsLogin: mọi người đang hoạt động, chỉ có ma/ten/donVi (không lộ vai trò)', dl.nhanSu[0]);
 const dvs = dl.nhanSu.map(x => x.donVi);
-ok(JSON.stringify(dvs) === JSON.stringify(dvs.slice().sort((a, b) => a.localeCompare(b, 'vi'))), 'dsLogin sắp theo đơn vị', dvs);
+{ const dm = sh('DonVi').rows.slice(1).map(r => r[0]); const rk = dvs.map(x => dm.indexOf(x)); ok(rk.every((x, i) => i === 0 || x >= rk[i - 1]), 'dsLogin sắp theo đơn vị theo THỨ TỰ DANH MỤC (B5e; không còn ABC)', dvs); }
 sh('NhanSu').rows.push(['NGHI', 'Đã nghỉ', 'Tổ viên', 'X', '', 'TOVIEN', '', '', '123450', false, 0, false, false]);
 ctx.memoClear_();
 ok(!ctx.dsLogin().nhanSu.some(x => x.ma === 'NGHI'), 'dsLogin bỏ người không hoạt động');
@@ -1212,6 +1214,75 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const r3 = api(tAdmin, 'xoaNhanSu', { ma: 'E1C', xacNhan: 'E1C' });
   ok(r3.ok && idx('E1C') < 0, 'E1: đệm đúng → xóa bình thường', r3);
   ctx.memoClear_();
+}
+
+// ===== B5e: cột ThuTu cuối NhanSu; tab NhanSu CŨ (13 cột, không có ThuTu) vẫn đọc/ghi/append/import/xóa được =====
+{
+  const S = sh('NhanSu');
+  const cu13 = () => { S.rows.forEach(r => { r.length = Math.min(r.length, 13); }); S.maxCols = 13; ctx.memoClear_(); };      // đưa tab về dạng CŨ: 13 cột, không tiêu đề ThuTu
+  const idx = ma => S.rows.findIndex(x => String(x[0]) === ma);
+  const snap13 = () => JSON.stringify(S.rows.map(r => r.slice(0, 13)));
+  const hang = (ma, ten, dv, tt) => { const r = [ma, ten, 'Tổ viên', dv || 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true]; if (tt !== undefined) r[13] = tt; return r; };
+  const nS0 = S.rows.length;
+  // 1) đường ĐỌC không đụng cấu trúc, dsLogin không lộ vai trò/thứ tự
+  cu13();
+  const dl = ctx.dsLogin(), ds0 = api(tAdmin, 'dsNhanSu').data;
+  ok(S.maxCols === 13 && S.rows[0].length === 13 && snap13() === snap13(), 'B5e: đọc (dsLogin, dsNhanSu) trên tab cũ 13 cột không tự thêm cột/tiêu đề');
+  ok(dl.nhanSu.length > 0 && dl.nhanSu.every(x => Object.keys(x).sort().join() === 'donVi,ma,ten') && !/thuTu|vaiTro|ThuTu/.test(JSON.stringify(dl)), 'B5e: dsLogin chỉ trả ma, ten, donVi (không vai trò, không thuTu)', dl.nhanSu[0]);
+  ok(ds0.length > 0 && ds0.every(x => x.thuTu === ''), 'B5e: tab cũ không có ThuTu → dsNhanSu trả thuTu rỗng, không lỗi');
+  // 2) tạo người mới có thứ tự → tự thêm cột + tiêu đề; cột cũ không đổi
+  const truoc = snap13();
+  const r1 = api(tAdmin, 'luuNhanSu', { ma: 'B5E1', ten: 'B5e Một', chucVu: 'Tổ viên', donVi: 'Trung tâm vận hành', thuTu: 2 });
+  ok(r1.ok && S.maxCols === 14 && S.rows[0][13] === 'ThuTu' && S.rows[0].slice(0, 13).join() === TABS.NhanSu.join(), 'B5e: tab cũ → ghi lần đầu tự thêm cột N + tiêu đề ThuTu, 13 tiêu đề cũ giữ nguyên', r1);
+  ok(S.rows[idx('B5E1')][13] === 2 && snap13().startsWith(truoc.slice(0, truoc.length - 1)), 'B5e: người mới ghi ThuTu đúng ở cột 14; các dòng cũ không đổi 13 cột đầu');
+  // 3) sửa thứ tự người có sẵn (setCell_ ghi đúng cột N); không gửi thuTu = giữ nguyên; rỗng = xóa; giá trị sai bị từ chối và không ghi
+  const sua = (ma, extra) => api(tAdmin, 'luuNhanSu', Object.assign({ ma, ten: S.rows[idx(ma)][1], chucVu: 'Tổ viên', donVi: S.rows[idx(ma)][3], vaiTro: S.rows[idx(ma)][5], hoatDong: true }, extra));
+  ok(sua('D1', { thuTu: 2 }).ok && S.rows[idx('D1')][13] === 2, 'B5e: sửa ThuTu người có sẵn ghi đúng ô cột 14');
+  ok(sua('00076603', { thuTu: 1 }).ok && sua('A1', {}).ok && (S.rows[idx('A1')][13] === undefined || S.rows[idx('A1')][13] === '') && S.rows[idx('00076603')][13] === 1, 'B5e: không gửi thuTu = giữ nguyên (A1 vẫn trống)');
+  ok(sua('D1', { thuTu: '' }).ok && S.rows[idx('D1')][13] === '' && sua('D1', { thuTu: 2 }).ok, 'B5e: thuTu rỗng = xóa thứ tự (xếp cuối)');
+  const t3 = JSON.stringify(S.rows), lg3 = sh('LogHeThong').rows.length;
+  ok(['-1', 1.5, 'abc', -3, 1e9].every(v => { const r = sua('D1', { thuTu: v }); return !r.ok && /Thứ tự/.test(r.err); }) && JSON.stringify(S.rows) === t3 && sh('LogHeThong').rows.length === lg3, 'B5e: thứ tự âm / thập phân / chữ / quá lớn bị từ chối, không ghi gì, không log');
+  ok(api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A', donVi: 'Phòng Tổ chức hành chính', thuTu: 77 }).ok && S.rows[idx('A1')][13] !== 77, 'B5e: Tổ trưởng/Tổ phó sửa tổ viên (luuToVien_) KHÔNG đụng ThuTu');
+  // 4) thứ tự: đơn vị theo danh mục → ThuTu người (trống sau) → họ tên ABC; đơn vị ngoài danh mục xếp cuối
+  S.rows.push(hang('B5E2', 'B5e Hai', 'Đơn vị lạ ngoài danh mục', 1), hang('B5E3', 'Aaa Không thứ tự', 'Trung tâm vận hành'), hang('B5E4', 'Zzz Thứ tự 0', 'Trung tâm vận hành', 0));
+  ctx.memoClear_();
+  const lg = ctx.dsLogin().nhanSu;
+  const tt2 = lg.filter(x => x.donVi === 'Trung tâm vận hành').map(x => x.ma);
+  ok(tt2.join() === ['B5E4', '00076603', 'B5E1', 'D1', 'B5E3', 'TT1'].join(), 'B5e: trong một đơn vị: ThuTu nhỏ trước (0,1,2,2), cùng ThuTu thì theo họ tên ABC, trống xếp sau cùng', tt2);
+  ok(lg[0].donVi === 'Bưu điện TP Huế' && lg[lg.length - 1].ma === 'B5E2', 'B5e: đơn vị theo ThuTu danh mục (Bưu điện trước), đơn vị ngoài danh mục xếp cuối', [lg[0], lg[lg.length - 1]]);
+  const dn = api(tAdmin, 'dsNhanSu').data.filter(x => x.donVi === 'Trung tâm vận hành').map(x => x.ma);
+  ok(dn.join() === tt2.join() && api(tAdmin, 'dsNhanSu').data.every(x => 'thuTu' in x), 'B5e: danh sách nhân sự (ADMIN) dùng cùng thứ tự và có trường thuTu');
+  ok(!/thuTu/.test(JSON.stringify(ctx.dsLogin())), 'B5e: dsLogin vẫn không lộ thuTu sau khi có dữ liệu thứ tự');
+  // 5) import trên tab cũ
+  cu13();
+  const ri = api(tAdmin, 'importNhanSu', { dong: [{ ma: 'B5EI1', ten: 'Import Một', chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế', vaiTro: 'TOVIEN' }, { ma: 'B5EI2', ten: 'Import Hai', donVi: 'Bưu điện TP Huế' }], apDung: true, xacNhan: 'IMPORT' });
+  ok(ri.ok && ri.data.daGhi === 2 && S.maxCols === 14 && S.rows[0][13] === 'ThuTu' && idx('B5EI1') > 0 && S.rows[idx('B5EI2')][13] === '', 'B5e: import trên tab cũ 13 cột ghi được, tự thêm cột ThuTu', ri.err || ri.data);
+  // 6) taoMau (người giả TN-xx) trên tab cũ
+  cu13();
+  const tn0 = S.rows.filter(x => /^TN-/.test(String(x[0]))).length;
+  S.rows = S.rows.filter(x => !/^TN-/.test(String(x[0]))); ctx.memoClear_();
+  const rm = api(tAdmin, 'taoMau', { ngay: '2026-11-03', cas: ['Sáng'], soNguoi: 2 });
+  ok(rm.ok && S.maxCols === 14 && S.rows.some(x => /^TN-/.test(String(x[0]))), 'B5e: taoMau trên tab cũ 13 cột ghi được người giả TN-xx', rm.err);
+  // 7) xóa trên tab cũ
+  S.rows.push(hang('B5EX', 'Sẽ xóa', 'Đơn vị B')); cu13();
+  const rx = api(tAdmin, 'xoaNhanSu', { ma: 'B5EX', xacNhan: 'B5EX' });
+  ok(rx.ok && idx('B5EX') < 0, 'B5e: xóa nhân sự trên tab cũ 13 cột chạy bình thường', rx.err);
+  // 8) TT/TP sửa tổ viên trên tab cũ: chỉ ghi cột < 14 nên KHÔNG cần/không thêm cột
+  S.rows.push(hang('B5EY', 'Tổ viên Y', 'Đơn vị B')); cu13();
+  const rt = api(tTT, 'luuNhanSu', { ma: 'B5EY', ten: 'Tổ viên Y sửa', donVi: 'Đơn vị B', hoatDong: true });
+  ok(rt.ok && S.rows[idx('B5EY')][1] === 'Tổ viên Y sửa' && S.maxCols === 13, 'B5e: luuToVien_ trên tab cũ ghi được, không thêm cột (không đụng ThuTu)', rt.err);
+  // 9) tiêu đề cột N đã bị dùng cho thứ khác → từ chối an toàn, không ghi gì
+  cu13(); S.maxCols = 14; S.rows[0][13] = 'KHAC'; ctx.memoClear_();
+  const n9 = S.rows.length, r9 = api(tAdmin, 'luuNhanSu', { ma: 'B5EZ', ten: 'Z', chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế' });
+  ok(!r9.ok && /ThuTu/.test(r9.err) && S.rows.length === n9 && S.rows[0][13] === 'KHAC', 'B5e: cột N đã có tiêu đề khác → từ chối, không ghi đè', r9);
+  // 10) chạy lại không đổi (idempotent)
+  cu13();
+  api(tAdmin, 'luuNhanSu', { ma: 'B5EW', ten: 'W', chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế' });
+  const hs = JSON.stringify(S.rows[0]), mc = S.maxCols;
+  api(tAdmin, 'luuNhanSu', { ma: 'B5EV', ten: 'V', chucVu: 'Tổ viên', donVi: 'Bưu điện TP Huế' });
+  ok(JSON.stringify(S.rows[0]) === hs && S.maxCols === mc && S.rows[0].filter(x => x === 'ThuTu').length === 1, 'B5e: ghi lần sau không thêm cột/tiêu đề nữa');
+  // dọn
+  S.rows = S.rows.filter(x => !/^(B5E|TN-)/.test(String(x[0]))); S.rows.length = Math.min(S.rows.length, nS0); cu13();
 }
 
 // ===== E2: chuanHoaMaHRM_ / chuanHoaDonVi_ không dùng đệm cũ =====
