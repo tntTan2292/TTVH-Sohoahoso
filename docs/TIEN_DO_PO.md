@@ -30,3 +30,4 @@
 | 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
 | 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
 | 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử F5 trong khung Apps Script thật |
+| 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⬜ Đã có phiếu, chờ Antigravity làm |

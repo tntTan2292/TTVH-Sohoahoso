@@ -13,6 +13,7 @@
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
 | Bản đang chạy | Apps Script **phiên bản 26** (10/11/2026 16:17) trên link chính `…MlRA/exec` = mã của commit `7dc1446` (H1 khóa mã hộp + E2 + B5e thứ tự đăng nhập, trên nền phiên bản 25 `42e59fa`; **F-NS-11 vẫn CHƯA bấm Xem trước/Áp dụng**). Phiên bản trước: 25 (`42e59fa`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 25 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
 | Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` c98c7608d8dc…, `Index.html` 958b3b3c7702… khớp `7dc1446` sau khi lưu và tải lại trang; trước khi đẩy bản trên Apps Script khớp `42e59fa`: 0ee865877e4f / 8b78263fb175). Từ nay `main` có thể đi trước bản chạy (đợt gộp chưa triển khai) |
+| Việc đang giao (10/11/2026, Opus) | **C3 (mục 25) – Antigravity:** làm lại diện mạo theo phiếu `docs/prompts/PROMPT_ANTIGRAVITY_C3_DIEN_MAO.md`. Chủ dự án đã xem màn đăng nhập mới trên bản thật, nhận xét chức năng ổn, chưa báo số phiên bản và chưa báo kết quả danh sách thử (F5, CSV, điện thoại). |
 | Mock | `node tools/test_mock.js` → **491 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → **575 đạt, 0 lỗi** |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
