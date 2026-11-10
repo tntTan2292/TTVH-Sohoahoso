@@ -1797,6 +1797,15 @@ tbody tr:last-child td { border-bottom: none; }
 #busy.cham #busyTxt { color: #b45309; font-weight: 700; }
 #topBar { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 9998; background: var(--col-scan, #2563eb); opacity: 0; transition: width .3s ease, opacity .3s ease; pointer-events: none; }
 @keyframes busyspin { to { transform: rotate(360deg); } }
+/* C0: ô số liệu bấm được; H2: bảng đối soát */
+.mt-click { cursor: pointer; border-color: var(--col-scan); }
+.mt-click:hover, .mt-click:focus { background: var(--card); outline: 2px solid var(--col-scan); }
+.mt-click .mt-val::after { content: ' ›'; color: var(--col-scan); }
+.ds-dem { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.ds-dem button { font-size: 12.5px; }
+.ds-dem button.on { background: var(--col-scan); color: #fff; border-color: var(--col-scan); }
+.ds-ghichu { display: block; font-size: 11.5px; color: var(--mut); }
+@media (max-width: 640px) { #modalCT { padding: 0; } #modalCT .modal-content { max-width: none; max-height: none; height: 100%; border-radius: 0; } }
 .lg-nguoi-box { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-bottom: 12px; }
 .lg-nguoi { display: block; text-align: left; justify-content: flex-start; width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: var(--card-sub); color: inherit; border-radius: var(--radius-sm); cursor: pointer; font: inherit; }
 .lg-nguoi.on { border-color: var(--col-scan); background: var(--col-scan); color: #fff; }
@@ -2106,6 +2115,20 @@ tbody tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<!-- MODAL CHI TIẾT Ô SỐ LIỆU (C0) -->
+<div id="modalCT" class="modal-overlay hide">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 style="margin:0;" id="ctTitle">Chi tiết</h2>
+      <button class="sm" type="button" id="ctDong">✕ Đóng</button>
+    </div>
+    <div class="modal-body">
+      <div id="ctTimBox" style="margin-bottom:10px;"><input id="ctTim" type="text" placeholder="🔍 Lọc nhanh theo mã hộp…" autocomplete="off"></div>
+      <div id="ctBody"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 var TOKEN = null, ME = null, STEP = null, CHARTS = {}, ALL_NS = [];
@@ -2136,7 +2159,7 @@ function toLogin() {
 
 /* T1: call() dùng chung. Lệnh GHI: lớp chờ toàn màn hình + thanh tiến trình ước lượng, chặn bấm, mỗi lúc chỉ một lệnh ghi; gửi kèm idGui (ghi, vaoCa) để gửi lại không ghi trùng.
    Lệnh ĐỌC: thanh mảnh trên đầu trang, không chặn. Mọi đường kết thúc (thành công / lỗi / hết phiên) đều gọi xong() để tắt lớp chờ. */
-var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
+var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
 var GUI_ACT = ['ghi', 'vaoCa'];
 var WRITE_BUSY = false, READ_N = 0, BUSY_T0 = 0, BUSY_IV = null, GUI_ID = {};
 function idMoi() { var a = 'abcdefghijklmnopqrstuvwxyz0123456789', r = 'g'; for (var i = 0; i < 18; i++) r += a.charAt(Math.floor(Math.random() * a.length)); return r + Date.now().toString(36); }
@@ -3465,8 +3488,8 @@ function veNgayNav(d) {
     Array.prototype.forEach.call($('dNgayCo').querySelectorAll('[data-ng]'), function (b) { b.onclick = function () { $('dNgay').value = b.dataset.ng; loadDash(); }; });
   } else if (d) { $('dNgayCo').innerHTML = ''; }
 }
-var DASH = { d: null, tab: 'tq', ns: { k: '7', tu: '', den: '', sk: 'tong', asc: false, data: null } };
-var DASH_TABS = [['tq', 'Tổng quan', '📊'], ['ngay', 'Theo ngày', '📅'], ['canhom', 'Ca – Nhóm', '👥'], ['nhansu', 'Nhân sự', '👤'], ['nhatky', 'Nhật ký nhập', '📝']];
+var DASH = { d: null, tab: 'tq', ns: { k: '7', tu: '', den: '', sk: 'tong', asc: false, data: null }, ds: { tu: '', den: '', tt: '', tim: '', data: null } };
+var DASH_TABS = [['tq', 'Tổng quan', '📊'], ['ngay', 'Theo ngày', '📅'], ['canhom', 'Ca – Nhóm', '👥'], ['nhansu', 'Nhân sự', '👤'], ['nhatky', 'Nhật ký nhập', '📝'], ['doisoat', 'Đối soát hộp', '🧾']];
 function dashTabNho(v) {
   try { if (v) localStorage.setItem('dashTab', v); else return localStorage.getItem('dashTab'); } catch (e) { }
   return null;
@@ -3487,10 +3510,12 @@ function dashHienTab() {
   var d = DASH.d, t = DASH.tab;
   if (!d) return;
   if (t === 'nhansu') { dashTabNhanSu(); return; }
+  if (t === 'doisoat') { dashTabDoiSoat(); return; }
   var h = t === 'ngay' ? dashTabNgay(d) : (t === 'canhom' ? dashTabCaNhom(d) : (t === 'nhatky' ? dashTabNhatKy(d) : dashTabTongQuan(d)));
   h += '<div class="muted" style="text-align:right;margin-top:10px;">Dữ liệu cập nhật tự động lúc ' + esc(d.capNhat) + '</div>';
   $('dBody').innerHTML = h;
   dashVeBieuDo(d, t);
+  ctGan();
 }
 // ----- Tab 1: Tổng quan -----
 function dashTabTongQuan(d) {
@@ -3516,7 +3541,7 @@ function dashTabNgay(d) {
     h += '<div class="tiles">' + d.cas.map(function (c) {
       return '<div class="tile">' +
         '<div class="th"><div class="th-left"><b>Ca ' + esc(c.ca) + '</b> <span class="muted th-time">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div> ' + ttChip(c) + '</div>' +
-        '<div class="mts">' + m('Nhân sự', c.nguoiPhan, 'người') + m('Hộp tồn đầu ca', c.tonDau, 'hộp') + m('Nhận từ TTLT', c.nhanHop, 'hộp') + m('Chưa scan', c.chuaScan, 'hộp') + m('Chờ tách file', c.chuaTach, 'hộp') + m('Chờ OCR', c.chuaOcr, 'hộp') + '</div></div>';
+        '<div class="mts">' + mb('Nhân sự', c.nguoiPhan, 'người', c.ca, 'nhanSu') + mb('Hộp tồn đầu ca', c.tonDau, 'hộp', c.ca, 'tonDau') + mb('Nhận từ TTLT', c.nhanHop, 'hộp', c.ca, 'nhan') + mb('Chưa scan', c.chuaScan, 'hộp', c.ca, 'chuaScan') + mb('Chờ tách file', c.chuaTach, 'hộp', c.ca, 'chuaTach') + mb('Chờ OCR', c.chuaOcr, 'hộp', c.ca, 'chuaOcr') + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="grid2" style="margin-top:14px;"><div class="card"><h3>Nhận hồ sơ – đầu ca (hộp)</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>' +
       '<div class="card"><h3>Kết quả – khối lượng chờ xử lý đầu ca (hộp)</h3><div class="chartbox"><canvas id="c3"></canvas></div></div></div>';
@@ -3673,11 +3698,109 @@ function dashNsBang() {
     c.onclick = function () { var k = c.dataset.sk; if (S.sk === k) S.asc = !S.asc; else { S.sk = k; S.asc = (k === 'ten'); } dashNsBang(); };
   });
 }
+/* ---------- C0: bấm ô số liệu "ĐẦU CA" → danh sách chi tiết ---------- */
+var CT = { loai: '', ca: '', rows: null };
+var CT_TEN = { nhanSu: 'Nhân sự được phân công', tonDau: 'Hộp tồn đầu ca', nhan: 'Nhận từ TTLT', chuaScan: 'Chưa scan', chuaTach: 'Chờ tách file', chuaOcr: 'Chờ OCR' };
+function mb(label, v, unit, ca, loai) {      // như m() nhưng bấm được khi số > 0 (ô 0 không bấm được)
+  var h = m(label, v, unit);
+  if (!(typeof v === 'number' && v > 0)) return h;
+  return h.replace('<div class="mt">', '<div class="mt mt-click" role="button" tabindex="0" data-ct="' + loai + '" data-ca="' + esc(ca) + '" title="Bấm để xem danh sách">');
+}
+function ctGan() {
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-ct]'), function (b) {
+    b.onclick = function () { openCT(b.getAttribute('data-ct'), b.getAttribute('data-ca')); };
+    b.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } };
+  });
+}
+function ngayNgan(x) { return x ? x.slice(8, 10) + '/' + x.slice(5, 7) : ''; }
+function khauOo(k) { return k.xong ? '<span class="chip ok">✔ ' + nfi(k.to) + '</span>' : (k.to ? nfi(k.to) : '<span class="muted">–</span>'); }
+function openCT(loai, ca) {
+  var d = DASH.d; if (!d) return;
+  CT.loai = loai; CT.ca = ca; CT.rows = null;
+  $('ctTitle').textContent = CT_TEN[loai] + ' · Ca ' + ca + ' · ' + d.ngay.split('-').reverse().join('/');
+  $('ctTim').value = ''; $('ctTimBox').style.display = loai === 'nhanSu' ? 'none' : '';
+  $('modalCT').classList.remove('hide');
+  if (loai === 'nhanSu') {      // dùng caNguoi sẵn có, không gọi máy chủ
+    CT.rows = (d.caNguoi || []).filter(function (x) { return x.ca === ca && x.coMat; }); ctVe(); return;
+  }
+  $('ctBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải danh sách…</div></div>';
+  var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
+  call('chiTietCa', { ngay: d.ngay, ca: ca, loai: loai, gomThu: gomThu }).then(function (r) {
+    if (CT.loai !== loai || CT.ca !== ca) return;
+    CT.rows = r.hop; ctVe();
+  }).catch(function (e) { $('ctBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
+function closeCT() { $('modalCT').classList.add('hide'); }
+function ctVe() {
+  var rows = CT.rows || [], q = ($('ctTim').value || '').toLowerCase().trim(), h;
+  if (CT.loai === 'nhanSu') {
+    h = '<div class="muted" style="margin-bottom:8px;">' + rows.length + ' người</div><div class="scroll"><table><tr><th>Họ và tên</th><th>Nhóm</th><th>Báo cáo</th></tr>' + rows.map(function (x) {
+      return '<tr><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + (x.nhom ? esc(x.nhom) : '<span class="muted">chưa có nhóm</span>') + '</td><td>' + (x.soBC > 0 ? '<span class="chip ok">Đã báo cáo (' + x.soBC + ')</span>' : '<span class="chip chip-mut">Chưa báo cáo</span>') + '</td></tr>';
+    }).join('') + '</table></div>';
+    $('ctBody').innerHTML = h; return;
+  }
+  var ds = rows.filter(function (x) { return !q || x.ma.toLowerCase().indexOf(q) >= 0 || x.khoa.toLowerCase().indexOf(q) >= 0; });
+  h = '<div class="muted" style="margin-bottom:8px;">' + ds.length + (ds.length !== rows.length ? ' / ' + rows.length : '') + ' hộp</div><div class="scroll"><table><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Tờ đã báo</th></tr>' + ds.map(function (x) {
+    return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td>' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) : '<span class="muted">–</span>') + '</td><td>' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + ' · ' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) : '<span class="muted">–</span>') + '</td><td>' + khauOo(x.scan) + '</td><td>' + khauOo(x.tach) + '</td><td>' + khauOo(x.ocr) + '</td><td>' + nfi(x.scan.to + x.tach.to + x.ocr.to) + '</td></tr>';
+  }).join('') + '</table></div>';
+  $('ctBody').innerHTML = ds.length || !rows.length ? h : '<div class="muted">Không có hộp nào khớp "' + esc(q) + '".</div>';
+}
+$('ctDong').onclick = closeCT; $('ctTim').oninput = ctVe;
+$('modalCT').onclick = function (e) { if (e.target === this) closeCT(); };
+
+/* ---------- H2: tab Đối soát hộp ---------- */
+var DS_TT = [['', 'Tất cả'], ['DU', 'Đủ'], ['NHAN_CHUA_LAM', 'Đã nhận chưa làm'], ['DANG_LAM', 'Đang làm dở'], ['XONG_CHUA_TRA', 'Làm xong chưa trả'], ['THIEU_NHAN', 'Thiếu nhận TTLT'], ['TRA_SOM', 'Trả khi chưa Tách xong']];
+var DS_CHIP = { DU: 'ok', NHAN_CHUA_LAM: 'chip-mut', DANG_LAM: 'warn', XONG_CHUA_TRA: 'warn', THIEU_NHAN: 'bad', TRA_SOM: 'bad' };
+function dashTabDoiSoat() {
+  var S = DASH.ds;
+  if (!S.den) S.den = $('dNgay').value || ME.ngay;
+  $('dBody').innerHTML = '<div class="card noprint"><h3>🧾 Đối soát hộp</h3><div class="muted" style="margin-bottom:10px;font-size:12.5px;">Mỗi hộp một dòng, trạng thái tính tới hết ngày chọn. Mã hộp hiện dạng chuẩn; hộp ghi nhiều kiểu mã được gộp thành một.</div>' +
+    '<div class="row"><div><label>Nhận từ ngày</label><input type="date" id="dsTu" value="' + esc(S.tu) + '"></div><div><label>Đến hết ngày</label><input type="date" id="dsDen" value="' + esc(S.den) + '" max="' + ME.ngay + '"></div>' +
+    '<div><label>Tìm mã hộp</label><input type="text" id="dsTim" value="' + esc(S.tim) + '" placeholder="VD: 2.1.87" autocomplete="off"></div>' +
+    '<div style="align-self:end"><button class="pri sm" type="button" id="dsXem" style="width:100%;">Xem</button></div></div></div><div id="dsBody"></div>';
+  $('dsXem').onclick = function () { S.tu = $('dsTu').value; S.den = $('dsDen').value; S.tim = $('dsTim').value; S.data = null; dashDsTai(); };
+  if (S.data) dashDsBang(); else dashDsTai();
+}
+function dashDsTai() {
+  var S = DASH.ds, gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
+  $('dsBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải đối soát hộp…</div></div>';
+  var key = S.tu + '|' + S.den + '|' + S.tim;
+  call('doiSoatHop', { tu: S.tu, den: S.den, tim: S.tim, gomThu: gomThu }).then(function (r) {
+    if (DASH.tab !== 'doisoat' || key !== S.tu + '|' + S.den + '|' + S.tim) return;
+    S.data = r; dashDsBang();
+  }).catch(function (e) { if ($('dsBody')) $('dsBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
+function dsLoc() { var S = DASH.ds, r = S.data; return r ? r.hop.filter(function (x) { return !S.tt || x.tt === S.tt; }) : []; }
+function dashDsBang() {
+  var S = DASH.ds, r = S.data; if (!r || !$('dsBody')) return;
+  var ds = dsLoc();
+  var h = '<div class="card"><div class="ds-dem noprint">' + DS_TT.map(function (t) {
+    return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] ? r.dem[t[0]] : r.dem.tong) + ')</button>';
+  }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
+    '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
+    '<div class="scroll"><table><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
+      return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td>' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) + '<span class="ds-ghichu">' + esc(x.nhan.nguoi) + '</span>' : '<span class="muted">–</span>') + '</td><td>' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td>' + khauOo(x.scan) + '</td><td>' + khauOo(x.tach) + '</td><td>' + khauOo(x.ocr) + '</td><td>' + (x.tra ? ngayNgan(x.tra.ngay) : '<span class="muted">–</span>') + '</td><td><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
+    }).join('') || '<tr><td colspan="8" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
+  $('dsBody').innerHTML = h;
+  Array.prototype.forEach.call($('dsBody').querySelectorAll('[data-dtt]'), function (b) { b.onclick = function () { S.tt = b.getAttribute('data-dtt'); dashDsBang(); }; });
+  $('dsCsv').onclick = dsCsv;
+}
+function csvO(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
+function dsCsv() {
+  var ds = dsLoc(), r = DASH.ds.data;
+  var rows = [['Mã hộp', 'Ngày nhận TTLT', 'Ca nhận', 'Người nhận', 'Nhóm nhận', 'Scan (tờ)', 'Scan xong', 'Tách (tờ)', 'Tách xong', 'OCR (tờ)', 'OCR xong', 'Ngày trả', 'Trạng thái', 'Ghi chú']];
+  ds.forEach(function (x) { rows.push([x.ma, x.nhan ? x.nhan.ngay : '', x.nhan ? x.nhan.ca : '', x.nhan ? x.nhan.nguoi : '', x.nhanNhom ? x.nhanNhom.nhom : '', x.scan.to, x.scan.xong ? 'x' : '', x.tach.to, x.tach.xong ? 'x' : '', x.ocr.to, x.ocr.xong ? 'x' : '', x.tra ? x.tra.ngay : '', x.ttText, x.ghiChu]); });
+  var txt = '\uFEFF' + rows.map(function (rw) { return rw.map(csvO).join(','); }).join('\r\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'doi_soat_hop_den_' + r.den + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
 function loadDash() {
   $('dBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải dữ liệu Dashboard điều hành…</div></div>';
   var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
   veNgayNav();
-  DASH.ns.data = null;
+  DASH.ns.data = null; DASH.ds.data = null;
   call('dashboard', { ngay: $('dNgay').value, gomThu: gomThu }).then(function (d) {
     veNgayNav(d);
     DASH.d = d;

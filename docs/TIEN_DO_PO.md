@@ -24,8 +24,8 @@
 | 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 17 | Màn hình chờ và chống bấm lặp | T1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 18 | Đo tốc độ, đề xuất tối ưu | T2 | ⬜ Chưa làm |
-| 19 | Tab Đối soát hộp | H2 | ⬜ Chưa làm |
-| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | ⬜ Chưa làm |
+| 19 | Tab Đối soát hộp | H2 | 🟡 Xong trong mã, chờ Opus review và triển khai |
+| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
 | 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | ⬜ Chưa làm |
 | 23 | Giao diện điện thoại | C2 | ⬜ Chưa làm |

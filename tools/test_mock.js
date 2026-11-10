@@ -1409,5 +1409,80 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   api(tAdmin, 'resetDuLieu', { phamVi: 'THU' }); memo2();      // dọn dữ liệu mẫu vừa tạo
 }
 
+// ===== H2 + C0: trangThaiHop_ dùng chung — doiSoatHop, chiTietCa, dash_ không đổi =====
+{
+  const { execSync } = require('child_process');
+  let cu = ''; try { cu = execSync('git show 84975cb:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && !/hopTapTruoc_/.test(cu), 'H2/C0: đọc được Code.gs bản trước H2 (commit 84975cb) để so sánh');
+  const ctx2 = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctx2[k] = ctx[k]; });
+  vm.createContext(ctx2); vm.runInContext(cu, ctx2); ctx2.now_ = (...a) => ctx.now_(...a);
+  const memo2 = () => { ctx2.memoClear_(); ctx.memoClear_(); };
+  const nk0 = sh('NhatKy').rows.length, pc0 = sh('PhanCa').rows.length;
+  let n = 0;
+  const ap = (ngay, ca, buoc, hop, extra) => { n++; ctx.append_('NhatKy', Object.assign({ ID: 'H2T' + n, ThoiGian: ngay + ' 0' + (n % 10) + ':00:00', Ngay: ngay, Ca: ca, Nhom: '', Buoc: buoc, MaHop: hop, SoHoSo: 0, SoTrang: 0, SoTo: 0, TrangLoi: 0, HetHop: false, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' }, extra || {})); };
+  const xong = { HetHop: true, SoHoSo: 2, SoTrang: 20, SoTo: 10 };
+  const D1 = '2026-10-26', D2 = '2026-10-27', D3 = '2026-10-28';
+  // D1 Chiều: nhận P1..P5 (P5 ghi hai kiểu 2.1.5 / 02.01.05); P1 nhóm nhận + Scan xong; P2 Scan dở
+  ['P1', 'P2', 'P3', 'P4', '2.1.5'].forEach(h => ap(D1, 'Chiều', 'NHAN', h)); ap(D1, 'Chiều', 'NHAN', '02.01.05');
+  ap(D1, 'Chiều', 'NHAN_NHOM', 'P1', { Nhom: '1' }); ap(D1, 'Chiều', 'SCAN', 'P1', Object.assign({ Nhom: '1' }, xong)); ap(D1, 'Chiều', 'SCAN', 'P2', { SoHoSo: 1, SoTrang: 5, SoTo: 3 });
+  // D2 Sáng: P1 Tách xong; P3 Scan xong; nhận P6; nhóm nhận P7 (không có NHAN); Scan P8 (không có NHAN)
+  ap(D2, 'Sáng', 'TACH', 'P1', xong); ap(D2, 'Sáng', 'SCAN', 'P3', xong); ap(D2, 'Sáng', 'NHAN', 'P6'); ap(D2, 'Sáng', 'NHAN_NHOM', 'P7', { Nhom: '2' }); ap(D2, 'Sáng', 'SCAN', 'P8', xong);
+  // D2 Chiều: P1 OCR xong + trả; P3 Tách xong; P4 trả khi chưa làm
+  ap(D2, 'Chiều', 'OCR', 'P1', xong); ap(D2, 'Chiều', 'TRA', 'P1'); ap(D2, 'Chiều', 'TACH', 'P3', xong); ap(D2, 'Chiều', 'TRA', 'P4');
+  // D3 Sáng: P3 trả (Tách xong, OCR chưa); P9 nhận + Scan/Tách/OCR xong, chưa trả
+  ap(D3, 'Sáng', 'TRA', 'P3'); ap(D3, 'Sáng', 'NHAN', 'P9'); ['SCAN', 'TACH', 'OCR'].forEach(b => ap(D3, 'Sáng', b, 'P9', xong));
+  memo2();
+  const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
+  // 1) dash_ GIỐNG HỆT trước/sau trên mọi ngày
+  let giong = true, sai = '';
+  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (JSON.stringify(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
+  ok(giong && ngays.length >= 3, 'H2/C0: dash_ (mọi ngày, có/không gomThu) GIỐNG HỆT trước/sau khi tách hàm dùng chung', [sai, ngays.length]);
+  // 2) mọi ngày × ca × loại: số dòng danh sách chiTietCa = số trên ô
+  const CAS = ['Sáng', 'Chiều', 'Tối'], MAP = { tonDau: 'tonDau', nhan: 'nhanHop', chuaScan: 'chuaScan', chuaTach: 'chuaTach', chuaOcr: 'chuaOcr' };
+  let khop = true, lech = [], tong = 0, coSo = 0;
+  ngays.forEach(d => { memo2(); const dd = ctx.dash_(d, false); CAS.forEach(ca => Object.keys(MAP).forEach(l => {
+    memo2(); const ct = ctx.chiTietCa_({ ma: 'TT1', vaiTro: 'TOTRUONG' }, { ngay: d, ca, loai: l }, false), o = dd.cas.find(c => c.ca === ca)[MAP[l]];
+    tong++; if (o > 0) coSo++;
+    if (ct.soDong !== o || ct.hop.length !== o || new Set(ct.hop.map(x => x.khoa)).size !== o) { khop = false; lech.push([d, ca, l, ct.soDong, o]); }
+  })); });
+  ok(khop && tong >= 45 && coSo >= 5, 'H2/C0: với mọi ngày × ca × loại, số dòng chiTietCa = số trên ô của dash_ (' + tong + ' tổ hợp, ' + coSo + ' ô > 0)', lech.slice(0, 5));
+  const ct = (d, ca, l) => { memo2(); return ctx.chiTietCa_({ ma: 'TT1', vaiTro: 'TOTRUONG' }, { ngay: d, ca, loai: l }, false); };
+  const mas = x => x.hop.map(h => h.ma).sort().join();
+  ok(mas(ct(D2, 'Chiều', 'tonDau')) === '02.01.05,P1,P2,P3,P4,P6' && mas(ct(D1, 'Chiều', 'nhan')) === '02.01.05,P1,P2,P3,P4', 'H2/C0: danh sách tồn đầu ca / nhận đúng mã hộp (mã hiển thị dạng chuẩn, 2.1.5 và 02.01.05 là MỘT hộp)', [mas(ct(D2, 'Chiều', 'tonDau')), mas(ct(D1, 'Chiều', 'nhan'))]);
+  // 3) đối soát: trạng thái từng hộp
+  const gui = (tk, p) => api(tk, 'doiSoatHop', p || {});
+  const r = gui(tAdmin, { den: D3 });
+  const tt = {}; (r.data ? r.data.hop : []).forEach(h => { tt[h.ma] = h.tt; });
+  const mongDoi = { P1: 'DU', P2: 'DANG_LAM', P3: 'DANG_LAM', P4: 'TRA_SOM', '02.01.05': 'NHAN_CHUA_LAM', P6: 'NHAN_CHUA_LAM', P7: 'THIEU_NHAN', P8: 'THIEU_NHAN', P9: 'XONG_CHUA_TRA' };
+  ok(r.ok && JSON.stringify(Object.keys(mongDoi).map(k => tt[k])) === JSON.stringify(Object.values(mongDoi)), 'H2: trạng thái từng hộp đúng (Đủ / Đang làm dở / Trả khi chưa Tách xong / Đã nhận chưa làm / Thiếu nhận / Làm xong chưa trả)', tt);
+  const bg = k => r.data.hop.find(h => h.ma === k);
+  ok(/nhóm 2 đã nhận/.test(bg('P7').ghiChu) && bg('P8').ghiChu === '' && /2 kiểu/.test(bg('02.01.05').ghiChu), 'H2: hộp thiếu nhận ghi rõ "nhóm đã nhận"; hộp ghi hai kiểu mã có ghi chú biến thể', [bg('P7').ghiChu, bg('02.01.05').ghiChu]);
+  ok(bg('P1').nhan.ngay === D1 && bg('P1').scan.xong && bg('P1').tach.xong && bg('P1').ocr.xong && bg('P1').ocr.to === 10 && bg('P1').tra.ngay === D2 && bg('P2').scan.to === 3 && !bg('P2').scan.xong, 'H2: dòng hộp có ngày nhận, từng khâu (số tờ lũy kế, ✔ khi HetHop), ngày trả');
+  const demSo = Object.values(r.data.dem).slice(1).reduce((a, b) => a + b, 0);
+  ok(r.data.dem.tong === r.data.hop.length && demSo === r.data.dem.tong && r.data.soDong === r.data.hop.length && !r.data.catBot, 'H2: bộ đếm theo trạng thái cộng lại = tổng = số dòng', r.data.dem);
+  // 4) số đối soát khớp Dashboard: hộp có nhận = luyKe.nhanHop; tồn (nhận, chưa trả) = luyKe.ton
+  memo2(); const dd = ctx.dash_(D3, false);
+  ok(r.data.hop.filter(h => h.nhan).length === dd.luyKe.nhanHop && r.data.hop.filter(h => h.nhan && !h.tra).length === dd.luyKe.ton && r.data.hop.filter(h => h.tra).length === dd.luyKe.traHop, 'H2: số hộp nhận / tồn / trả của Đối soát = lũy kế Dashboard cùng ngày (cùng hàm)', [dd.luyKe.nhanHop, dd.luyKe.ton, dd.luyKe.traHop]);
+  // 5) lọc
+  const t1 = gui(tAdmin, { den: D3, trangThai: 'THIEU_NHAN' }); ok(t1.ok && t1.data.hop.map(h => h.ma).sort().join() === 'P7,P8' && t1.data.dem.tong === r.data.dem.tong, 'H2: lọc theo trạng thái (bộ đếm vẫn là toàn bộ)', t1.err);
+  const t2 = gui(tAdmin, { den: D3, tim: '2.1.5' }); ok(t2.ok && t2.data.hop.length === 1 && t2.data.hop[0].ma === '02.01.05', 'H2: tìm mã theo khóa — gõ "2.1.5" ra hộp ghi "02.01.05"', t2.data);
+  const t3 = gui(tAdmin, { den: D3, tu: D2 }); ok(t3.ok && t3.data.hop.every(h => h.ngayMoc >= D2) && t3.data.hop.some(h => h.ma === 'P9') && !t3.data.hop.some(h => h.ma === 'P1'), 'H2: lọc từ ngày nhận (hộp thiếu nhận theo ngày làm đầu tiên)', t3.data.hop.map(h => h.ma + h.ngayMoc));
+  const t4 = gui(tAdmin, { den: D1 }); ok(t4.ok && t4.data.hop.length === 5 && t4.data.hop.every(h => !h.tra && !h.ocr.xong), 'H2: trạng thái tính tới hết ngày đang chọn (den = ' + D1 + '): chưa thấy việc của các ngày sau', t4.data.hop.map(h => h.ma));
+  ok(!gui(tAdmin, { trangThai: 'XYZ' }).ok, 'H2: trạng thái lạ bị từ chối');
+  // 6) quyền: tổ viên không gọi được; Lãnh đạo, TT, ADMIN gọi được
+  ok(!gui(tA).ok && !api(tA, 'chiTietCa', { ngay: D1, ca: 'Chiều', loai: 'nhan' }).ok, 'H2/C0: tổ viên không gọi được doiSoatHop / chiTietCa');
+  ok(gui(tLD).ok && gui(tTT).ok && api(tLD, 'chiTietCa', { ngay: D1, ca: 'Chiều', loai: 'nhan' }).ok, 'H2/C0: Lãnh đạo, Tổ trưởng xem được');
+  ok(!api(tTT, 'chiTietCa', { ngay: D1, ca: 'Khuya', loai: 'nhan' }).ok && !api(tTT, 'chiTietCa', { ngay: D1, ca: 'Chiều', loai: 'abc' }).ok, 'C0: ca / loại không hợp lệ bị từ chối');
+  // 7) chỉ ĐỌC: không ghi gì, không log
+  const snap = JSON.stringify([sh('NhatKy').rows.length, sh('LogHeThong').rows.length, sh('PhanCa').rows.length]);
+  gui(tAdmin, {}); api(tTT, 'chiTietCa', { ngay: D2, ca: 'Chiều', loai: 'tonDau' });
+  ok(JSON.stringify([sh('NhatKy').rows.length, sh('LogHeThong').rows.length, sh('PhanCa').rows.length]) === snap, 'H2/C0: hai action chỉ đọc, không ghi NhatKy/log');
+  // 8) bản ghi hủy / THỬ NGHIỆM không vào đối soát (như Dashboard)
+  ap(D3, 'Sáng', 'NHAN', 'HUY-1', { Huy: true }); ap(D3, 'Sáng', 'NHAN', 'THU-1', { Loai: 'THỬ NGHIỆM' }); memo2();
+  const r5 = gui(tAdmin, { den: D3 }), r6 = api(tAdmin, 'doiSoatHop', { den: D3, gomThu: true });
+  ok(!r5.data.hop.some(h => h.ma === 'HUY-1' || h.ma === 'THU-1') && r6.data.hop.some(h => h.ma === 'THU-1') && !r6.data.hop.some(h => h.ma === 'HUY-1'), 'H2: bỏ bản ghi hủy; THỬ NGHIỆM chỉ hiện khi ADMIN gomThu');
+  sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; memo2();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

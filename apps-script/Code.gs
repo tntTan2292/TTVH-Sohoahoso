@@ -341,8 +341,8 @@ function auth_(token) {
 }
 
 /* ====================== API ====================== */
-const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
-const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu'];
+const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
+const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu', 'doiSoatHop', 'chiTietCa'];
 function api(token, action, p) {
   try {
     const u = auth_(token); p = p || {};
@@ -380,6 +380,14 @@ function route_(u, action, p) {
     case 'dashboard': {
       if (u.vaiTro === 'TOVIEN') throw 'Dashboard chỉ dành cho Lãnh đạo và Quản lý';     // tổ viên không xem Dashboard
       return dash_(p.ngay, !!p.gomThu && u.vaiTro === 'ADMIN');
+    }
+    case 'doiSoatHop': {      // H2: cùng quyền Dashboard (tổ viên không xem)
+      if (u.vaiTro === 'TOVIEN') throw 'Đối soát hộp chỉ dành cho Lãnh đạo và Quản lý';
+      return doiSoatHop_(u, p, !!p.gomThu && u.vaiTro === 'ADMIN');
+    }
+    case 'chiTietCa': {       // C0: chỉ tải khi bấm ô số liệu
+      if (u.vaiTro === 'TOVIEN') throw 'Chi tiết số liệu chỉ dành cho Lãnh đạo và Quản lý';
+      return chiTietCa_(u, p, !!p.gomThu && u.vaiTro === 'ADMIN');
     }
     case 'thongKeNhanSu': {
       if (u.vaiTro === 'TOVIEN') throw 'Thống kê nhân sự chỉ dành cho Lãnh đạo và Quản lý';
@@ -1473,7 +1481,7 @@ function chot_(u, p) {
 // Bản ghi NhatKy còn hiệu lực (không hủy), đúng ca; dữ liệu THỬ NGHIỆM không tính vào số thật (trừ khi gomThu). Dùng chung dash_ và thongKeNhanSu_.
 function nhatKyRows_(gomThu) {
   return read_('NhatKy').filter(function (r) { return !b_(r.Huy); }).map(function (r) {
-    return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), hop: maHopKhoa_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),      // H1: hop = KHÓA mã hộp (dùng để đếm/gom, không hiển thị)
+    return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), ma: s_(r.MaHop), tg: ts_(r.ThoiGian), hop: maHopKhoa_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),      // H1: hop = KHÓA mã hộp (dùng để đếm/gom, không hiển thị)
       to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), nguoi: s_(r.NguoiNhap), loai: s_(r.Loai), tv: s_(r.ThanhVien) };
   }).filter(function (r) { return CA[r.ca] && (gomThu || r.loai !== 'THỬ NGHIỆM'); });
 }
@@ -1491,6 +1499,114 @@ function congCaNhan_(canhan, tvs, caKey, b, add) {
     Object.keys(add).forEach(function (f) { c[b + f] += add[f] / tvs.length; });
   });
 }
+/* ====================== Trạng thái hộp dùng chung (H2 Đối soát, C0 chi tiết ô số liệu) ======================
+   MỘT nguồn cho số đếm của dash_ và danh sách của chiTietCa / doiSoatHop: số trên ô luôn = số dòng danh sách.
+   Mọi so sánh theo KHÓA mã hộp (H1). Mốc ca k = 'yyyy-MM-dd|o' (o = 1 Sáng, 2 Chiều, 3 Tối). */
+function nhatKyMoc_(rows) {      // gắn mốc ca k và số đơn vị (tờ nếu > 0, không thì trang) cho từng bản ghi
+  rows.forEach(function (r) { r.k = r.ngay + '|' + CA[r.ca].o; r.dv = r.to > 0 ? r.to : r.trang; });
+  return rows;
+}
+// Mốc ca SỚM NHẤT của từng hộp theo khâu: Scan/Tách/OCR chỉ tính bản ghi "xong hộp" (HetHop)
+function hopMoc_(rows) {
+  const first = function (buoc, needHet) {
+    const m = {};
+    rows.forEach(function (r) { if (r.buoc === buoc && (!needHet || r.het) && r.hop && (m[r.hop] === undefined || r.k < m[r.hop])) m[r.hop] = r.k; });
+    return m;
+  };
+  return { nhan: first('NHAN'), scan: first('SCAN', true), tach: first('TACH', true), ocr: first('OCR', true), tra: first('TRA') };
+}
+// Tập mã hộp (khóa) theo trạng thái ĐẦU mốc k: tồn đầu / chưa scan / chờ tách / chờ OCR
+function hopTapTruoc_(M, k) {
+  const lt = function (m, h) { return m[h] !== undefined && m[h] < k; };
+  const tonDau = [], chuaScan = [], chuaTach = [], chuaOcr = [];
+  Object.keys(M.nhan).forEach(function (h) {
+    if (lt(M.nhan, h) && !lt(M.tra, h)) { tonDau.push(h); if (!lt(M.scan, h)) chuaScan.push(h); }
+  });
+  Object.keys(M.scan).forEach(function (h) { if (lt(M.scan, h) && !lt(M.tach, h) && !lt(M.tra, h)) chuaTach.push(h); });
+  Object.keys(M.tach).forEach(function (h) { if (lt(M.tach, h) && !lt(M.ocr, h)) chuaOcr.push(h); });
+  return { tonDau: tonDau, chuaScan: chuaScan, chuaTach: chuaTach, chuaOcr: chuaOcr };
+}
+// Tập mã hộp có mốc m[h] bắt đầu bằng prefix (và <= den nếu có)
+function hopTrongMoc_(m, prefix, den) { return Object.keys(m).filter(function (h) { return m[h].indexOf(prefix) === 0 && (!den || m[h] <= den); }); }
+// Hồ sơ từng hộp (theo khóa) từ các bản ghi: nhận TTLT, nhận nhóm, Scan/Tách/OCR (số tờ lũy kế, đã xong hộp), trả, các kiểu viết mã
+function hopHoSo_(rows) {
+  const ho = {};
+  const som = function (a, r) { return !a || r.k < a.k || (r.k === a.k && r.tg < a.tg); };
+  rows.forEach(function (r) {
+    if (!r.hop) return;
+    const h = ho[r.hop] = ho[r.hop] || { khoa: r.hop, maGoc: [], nhan: null, nhanNhom: null, tra: null, lam: false,
+      scan: { to: 0, hs: 0, xong: false }, tach: { to: 0, hs: 0, xong: false }, ocr: { to: 0, hs: 0, xong: false }, batDau: '' };
+    if (r.ma && h.maGoc.indexOf(r.ma) < 0) h.maGoc.push(r.ma);
+    if (!h.batDau || r.ngay < h.batDau) h.batDau = r.ngay;
+    if (r.buoc === 'NHAN') { if (som(h.nhan, r)) h.nhan = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi }; }
+    else if (r.buoc === 'NHAN_NHOM') { if (som(h.nhanNhom, r)) h.nhanNhom = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nhom: r.nhom, nguoi: r.nguoi }; }
+    else if (r.buoc === 'TRA') { if (som(h.tra, r)) h.tra = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi }; }
+    else if (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR') {
+      const b = h[r.buoc.toLowerCase()];
+      h.lam = true; b.to += r.dv; b.hs += r.hs; if (r.het) b.xong = true;
+    }
+  });
+  return ho;
+}
+const HOP_TT_ = { DU: 'Đủ', NHAN_CHUA_LAM: 'Đã nhận chưa làm', DANG_LAM: 'Đang làm dở', XONG_CHUA_TRA: 'Làm xong chưa trả', THIEU_NHAN: 'Thiếu nhận TTLT', TRA_SOM: 'Trả khi chưa Tách xong' };
+// Trạng thái đối soát (ưu tiên từ trên xuống): thiếu nhận TTLT → trả khi chưa Tách xong → đủ → làm xong chưa trả → đã nhận chưa làm → đang làm dở.
+// Hộp đã trả, Tách xong nhưng OCR chưa xong không thuộc nhóm nào khác → "Đang làm dở".
+function hopTrangThai_(h) {
+  if (!h.nhan) return 'THIEU_NHAN';
+  if (h.tra && !h.tach.xong) return 'TRA_SOM';
+  if (h.ocr.xong) return h.tra ? 'DU' : 'XONG_CHUA_TRA';
+  return h.lam ? 'DANG_LAM' : 'NHAN_CHUA_LAM';
+}
+function hopBanGhi_(h, ns) {      // một dòng cho giao diện (không lộ khóa nội bộ k/tg)
+  const rep = h.maGoc.filter(function (m) { return m === maHopChuan_(m); })[0] || h.maGoc[0] || h.khoa;
+  const tt = hopTrangThai_(h), ten = function (ma) { return ns[ma] || ma; };
+  let ghiChu = '';
+  if (h.maGoc.length > 1) ghiChu = 'Mã ghi ' + h.maGoc.length + ' kiểu: ' + h.maGoc.join(', ');
+  if (tt === 'THIEU_NHAN' && h.nhanNhom) ghiChu = (ghiChu ? ghiChu + '; ' : '') + 'nhóm ' + h.nhanNhom.nhom + ' đã nhận ' + h.nhanNhom.ngay + ' ca ' + h.nhanNhom.ca;
+  return { ma: maHopChuan_(rep), khoa: h.khoa, tt: tt, ttText: HOP_TT_[tt],
+    nhan: h.nhan ? { ngay: h.nhan.ngay, ca: h.nhan.ca, nguoi: ten(h.nhan.nguoi) } : null,
+    nhanNhom: h.nhanNhom ? { ngay: h.nhanNhom.ngay, ca: h.nhanNhom.ca, nhom: h.nhanNhom.nhom } : null,
+    scan: { to: h.scan.to, xong: h.scan.xong }, tach: { to: h.tach.to, xong: h.tach.xong }, ocr: { to: h.ocr.to, xong: h.ocr.xong },
+    tra: h.tra ? { ngay: h.tra.ngay, ca: h.tra.ca } : null, ngayMoc: h.nhan ? h.nhan.ngay : h.batDau, ghiChu: ghiChu };
+}
+function hopSapXep_(a, b) { return a.ngayMoc.localeCompare(b.ngayMoc) || a.ma.localeCompare(b.ma, 'vi', { numeric: true }); }
+const HOP_TOI_DA_ = 5000;
+// H2 – Đối soát hộp: mỗi hộp một dòng, trạng thái tính tới hết ngày `den`. Lọc theo ngày nhận (hộp thiếu nhận: theo ngày làm đầu tiên), trạng thái, mã.
+function doiSoatHop_(u, p, gomThu) {
+  const t = now_(); let den = d_(p.den) || t.ngay; if (den > t.ngay) den = t.ngay;
+  const tu = d_(p.tu) || '', tim = s_(p.tim).replace(/\s+/g, '').toUpperCase(), timKhoa = maHopKhoa_(p.tim), loc = s_(p.trangThai);
+  if (loc && !HOP_TT_[loc]) throw 'Trạng thái không hợp lệ';
+  const ns = {}; read_('NhanSu').forEach(function (r) { ns[s_(r.MaHRM)] = s_(r.HoTen); });
+  const rows = nhatKyMoc_(nhatKyRows_(gomThu)).filter(function (r) { return r.ngay <= den; });
+  const ho = hopHoSo_(rows), dem = { tong: 0 };
+  Object.keys(HOP_TT_).forEach(function (k) { dem[k] = 0; });
+  let ds = Object.keys(ho).map(function (k) { return hopBanGhi_(ho[k], ns); }).filter(function (x) {
+    if (tu && x.ngayMoc < tu) return false;
+    if (tim && x.ma.replace(/\s+/g, '').toUpperCase().indexOf(tim) < 0 && x.khoa.indexOf(timKhoa) < 0) return false;
+    return true;
+  });
+  ds.forEach(function (x) { dem.tong++; dem[x.tt]++; });
+  if (loc) ds = ds.filter(function (x) { return x.tt === loc; });
+  ds.sort(hopSapXep_);
+  const catBot = ds.length > HOP_TOI_DA_;
+  return { tu: tu, den: den, dem: dem, hop: catBot ? ds.slice(0, HOP_TOI_DA_) : ds, soDong: ds.length, catBot: catBot, capNhat: t.ts };
+}
+// C0 – chi tiết ô số liệu "ĐẦU CA" của một ca: danh sách hộp lấy từ CÙNG hàm với dash_ (hopMoc_/hopTapTruoc_/hopTrongMoc_)
+const CHI_TIET_LOAI_ = { tonDau: 'Hộp tồn đầu ca', nhan: 'Nhận từ TTLT', chuaScan: 'Chưa scan', chuaTach: 'Chờ tách file', chuaOcr: 'Chờ OCR' };
+function chiTietCa_(u, p, gomThu) {
+  const t = now_(), ngay = d_(p.ngay) || t.ngay, ca = s_(p.ca), loai = s_(p.loai);
+  if (!CA[ca]) throw 'Chọn ca';
+  if (!CHI_TIET_LOAI_[loai]) throw 'Loại số liệu không hợp lệ';
+  const k = ngay + '|' + CA[ca].o;
+  const rows = nhatKyMoc_(nhatKyRows_(gomThu));
+  const M = hopMoc_(rows);
+  const khoa = loai === 'nhan' ? hopTrongMoc_(M.nhan, k) : hopTapTruoc_(M, k)[loai];
+  const ns = {}; read_('NhanSu').forEach(function (r) { ns[s_(r.MaHRM)] = s_(r.HoTen); });
+  const ho = hopHoSo_(rows.filter(function (r) { return loai === 'nhan' ? r.k <= k : r.k < k; }));      // số tờ / khâu xong tính tới hết ca (nhận) hoặc tới đầu ca (tồn, chờ)
+  const hop = khoa.map(function (h) { return ho[h] ? hopBanGhi_(ho[h], ns) : { ma: maHopChuan_(h), khoa: h, tt: '', ttText: '', nhan: null, nhanNhom: null, scan: { to: 0, xong: false }, tach: { to: 0, xong: false }, ocr: { to: 0, xong: false }, tra: null, ngayMoc: '', ghiChu: '' }; }).sort(hopSapXep_);
+  return { ngay: ngay, ca: ca, loai: loai, ten: CHI_TIET_LOAI_[loai], soDong: hop.length, hop: hop };
+}
+
 function dash_(ngayIn, gomThu) {
   const t = now_(), ngay = d_(ngayIn) || t.ngay;
   const rows = nhatKyRows_(gomThu);
@@ -1507,26 +1623,14 @@ function dash_(ngayIn, gomThu) {
   const dkSum = function (b, o) {
     return dkNgay.reduce(function (a, x) { return a + ((x.b === b && (!o.ngay || x.ngay === o.ngay) && (!o.ca || x.ca === o.ca) && (!o.den || x.ngay <= o.den)) ? x.dv : 0); }, 0);
   };
-  rows.forEach(function (r) { r.k = r.ngay + '|' + CA[r.ca].o; r.dv = r.to > 0 ? r.to : r.trang; });
-  const first = function (buoc, needHet) {
-    const m = {};
-    rows.forEach(function (r) { if (r.buoc === buoc && (!needHet || r.het) && r.hop && (m[r.hop] === undefined || r.k < m[r.hop])) m[r.hop] = r.k; });
-    return m;
-  };
-  const nhan = first('NHAN'), scan = first('SCAN', true), tach = first('TACH', true), ocr = first('OCR', true), tra = first('TRA');
-  const lt = function (m, h, k) { return m[h] !== undefined && m[h] < k; };
+  nhatKyMoc_(rows);
+  const M = hopMoc_(rows), nhan = M.nhan, scan = M.scan, tach = M.tach, ocr = M.ocr, tra = M.tra;      // C0/H2: dùng chung với chiTietCa / doiSoatHop → số trên ô = số dòng danh sách
   const trangThaiTruoc = function (k) {
-    let tonDau = 0, chuaScan = 0, chuaTach = 0;
-    Object.keys(nhan).forEach(function (h) {
-      if (lt(nhan, h, k) && !lt(tra, h, k)) { tonDau++; if (!lt(scan, h, k)) chuaScan++; }
-    });
-    Object.keys(scan).forEach(function (h) { if (lt(scan, h, k) && !lt(tach, h, k) && !lt(tra, h, k)) chuaTach++; });
-    let chuaOcr = 0;
-    Object.keys(tach).forEach(function (h) { if (lt(tach, h, k) && !lt(ocr, h, k)) chuaOcr++; });
-    return { tonDau: tonDau, chuaScan: chuaScan, chuaTach: chuaTach, chuaOcr: chuaOcr };
+    const g = hopTapTruoc_(M, k);
+    return { tonDau: g.tonDau.length, chuaScan: g.chuaScan.length, chuaTach: g.chuaTach.length, chuaOcr: g.chuaOcr.length };
   };
   // den (tùy chọn): chỉ tính tới mốc này (dùng cho lũy kế đến hết ngày đang xem)
-  const cnt = function (m, prefix, den) { return Object.keys(m).filter(function (h) { return m[h].indexOf(prefix) === 0 && (!den || m[h] <= den); }).length; };
+  const cnt = function (m, prefix, den) { return hopTrongMoc_(m, prefix, den).length; };
   const agg = function (prefix, den) {
     const rs = rows.filter(function (r) { return r.k.indexOf(prefix) === 0 && (!den || r.k <= den); });
     const sum = function (b, f) { return rs.filter(function (r) { return r.buoc === b; }).reduce(function (a, r) { return a + r[f]; }, 0); };
