@@ -209,6 +209,30 @@ function hash_(salt, pin) {
 function isAdmin_(u) { return VAI_TRO_QL.indexOf(u.vaiTro) >= 0; }
 function setCell_(tab, row, col, val) { ss_().getSheetByName(tab).getRange(row, TAB[tab].indexOf(col) + 1).setValue(safe_(val)); memoClear_(tab); }
 
+/* ====================== Mã hộp: khóa so sánh và dạng chuẩn (H1, QĐ6) ====================== */
+// Cùng một hộp bị ghi nhiều kiểu (2.1.87 / 02.01.87 / 02.1.87) → mọi chỗ SO SÁNH / GOM theo mã hộp dùng maHopKhoa_, không so chuỗi thô.
+const MA_HOP_SO_RE_ = /^\d+(\.\d+)+$/;      // các đoạn số ngăn bằng dấu chấm (208.18.17, 2.1.87)
+// Khóa: bỏ khoảng trắng, IN HOA; nếu đúng mẫu số thì bỏ số 0 đầu từng đoạn (đoạn 0/00 → 0). Mã khác mẫu: khóa là chính nó (đã bỏ khoảng trắng, in hoa).
+function maHopKhoa_(v) {
+  const x = s_(v).replace(/\s+/g, '').toUpperCase();
+  return MA_HOP_SO_RE_.test(x) ? x.split('.').map(function (d) { return d.replace(/^0+(?=\d)/, ''); }).join('.') : x;
+}
+// Dạng hiển thị chuẩn: đoạn số 1 chữ số đệm thành 2 (2.1.87 → 02.01.87); đoạn ≥ 2 chữ số giữ nguyên (208.18.17); mã khác mẫu giữ nguyên.
+function maHopChuan_(v) {
+  const x = s_(v).replace(/\s+/g, '');
+  return MA_HOP_SO_RE_.test(x) ? x.split('.').map(function (d) { return d.length < 2 ? '0' + d : d; }).join('.') : x;
+}
+// Gom các dòng theo khóa; trả hàm rep(khoa) = mã ĐẠI DIỆN để hiển thị: ưu tiên dạng đã chuẩn, không có thì mã gặp đầu tiên (không đổi chuỗi khi chỉ có một kiểu).
+function repMaHop_(rows) {
+  const rep = {};
+  rows.forEach(function (r) {
+    const h = s_(r.MaHop), k = maHopKhoa_(h);
+    if (!k) return;
+    if (rep[k] === undefined || (h === maHopChuan_(h) && rep[k] !== maHopChuan_(rep[k]))) rep[k] = h;
+  });
+  return function (k) { return rep[k] !== undefined ? rep[k] : k; };
+}
+
 /* ====================== Ca / thời gian ====================== */
 function caWin_(ca, ngay, t) {
   const c = CA[ca];
@@ -476,7 +500,7 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
     if (!raw.length) throw 'Chưa nhập mã hộp';
     const xau = raw.filter(function (h) { return !MA_HOP_RE.test(h); });
     if (xau.length) throw 'Mã hộp không hợp lệ: ' + xau.slice(0, 3).join(' | ') + ' (chỉ chữ, số, . _ - /; tối đa 30 ký tự; mỗi mã một dòng, không dùng dấu phẩy)';
-    const hops = raw.filter(function (h, i) { return raw.indexOf(h) === i; });   // loại mã trùng trong danh sách nhập
+    const hops = raw.filter(function (h, i) { return raw.map(maHopKhoa_).indexOf(maHopKhoa_(h)) === i; });   // loại mã trùng trong danh sách nhập (H1: trùng theo khóa, 2.1.87 = 02.01.87)
     if (hops.length > 200) throw 'Tối đa 200 mã hộp mỗi lần';
     const canhanBuoc = ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'].indexOf(buoc) >= 0;
     const tv = nhom ? membersOf_(ngay, ca, nhom).map(function (m) { return m.ma; }).join(',')   // chốt thành viên nhóm lúc báo cáo
@@ -484,7 +508,8 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
     const ghiChu = (nguoiHoTen ? '[Nhập hộ: ' + nguoiHoTen + '] ' : '') + s_(p.ghiChu);
     const warnings = [], rows = read_('NhatKy').filter(function (r) { return !b_(r.Huy); });
     if (raw.length > hops.length) warnings.push('Đã bỏ ' + (raw.length - hops.length) + ' mã trùng trong danh sách nhập');
-    const has = function (b, h, het) { return rows.some(function (r) { return s_(r.Buoc) === b && s_(r.MaHop) === h && (!het || b_(r.HetHop)); }); };
+    const hk = {}; rows.forEach(function (r) { (hk[s_(r.Buoc)] = hk[s_(r.Buoc)] || {})[maHopKhoa_(r.MaHop)] = (hk[s_(r.Buoc)][maHopKhoa_(r.MaHop)] || 0) | (b_(r.HetHop) ? 2 : 1); });   // H1: tra theo KHÓA mã hộp (1 = có bản ghi, 2 = có bản ghi xong hộp)
+    const has = function (b, h, het) { const v = (hk[b] || {})[maHopKhoa_(h)] || 0; return het ? (v & 2) > 0 : v > 0; };
     let added = 0, ct = '';
 
     if (buoc === 'SCAN' || buoc === 'TACH' || buoc === 'OCR') {
@@ -536,13 +561,14 @@ function ghiLo_(u, p) {      // chạy trong withLock_ ở api(); MỌI kiểm t
   const muc = Array.isArray(p.muc) ? p.muc : [];
   if (!muc.length) throw 'Chưa có dòng nào để gửi';
   if (muc.length > LO_MAX_MUC) throw 'Mỗi lần gửi tối đa ' + LO_MAX_HOP + ' hộp × ' + LO_BUOC.length + ' khâu (' + LO_MAX_MUC + ' dòng)';
-  const thuTu = [], theoHop = {};
+  const thuTu = [], theoHop = {};      // H1: gom theo KHÓA mã hộp (cùng hộp viết 2.1.87 và 02.01.87 là một hộp)
   muc.forEach(function (m) {
     const h = s_(m && m.hop), b = s_(m && m.buoc);
     if (LO_BUOC.indexOf(b) < 0) throw 'Khâu không hợp lệ trong lô: ' + b + ' (chỉ Scan, Tách file, OCR)';
     if (!h) throw 'Có dòng chưa nhập mã hộp';
-    if (!theoHop[h]) { theoHop[h] = []; thuTu.push(h); }
-    theoHop[h].push(m);
+    const k = maHopKhoa_(h);
+    if (!theoHop[k]) { theoHop[k] = []; thuTu.push(k); }
+    theoHop[k].push(m);
   });
   if (thuTu.length > LO_MAX_HOP) throw 'Mỗi lần gửi tối đa ' + LO_MAX_HOP + ' hộp (đang có ' + thuTu.length + ')';
   const chung = {};
@@ -551,11 +577,11 @@ function ghiLo_(u, p) {      // chạy trong withLock_ ở api(); MỌI kiểm t
   let added = 0, loi = 0;
   LO_DANG_GHI_ = true;
   try {
-    thuTu.forEach(function (h) {
-      theoHop[h].sort(function (a, b) { return LO_BUOC.indexOf(s_(a.buoc)) - LO_BUOC.indexOf(s_(b.buoc)); });
+    thuTu.forEach(function (khoa) {
+      theoHop[khoa].sort(function (a, b) { return LO_BUOC.indexOf(s_(a.buoc)) - LO_BUOC.indexOf(s_(b.buoc)); });
       let hong = '';
-      theoHop[h].forEach(function (m) {
-        const b = s_(m.buoc), kq = { hop: h, buoc: b, ok: false, added: 0, warnings: [], err: '' };
+      theoHop[khoa].forEach(function (m) {
+        const h = s_(m.hop), b = s_(m.buoc), kq = { hop: h, buoc: b, ok: false, added: 0, warnings: [], err: '' };
         ketQua.push(kq);
         if (hong) { kq.err = 'Bỏ qua vì khâu ' + (STEP_NAME_[hong] || hong) + ' của hộp này bị lỗi'; loi++; return; }
         const q = Object.assign({}, chung, { buoc: b, hop: h, soHoSo: m.soHoSo, soTrang: m.soTrang, soTo: m.soTo, trangLoi: m.trangLoi, hetHop: !!m.hetHop, maHoSo: m.maHoSo });
@@ -615,7 +641,7 @@ function khoiPhuc_(u, p) {
   if (!b_(r.Huy)) throw 'Bản ghi này chưa bị xóa';
   const mot = ['NHAN', 'NHAN_NHOM', 'TRA'].indexOf(s_(r.Buoc)) >= 0;
   const trung = read_('NhatKy').some(function (x) {
-    if (b_(x.Huy) || s_(x.ID) === s_(p.id) || s_(x.Buoc) !== s_(r.Buoc) || s_(x.MaHop) !== s_(r.MaHop)) return false;
+    if (b_(x.Huy) || s_(x.ID) === s_(p.id) || s_(x.Buoc) !== s_(r.Buoc) || maHopKhoa_(x.MaHop) !== maHopKhoa_(r.MaHop)) return false;
     return mot || (b_(r.HetHop) && b_(x.HetHop));
   });
   if (trung) throw 'Không khôi phục được: hộp ' + s_(r.MaHop) + ' đã có bản ghi còn hiệu lực ở bước này (tránh cộng trùng). Xóa hoặc sửa bản ghi kia trước.';
@@ -662,7 +688,8 @@ function nhatKy_(u, p) {
 
 function hopGoiY_(u, p) {
   const buoc = s_(p.buoc), rows = read_('NhatKy').filter(function (r) { return !b_(r.Huy); });
-  const set = function (b, het) { const m = {}; rows.forEach(function (r) { if (s_(r.Buoc) === b && (!het || b_(r.HetHop))) m[s_(r.MaHop)] = 1; }); return m; };
+  const rep = repMaHop_(rows);      // H1: gom theo khóa, trả mã đại diện để hiển thị
+  const set = function (b, het) { const m = {}; rows.forEach(function (r) { if (s_(r.Buoc) === b && (!het || b_(r.HetHop))) m[maHopKhoa_(r.MaHop)] = 1; }); return m; };
   const nhan = set('NHAN'), nhanNhom = set('NHAN_NHOM'), scanDone = set('SCAN', true), tachDone = set('TACH', true), ocrDone = set('OCR', true), tra = set('TRA');
   let out = [];
   if (buoc === 'SCAN') out = Object.keys(nhanNhom).filter(function (h) { return !scanDone[h] && !tra[h]; });
@@ -670,7 +697,7 @@ function hopGoiY_(u, p) {
   else if (buoc === 'OCR') out = Object.keys(tachDone).filter(function (h) { return !ocrDone[h]; });
   else if (buoc === 'NHAN_NHOM') out = Object.keys(nhan).filter(function (h) { return !nhanNhom[h] && !tra[h]; });
   else if (buoc === 'TRA') out = Object.keys(nhan).filter(function (h) { return !tra[h]; });
-  return out.sort();
+  return out.map(rep).sort();
 }
 
 /* ---------- Vào ca (tự vào ca đang mở) và lịch sử cá nhân ---------- */
@@ -1183,7 +1210,7 @@ function chuanHoaNhom_(u, p) {
   const mo = function (r) { return { id: s_(r.ID), gio: ts_(r.ThoiGian).slice(11, 16), buoc: s_(r.Buoc), hop: s_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang), to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), maHoSo: s_(r.MaHoSo) }; };
   const giong = function (a, b) { return ['SoHoSo', 'SoTrang', 'SoTo', 'TrangLoi'].every(function (k) { return n_(a[k]) === n_(b[k]); }) && b_(a.HetHop) === b_(b.HetHop); };
   // gom theo (nhóm, khâu, hộp): dòng đã ở sẵn trong nhóm + dòng sắp đổi
-  const nhomKey = function (nhom, r) { return nhom + '|' + s_(r.Buoc) + '|' + s_(r.MaHop); };
+  const nhomKey = function (nhom, r) { return nhom + '|' + s_(r.Buoc) + '|' + maHopKhoa_(r.MaHop); };
   const gom = {};
   rows.forEach(function (r) { if (s_(r.Nhom)) (gom[nhomKey(s_(r.Nhom), r)] = gom[nhomKey(s_(r.Nhom), r)] || []).push({ r: r, moi: false }); });
   ds.forEach(function (x) { (gom[nhomKey(x.nhom, x.r)] = gom[nhomKey(x.nhom, x.r)] || []).push({ r: x.r, moi: true }); });
@@ -1399,7 +1426,7 @@ function chot_(u, p) {
 // Bản ghi NhatKy còn hiệu lực (không hủy), đúng ca; dữ liệu THỬ NGHIỆM không tính vào số thật (trừ khi gomThu). Dùng chung dash_ và thongKeNhanSu_.
 function nhatKyRows_(gomThu) {
   return read_('NhatKy').filter(function (r) { return !b_(r.Huy); }).map(function (r) {
-    return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), hop: s_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),
+    return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), hop: maHopKhoa_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),      // H1: hop = KHÓA mã hộp (dùng để đếm/gom, không hiển thị)
       to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), nguoi: s_(r.NguoiNhap), loai: s_(r.Loai), tv: s_(r.ThanhVien) };
   }).filter(function (r) { return CA[r.ca] && (gomThu || r.loai !== 'THỬ NGHIỆM'); });
 }

@@ -1214,5 +1214,70 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ctx.memoClear_();
 }
 
+// ===== H1: khóa mã hộp (maHopKhoa_ / maHopChuan_) =====
+{
+  const { execSync } = require('child_process');
+  // hàm thuần
+  const K = ctx.maHopKhoa_, C = ctx.maHopChuan_;
+  ok(K('2.1.87') === '2.1.87' && K('02.01.87') === '2.1.87' && K('02.1.87') === '2.1.87' && K(' 2.01.87 ') === '2.1.87' && K('00.0.00') === '0.0.0' && K('208.18.17') === '208.18.17' && K('208.018.017') === '208.18.17', 'H1: maHopKhoa_ bỏ số 0 đầu từng đoạn (đoạn 0/00 → 0), giữ đoạn dài', ['2.1.87', '02.01.87', '00.0.00'].map(K));
+  ok(K('test-1') === 'TEST-1' && K('Test-1') === 'TEST-1' && K('TEST-01') === 'TEST-01' && K('A/B_3') === 'A/B_3' && K('') === '' && K(null) === '', 'H1: mã khác mẫu số: khóa là chính nó (bỏ khoảng trắng, in hoa), không bỏ số 0');
+  ok(C('2.1.87') === '02.01.87' && C('02.01.87') === '02.01.87' && C('208.18.17') === '208.18.17' && C('2.18.7') === '02.18.07' && C('TEST-1') === 'TEST-1' && C('0.0.0') === '00.00.00', 'H1: maHopChuan_ đệm đoạn 1 chữ số thành 2, giữ đoạn ≥ 2 chữ số, mã khác mẫu giữ nguyên');
+  ok(K(C('2.1.87')) === K('2.1.87') && K(C('208.18.17')) === K('208.18.17'), 'H1: khóa của dạng chuẩn = khóa của dạng gốc');
+  // bản trước H1 (b119766) chạy trên CÙNG Sheet giả để so sánh trước/sau
+  let cu = ''; try { cu = execSync('git show b119766:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && !/maHopKhoa_/.test(cu), 'H1: đọc được Code.gs bản trước H1 (commit b119766) để so sánh');
+  const ctx2 = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctx2[k] = ctx[k]; });
+  vm.createContext(ctx2); vm.runInContext(cu, ctx2); ctx2.now_ = (...a) => ctx.now_(...a);
+  const memo2 = () => { ctx2.memoClear_(); ctx.memoClear_(); };
+  ['2026-11-03', '2026-11-04', '2026-11-05'].forEach(d => api(tAdmin, 'taoMau', { ngay: d }));      // thêm dữ liệu mẫu nhiều ngày/ca/nhóm để so sánh trước/sau
+  const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
+  const raws = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.s_(x[6])).filter(Boolean)));
+  ok(raws.length === new Set(raws.map(K)).size && ngays.length >= 2, 'H1: (điều kiện) dữ liệu mock hiện có KHÔNG có biến thể mã hộp', [raws.length, ngays.length]);
+  // 1) không có biến thể → dash_ / hopGoiY_ / thongKeNhanSu_ giống hệt trước/sau
+  let giong = true, sai = '';
+  ngays.forEach(n => [true, false].forEach(g => { memo2(); const a = JSON.stringify(ctx.dash_(n, g)), b = JSON.stringify(ctx2.dash_(n, g)); if (a !== b) { giong = false; sai += ' dash ' + n + g; } }));
+  ['SCAN', 'TACH', 'OCR', 'NHAN_NHOM', 'TRA'].forEach(b => { memo2(); const a = JSON.stringify(ctx.hopGoiY_({}, { buoc: b })), c = JSON.stringify(ctx2.hopGoiY_({}, { buoc: b })); if (a !== c) { giong = false; sai += ' goiY ' + b; } });
+  memo2(); const tk = { tu: ngays[0], den: ngays[ngays.length - 1] };
+  if (JSON.stringify(ctx.thongKeNhanSu_(tk, true)) !== JSON.stringify(ctx2.thongKeNhanSu_(tk, true))) { giong = false; sai += ' thongKe'; }
+  ok(giong, 'H1: không có biến thể mã → dash_ (mọi ngày, có/không gomThu), hopGoiY_ (5 khâu), thongKeNhanSu_ GIỐNG HỆT trước/sau', sai);
+  // cảnh báo ghi_ giống hệt trước/sau (ghi thử rồi gỡ dòng vừa ghi)
+  const hopCo = raws.find(h => sh('NhatKy').rows.some(x => x[6] === h && x[5] === 'NHAN' && x[16] !== true)) || raws[0];
+  const thu = (C_, tk2, p) => { memo2(); const n0 = sh('NhatKy').rows.length, l0 = sh('LogHeThong').rows.length; const r = C_.api(tk2, 'ghi', p); sh('NhatKy').rows.length = n0; sh('LogHeThong').rows.length = l0; memo2(); return r; };
+  const ca = 'Chiều', cas = [{ buoc: 'SCAN', hop: hopCo, soHoSo: 1, soTrang: 5 }, { buoc: 'SCAN', hop: 'KHONG-NHAN-1', soHoSo: 1, soTrang: 5 }, { buoc: 'TACH', hop: 'KHONG-NHAN-1', soHoSo: 1, soTrang: 5 }, { buoc: 'OCR', hop: hopCo, soHoSo: 1, soTrang: 5 }, { buoc: 'NHAN', hop: hopCo }, { buoc: 'NHAN', hop: 'MOI-9' }, { buoc: 'TRA', hop: 'KHONG-NHAN-1' }, { buoc: 'TRA', hop: hopCo }];
+  let gg = true, ggSai = [];
+  cas.forEach(c => { const a = thu(ctx, tTT, Object.assign({ ca }, c)), b = thu(ctx2, tTT, Object.assign({ ca }, c)); if (JSON.stringify(a) !== JSON.stringify(b)) { gg = false; ggSai.push([c, a, b]); } });
+  ok(gg, 'H1: không có biến thể mã → kết quả và cảnh báo của ghi_ (8 tình huống: Scan/Tách/OCR/Nhận/Trả, có/không có nhận) GIỐNG HỆT trước/sau', ggSai);
+  // 2) có biến thể: 2.1.87 (Quản lý nhận TTLT) + 02.01.87 (nhóm nhận) = MỘT hộp
+  const nk0 = sh('NhatKy').rows.length, lg0 = sh('LogHeThong').rows.length;
+  const NG = '2026-11-09', ap = (id, buoc, hop, nhom, extra) => ctx.append_('NhatKy', Object.assign({ ID: id, ThoiGian: NG + ' 14:0' + id.slice(-1) + ':00', Ngay: NG, Ca: 'Chiều', Nhom: nhom || '', Buoc: buoc, MaHop: hop, SoHoSo: 0, SoTrang: 0, SoTo: 0, TrangLoi: 0, HetHop: false, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' }, extra || {}));
+  const dashHop = (C_, f) => { memo2(); const d = C_.dash_(NG, false); return f(d); };
+  const base = dashHop(ctx, d => d.day.nhanHop), baseCu = dashHop(ctx2, d => d.day.nhanHop);
+  ap('HV1', 'NHAN', '2.1.87'); ap('HV2', 'NHAN_NHOM', '02.01.87', '1');
+  ok(dashHop(ctx, d => d.day.nhanHop) === base + 1 && dashHop(ctx2, d => d.day.nhanHop) === baseCu + 1, 'H1: Nhận "2.1.87" + Nhận nhóm "02.01.87": nhận TTLT = 1 hộp (không đếm đôi)');
+  ap('HV3', 'NHAN', '02.01.87');      // cùng hộp ghi hai kiểu ở CÙNG khâu
+  const nCu = dashHop(ctx2, d => d.day.nhanHop), nMoi = dashHop(ctx, d => d.day.nhanHop);
+  ok(nMoi === base + 1 && nCu === base + 2, 'H1: hai kiểu mã ở cùng khâu Nhận: bản mới gom một hộp, bản cũ đếm hai', [base, nMoi, nCu]);
+  // Scan "02.01.87" khi chỉ nhận "2.1.87": hết cảnh báo nhầm
+  const wMoi = thu(ctx, tTT, { ca: 'Chiều', buoc: 'SCAN', hop: '02.01.87', soHoSo: 1, soTrang: 5 });
+  ok(wMoi.ok && !wMoi.data.warnings.some(w => /chưa có trong danh sách đã nhận/.test(w)), 'H1: báo Scan "02.01.87" khi đã nhận "2.1.87" → KHÔNG còn cảnh báo "chưa có trong danh sách đã nhận"', wMoi);
+  // đã báo XONG ở bước này bằng kiểu mã khác → chặn
+  ap('HV4', 'SCAN', '2.1.87', '1', { HetHop: true, SoHoSo: 1, SoTrang: 9 });
+  const dup = thu(ctx, tTT, { ca: 'Chiều', buoc: 'SCAN', hop: '02.01.87', soHoSo: 1, soTrang: 5 });
+  ok(!dup.ok && /đã được báo cáo XONG/.test(dup.err), 'H1: Scan đã XONG với "2.1.87" → báo lại "02.01.87" bị chặn như cùng hộp', dup);
+  // hopGoiY_: một hộp, mã đại diện
+  memo2();
+  const gy = ctx.hopGoiY_({}, { buoc: 'TACH' });
+  ok(gy.filter(h => ctx.maHopKhoa_(h) === '2.1.87').length === 1, 'H1: hopGoiY_ (Tách) gom về một mã cho hộp 2.1.87 / 02.01.87', gy);
+  const nnMoi = ctx.hopGoiY_({}, { buoc: 'NHAN_NHOM' }).filter(h => ctx.maHopKhoa_(h) === '2.1.87').length, nnCu = ctx2.hopGoiY_({}, { buoc: 'NHAN_NHOM' }).filter(h => /^0?2\.0?1\.87$/.test(h)).length;
+  ok(nnMoi === 0 && nnCu >= 1, 'H1: hộp đã nhận nhóm (02.01.87) không còn bị gợi ý "chưa nhận nhóm" chỉ vì khác kiểu mã (bản cũ vẫn gợi ý)', [nnMoi, nnCu]);
+  // ghiLo_: hai dòng cùng hộp khác kiểu mã tính là MỘT hộp
+  memo2();
+  const lo = ctx.ghiLo_({ ma: 'TT1', vaiTro: 'TOTRUONG', ten: 'Tổ trưởng' }, { idLo: 'LOH1TEST0001', ca: 'Chiều', muc: [{ hop: '7.7.7', buoc: 'TACH', soHoSo: 1, soTrang: 3 }, { hop: '07.07.07', buoc: 'SCAN', soHoSo: 1, soTrang: 3 }] });
+  ok(lo.ketQua.length === 2 && lo.ketQua[0].buoc === 'SCAN' && lo.ketQua[1].buoc === 'TACH' && lo.ketQua[0].hop === '07.07.07' && lo.ketQua[1].hop === '7.7.7', 'H1: ghiLo_ gom "7.7.7" và "07.07.07" thành một hộp (Scan chạy trước Tách), mỗi dòng ghi đúng mã người gửi', lo.ketQua.map(k => [k.hop, k.buoc, k.ok, k.err]));
+  // dọn
+  sh('NhatKy').rows.length = nk0; sh('LogHeThong').rows.length = lg0; delete cacheMap['lo_TT1_LOH1TEST0001']; memo2();
+  api(tAdmin, 'resetDuLieu', { phamVi: 'THU' }); memo2();      // dọn dữ liệu mẫu vừa tạo
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);
