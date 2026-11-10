@@ -117,6 +117,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-DL-04 | Tạo dữ liệu mẫu (`THỬ NGHIỆM`, người giả TN-xx) | `taoMau_` | `#dlMauCa`, `#dlMau` |
 | F-DL-05 | Xóa dữ liệu thử nghiệm (gồm nhóm mẫu) | `resetDuLieu_` (`THU`) | `#dlThu` |
 | F-DL-06 | Xóa theo ngày / toàn bộ: phải gõ `XOA`; sao lưu tab `SL_<tab>_<giờ>` trước | `resetDuLieu_` (`NGAY`, `TATCA`), `backupTab_` | `#dlNgayDel`, `#dlAll` |
+| F-DL-07 | **Chuẩn hóa báo cáo cá nhân → nhóm (A2, ADMIN):** khung trong tab Dữ liệu: chọn ngày + ca → **Xem trước** (bảng dòng, giờ, khâu, hộp, người, cũ → mới, lý do; dòng xung đột liệt kê riêng) → **Áp dụng** (gõ `NHOM`). Quét `NhatKy` không hủy/không THỬ NGHIỆM, khâu NHAN_NHOM/SCAN/TACH/OCR, `Nhom` rỗng mà người báo cáo thuộc một nhóm `PhanNhom` của đúng ngày/ca → đổi `Nhom` + `ThanhVien` = cả nhóm; dòng trùng (cùng nhóm/khâu/hộp, số liệu giống) → hủy mềm dòng thừa; số liệu khác → KHÔNG tự đổi. Áp dụng: sao lưu `SaoLuuXoa`, log `CHUAN_HOA_NHOM`/`CHUAN_HOA_NHOM_HUY` từng dòng + `CHUAN_HOA_NHOM_TONG` | `chuanHoaNhom_` | `#chCard`, `#chNgay`, `#chCa`, `#chXem`, `#chApDung`, `#chKq`, `initCH`, `chCall`, `veChXem` |
 
 ## 8. Nhật ký hệ thống – chỉ ADMIN (F-LG)
 

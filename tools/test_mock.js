@@ -771,5 +771,61 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(tk(tAdmin, { tu: '2026-10-01', den: '2030-01-01' }).data.den <= '2026-11-09', 'thongKeNhanSu: đến ngày không vượt quá hôm nay');
 }
 
+// ===== A2: chuanHoaNhom (cá nhân → nhóm, xem trước / áp dụng) =====
+{
+  const NG = '2026-11-09', CAX = 'Sáng';
+  const nk0 = sh('NhatKy').rows.length, pn0 = sh('PhanNhom').rows.length;
+  sh('PhanNhom').rows.push([NG, CAX, '1', 'A1', 'Nhân viên A', 'TT1', ''], [NG, CAX, '1', 'B1', 'Nhân viên B', 'TT1', ''], [NG, CAX, '2', 'TT1', 'Tổ trưởng', 'TT1', '']);
+  ctx.memoClear_();
+  const mk = (id, o) => ctx.append_('NhatKy', Object.assign({ ID: id, ThoiGian: NG + ' 08:' + id.slice(2, 4) + ':00', Ngay: NG, Ca: CAX, Nhom: '', Buoc: 'SCAN', MaHop: 'CH-X', SoHoSo: 2, SoTrang: 50, SoTo: 0, TrangLoi: 0, HetHop: true, NguoiNhap: 'A1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'A1' }, o));
+  mk('CH10', { MaHop: 'CH-1', NguoiNhap: 'A1', ThanhVien: 'A1' });                 // 1) A1 và B1 báo cùng hộp, giống nhau → đổi nhóm 1 + hủy dòng thừa
+  mk('CH11', { MaHop: 'CH-1', NguoiNhap: 'B1', ThanhVien: 'B1' });
+  mk('CH12', { MaHop: 'CH-2', Buoc: 'NHAN_NHOM', SoHoSo: 0, SoTrang: 0, HetHop: false });   // 2) một dòng nhận hộp cá nhân → đổi nhóm
+  mk('CH13', { MaHop: 'CH-3', SoTrang: 10 });                                       // 3) khác số liệu → xung đột
+  mk('CH14', { MaHop: 'CH-3', SoTrang: 20, NguoiNhap: 'B1', ThanhVien: 'B1' });
+  mk('CH15', { MaHop: 'CH-4', NguoiNhap: 'D1', ThanhVien: 'D1' });                  // 4) D1 chưa có nhóm → giữ cá nhân
+  mk('CH16', { MaHop: 'CH-5', Loai: 'THỬ NGHIỆM' });                                // 5) THỬ NGHIỆM và bản đã hủy: không quét
+  mk('CH17', { MaHop: 'CH-6', Huy: true });
+  mk('CH18', { MaHop: 'CH-7', Nhom: '1', ThanhVien: 'A1,B1', SoTrang: 30 });        // 6) dòng nhóm sẵn có + dòng cá nhân giống hệt → hủy dòng cá nhân
+  mk('CH19', { MaHop: 'CH-7', SoTrang: 30 });
+  mk('CH20', { MaHop: 'CH-8', Buoc: 'TRA', SoHoSo: 0, SoTrang: 0, HetHop: false }); // 7) khâu không thuộc diện chuẩn hóa
+  ctx.memoClear_();
+  const nhom = id => ctx.s_(sh('NhatKy').rows.find(x => x[0] === id)[4]);
+  const snap = () => JSON.stringify([sh('NhatKy').rows, sh('LogHeThong').rows.length]);
+  const kPhan = () => api(tAdmin, 'dashboard', { ngay: NG }).data.day.scanDV;
+  // quyền
+  ok(!api(tTT, 'chuanHoaNhom', { ngay: NG, ca: CAX }).ok && !api(tA, 'chuanHoaNhom', { ngay: NG, ca: CAX }).ok && !api(tLD, 'chuanHoaNhom', { ngay: NG, ca: CAX }).ok, 'A2: chỉ ADMIN gọi được chuanHoaNhom (TT/TP, tổ viên, LĐ bị chặn)');
+  ok(!api(tAdmin, 'chuanHoaNhom', { ca: CAX }).ok && !api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: 'Khuya' }).ok, 'A2: thiếu ngày hoặc ca sai bị từ chối');
+  // xem trước
+  const truoc = snap(), kTruoc = kPhan();
+  const pv = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX });
+  const D = pv.data || {};
+  ok(pv.ok && D.apDung === false && snap() === truoc, 'A2: xem trước KHÔNG ghi gì (NhatKy, log không đổi)', pv.err);
+  const idDoi = (D.doiNhom || []).map(x => x.id).sort().join(), idHuy = (D.huyTrung || []).map(x => x.id).sort().join();
+  ok(idDoi === 'CH10,CH12' && idHuy === 'CH11,CH19', 'A2: đề xuất đổi CH10,CH12; hủy trùng CH11 (giống CH10) và CH19 (giống dòng nhóm CH18)', { idDoi, idHuy });
+  ok(D.xungDot.length === 1 && D.xungDot[0].hop === 'CH-3' && D.xungDot[0].dong.length === 2, 'A2: CH-3 khác số liệu → liệt kê xung đột, không tự quyết', D.xungDot);
+  ok(D.boQua === 1 && !(D.doiNhom.concat(D.huyTrung).some(x => ['CH15', 'CH16', 'CH17', 'CH20', 'CH13', 'CH14'].indexOf(x.id) >= 0)), 'A2: người chưa có nhóm giữ cá nhân; THỬ NGHIỆM, bản hủy, khâu TRA, dòng xung đột không bị đề xuất sửa', D);
+  const x10 = D.doiNhom.find(x => x.id === 'CH10');
+  ok(x10 && x10.nhomMoi === '1' && /Nhân viên A \+ Nhân viên B/.test(x10.tvMoi) && x10.tvCu === 'Nhân viên A' && x10.ly && x10.buoc === 'SCAN' && x10.hop === 'CH-1', 'A2: bảng xem trước có đủ giờ, khâu, hộp, người, cũ → mới, lý do', x10);
+  // áp dụng: cần xác nhận
+  const r0 = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX, apDung: true });
+  ok(!r0.ok && /NHOM/.test(r0.err) && snap() === truoc, 'A2: áp dụng thiếu chữ NHOM bị từ chối, không ghi gì', r0);
+  const sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length, lg0 = sh('LogHeThong').rows.length;
+  const ap = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX, apDung: true, xacNhan: 'NHOM' });
+  ok(ap.ok && ap.data.daSua.doi === 2 && ap.data.daSua.huy === 2 && ap.data.saoLuu === 'SaoLuuXoa', 'A2: áp dụng: đổi 2, hủy 2, có sao lưu', ap);
+  ok(nhom('CH10') === '1' && nhom('CH12') === '1' && sh('NhatKy').rows.find(x => x[0] === 'CH10')[18] === 'A1,B1', 'A2: dòng được đổi có Nhom = 1 và ThanhVien = cả nhóm');
+  ok(sh('NhatKy').rows.find(x => x[0] === 'CH11')[16] === true && sh('NhatKy').rows.find(x => x[0] === 'CH19')[16] === true && /^ADMIN /.test(sh('NhatKy').rows.find(x => x[0] === 'CH11')[17]), 'A2: dòng trùng bị hủy mềm (Huy = TRUE, NguoiHuy ghi người + giờ)');
+  ok(nhom('CH13') === '' && nhom('CH14') === '' && nhom('CH15') === '' && sh('NhatKy').rows.find(x => x[0] === 'CH13')[16] === false, 'A2: xung đột và người chưa có nhóm KHÔNG bị đụng');
+  ok(sh('SaoLuuXoa').rows.length - sl0 === 4 && sh('SaoLuuXoa').rows.slice(sl0).every(x => x[1] === 'NhatKy' && /"CH1[0129]"/.test(x[3])), 'A2: sao lưu đúng 4 dòng cũ vào SaoLuuXoa (JSON dòng gốc)');
+  const lgM = sh('LogHeThong').rows.slice(lg0).map(x => x[4] + ':' + x[6]);
+  ok(lgM.filter(x => /^CHUAN_HOA_NHOM:/.test(x)).length === 2 && lgM.filter(x => /^CHUAN_HOA_NHOM_HUY:/.test(x)).length === 2 && lgM.some(x => /^CHUAN_HOA_NHOM_TONG:/.test(x)) && lgM.filter(x => /^CHUAN_HOA_NHOM:.*cũ: .*mới: /.test(x)).length === 2, 'A2: log từng dòng cũ → mới + 1 dòng tổng', lgM);
+  ok(kTruoc - kPhan() === 80, 'A2: Dashboard ngày giảm đúng phần trùng bị hủy (50 + 30 = 80), không đổi gì khác', [kTruoc, kPhan()]);
+  const ap2 = api(tAdmin, 'chuanHoaNhom', { ngay: NG, ca: CAX, apDung: true, xacNhan: 'NHOM' });
+  ok(ap2.ok && ap2.data.daSua.doi === 0 && ap2.data.daSua.huy === 0 && ap2.data.xungDot.length === 1, 'A2: chạy lại không còn gì để đổi (idempotent), xung đột vẫn được nhắc', ap2.data);
+  // dọn
+  sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; ctx.memoClear_();
+}
+
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

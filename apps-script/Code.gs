@@ -330,6 +330,7 @@ function route_(u, action, p) {
     case 'suaBanGhi': needSuper_(u); return suaBanGhi_(u, p);
     case 'resetDuLieu': needSuper_(u); return resetDuLieu_(u, p);
     case 'taoMau': needSuper_(u); return taoMau_(u, p);
+    case 'chuanHoaNhom': needSuper_(u); return chuanHoaNhom_(u, p);
     case 'dsNhanSu': needSuper_(u); return dsNhanSu_();
     case 'luuNhanSu': needSuper_(u); return luuNhanSu_(u, p);
     case 'dsCa': need_(u); return dsCa_(p);
@@ -808,6 +809,101 @@ function resetDuLieu_(u, p) {
   log_(u.ma, 'RESET_DU_LIEU', pv + ' ' + s_(p.ngay) + ' xóa ' + n + ' | sao lưu: SaoLuuXoa');
   return { daXoa: n, saoLuu: ['SaoLuuXoa'] };
 }
+/* ---------- Chuẩn hóa báo cáo cá nhân → nhóm (A2, QĐ1; chỉ ADMIN): xem trước rồi mới áp dụng ---------- */
+// Quét NhatKy (không hủy, không THỬ NGHIỆM) của ngày/ca, khâu NHAN_NHOM/SCAN/TACH/OCR, dòng có Nhom rỗng mà người báo cáo (ThanhVien, hoặc NguoiNhap nếu trống)
+// đang thuộc MỘT nhóm trong PhanNhom của đúng ngày/ca → đề xuất đổi Nhom + ThanhVien. Sau khi đổi, dòng trùng (cùng nhóm, khâu, hộp) với số liệu GIỐNG nhau
+// → đề xuất hủy mềm dòng thừa; số liệu KHÁC nhau → liệt kê để chủ dự án tự chọn (KHÔNG đổi, KHÔNG hủy).
+// apDung=false: chỉ trả bảng xem trước. apDung=true (cần xacNhan='NHOM'): sao lưu dòng bị đổi/hủy (SaoLuuXoa), sửa, ghi log từng dòng.
+const CHUAN_HOA_BUOC_ = ['NHAN_NHOM', 'SCAN', 'TACH', 'OCR'];
+function chuanHoaNhom_(u, p) {
+  const ngay = d_(p.ngay), ca = s_(p.ca), apDung = p.apDung === true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || !CA[ca]) throw 'Chọn ngày và ca cần chuẩn hóa';
+  if (apDung && s_(p.xacNhan) !== 'NHOM') throw 'Gõ đúng chữ NHOM để xác nhận áp dụng chuẩn hóa';
+  const ten = {}; read_('NhanSu').forEach(function (r) { ten[s_(r.MaHRM)] = s_(r.HoTen); });
+  const tenDS = function (dsMa) { return dsMa.map(function (m) { return ten[m] || m; }).join(' + '); };
+  const nhomCua = {}, thanhVien = {};      // người → nhóm; nhóm → [mã]
+  read_('PhanNhom').forEach(function (r) {
+    if (d_(r.Ngay) !== ngay || s_(r.Ca) !== ca || !s_(r.Nhom)) return;
+    nhomCua[s_(r.MaHRM)] = s_(r.Nhom);
+    (thanhVien[s_(r.Nhom)] = thanhVien[s_(r.Nhom)] || []).push(s_(r.MaHRM));
+  });
+  const rows = read_('NhatKy').filter(function (r) {
+    return !b_(r.Huy) && d_(r.Ngay) === ngay && s_(r.Ca) === ca && s_(r.Loai) !== 'THỬ NGHIỆM' && CHUAN_HOA_BUOC_.indexOf(s_(r.Buoc)) >= 0;
+  });
+  const ds = [], boQua = [];      // ds: dòng sẽ đổi nhóm; boQua: dòng cá nhân giữ nguyên (người chưa có nhóm / thuộc nhiều nhóm)
+  const nguoiCua = function (r) { const tv = s_(r.ThanhVien).split(',').map(s_).filter(Boolean); return tv.length ? tv : (s_(r.NguoiNhap) ? [s_(r.NguoiNhap)] : []); };
+  rows.forEach(function (r) {
+    if (s_(r.Nhom)) return;
+    const ng = nguoiCua(r), nhomSet = {};
+    ng.forEach(function (m) { if (nhomCua[m]) nhomSet[nhomCua[m]] = 1; });
+    const ks = Object.keys(nhomSet);
+    if (ks.length === 1) ds.push({ r: r, nhom: ks[0], ng: ng });
+    else boQua.push({ id: s_(r.ID), ly: ks.length ? 'Người trong dòng thuộc nhiều nhóm khác nhau (' + ks.join(', ') + ')' : 'Người báo cáo chưa thuộc nhóm nào trong ca này' });
+  });
+  const mo = function (r) { return { id: s_(r.ID), gio: ts_(r.ThoiGian).slice(11, 16), buoc: s_(r.Buoc), hop: s_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang), to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), maHoSo: s_(r.MaHoSo) }; };
+  const giong = function (a, b) { return ['SoHoSo', 'SoTrang', 'SoTo', 'TrangLoi'].every(function (k) { return n_(a[k]) === n_(b[k]); }) && b_(a.HetHop) === b_(b.HetHop); };
+  // gom theo (nhóm, khâu, hộp): dòng đã ở sẵn trong nhóm + dòng sắp đổi
+  const nhomKey = function (nhom, r) { return nhom + '|' + s_(r.Buoc) + '|' + s_(r.MaHop); };
+  const gom = {};
+  rows.forEach(function (r) { if (s_(r.Nhom)) (gom[nhomKey(s_(r.Nhom), r)] = gom[nhomKey(s_(r.Nhom), r)] || []).push({ r: r, moi: false }); });
+  ds.forEach(function (x) { (gom[nhomKey(x.nhom, x.r)] = gom[nhomKey(x.nhom, x.r)] || []).push({ r: x.r, moi: true }); });
+  const doiNhom = [], huyTrung = [], xungDot = [];
+  Object.keys(gom).forEach(function (k) {
+    const g = gom[k];
+    if (!g.some(function (x) { return x.moi; })) return;       // nhóm đã có sẵn, không dính dòng cần đổi: không đụng
+    const nhom = k.split('|')[0];
+    if (g.length === 1) { doiNhom.push({ r: g[0].r, nhom: nhom, ly: 'Người báo cáo thuộc Nhóm ' + nhom + ' trong ca này' }); return; }
+    if (!g.every(function (x) { return giong(x.r, g[0].r); })) {
+      xungDot.push({ nhom: nhom, buoc: s_(g[0].r.Buoc), hop: s_(g[0].r.MaHop), dong: g.map(function (x) { return Object.assign(mo(x.r), { nhomHienTai: s_(x.r.Nhom) || '(cá nhân)', nguoi: tenDS(nguoiCua(x.r)) }); }), ly: 'Cùng nhóm/khâu/hộp nhưng số liệu khác nhau – KHÔNG tự đổi, chủ dự án chọn dòng đúng (tab Dữ liệu: Sửa/Xóa)' });
+      return;
+    }
+    g.sort(function (a, b) {      // giữ: dòng đã ở trong nhóm trước, rồi dòng có mã hồ sơ, rồi sớm nhất
+      if (a.moi !== b.moi) return a.moi ? 1 : -1;
+      const ma = s_(a.r.MaHoSo) ? 0 : 1, mb = s_(b.r.MaHoSo) ? 0 : 1;
+      if (ma !== mb) return ma - mb;
+      const ta = ts_(a.r.ThoiGian), tb = ts_(b.r.ThoiGian);
+      return ta < tb ? -1 : ta > tb ? 1 : a.r._row - b.r._row;
+    });
+    const giu = g[0];
+    if (giu.moi) doiNhom.push({ r: giu.r, nhom: nhom, ly: 'Giữ dòng này (sớm nhất/đủ mã hồ sơ) trong ' + g.length + ' dòng trùng của Nhóm ' + nhom });
+    g.slice(1).forEach(function (x) { if (x.moi) huyTrung.push({ r: x.r, nhom: nhom, giuId: s_(giu.r.ID), ly: 'Trùng với dòng ' + s_(giu.r.ID) + ' (cùng Nhóm ' + nhom + ', khâu, hộp, số liệu giống nhau) – hủy mềm' }); });
+  });
+  const tv = function (nhom) { return thanhVien[nhom] || []; };
+  const hienThi = function (x, hd) {
+    const r = x.r;
+    return Object.assign(mo(r), { hanhDong: hd, nguoi: tenDS(nguoiCua(r)), nhomCu: '(cá nhân)', nhomMoi: x.nhom, tvCu: tenDS(nguoiCua(r)), tvMoi: tenDS(tv(x.nhom)), ly: x.ly, giuId: x.giuId || '' });
+  };
+  const kq = {
+    ngay: ngay, ca: ca, apDung: apDung,
+    doiNhom: doiNhom.map(function (x) { return hienThi(x, 'DOI_NHOM'); }),
+    huyTrung: huyTrung.map(function (x) { return hienThi(x, 'HUY_TRUNG'); }),
+    xungDot: xungDot, boQua: boQua.length, tongQuet: rows.length
+  };
+  if (!apDung) return kq;
+  if (!doiNhom.length && !huyTrung.length) { kq.daSua = { doi: 0, huy: 0 }; kq.saoLuu = ''; return kq; }
+  // ÁP DỤNG: sao lưu nguyên dòng cũ → sửa từng ô → log từng dòng cũ → mới
+  const dongThat = function (r) { return TAB.NhatKy.map(function (k) { return r[k]; }); };
+  const saoLuu = saoLuuDong_('NhatKy', doiNhom.concat(huyTrung).map(function (x) { return dongThat(x.r); }), u.ma);
+  const sh = ss_().getSheetByName('NhatKy'), cNhom = TAB.NhatKy.indexOf('Nhom') + 1, cTV = TAB.NhatKy.indexOf('ThanhVien') + 1, cHuy = TAB.NhatKy.indexOf('Huy') + 1, cNH = TAB.NhatKy.indexOf('NguoiHuy') + 1;
+  const t = now_();
+  doiNhom.forEach(function (x) {
+    const r = x.r;
+    sh.getRange(r._row, cNhom).setValue(safe_(x.nhom));
+    sh.getRange(r._row, cTV).setValue(safe_(tv(x.nhom).join(',')));
+    log_(u.ma, 'CHUAN_HOA_NHOM', 'ID ' + s_(r.ID) + ' | ' + ngay + ' ca ' + ca + ' | ' + (STEP_NAME_[s_(r.Buoc)] || s_(r.Buoc)) + ' hộp ' + s_(r.MaHop) + ' | cũ: nhóm (cá nhân), thành viên ' + tenDS(nguoiCua(r)) + ' | mới: Nhóm ' + x.nhom + ', thành viên ' + tenDS(tv(x.nhom)) + ' | sao lưu ' + saoLuu);
+  });
+  huyTrung.forEach(function (x) {
+    const r = x.r;
+    sh.getRange(r._row, cHuy).setValue(true);
+    sh.getRange(r._row, cNH).setValue(safe_(u.ma + ' ' + t.ts));
+    log_(u.ma, 'CHUAN_HOA_NHOM_HUY', 'ID ' + s_(r.ID) + ' | ' + ngay + ' ca ' + ca + ' | ' + (STEP_NAME_[s_(r.Buoc)] || s_(r.Buoc)) + ' hộp ' + s_(r.MaHop) + ' ' + n_(r.SoHoSo) + ' hồ sơ ' + n_(r.SoTrang) + ' trang ' + n_(r.SoTo) + ' tờ | cũ: còn hiệu lực (cá nhân ' + tenDS(nguoiCua(r)) + ') | mới: hủy mềm vì trùng dòng ' + x.giuId + ' của Nhóm ' + x.nhom + ' | sao lưu ' + saoLuu);
+  });
+  memoClear_('NhatKy');
+  log_(u.ma, 'CHUAN_HOA_NHOM_TONG', ngay + ' ca ' + ca + ' | đổi nhóm ' + doiNhom.length + ' dòng, hủy trùng ' + huyTrung.length + ' dòng, xung đột để chủ dự án chọn ' + xungDot.length + ', giữ cá nhân ' + boQua.length + ' | sao lưu ' + saoLuu);
+  kq.daSua = { doi: doiNhom.length, huy: huyTrung.length }; kq.saoLuu = saoLuu;
+  return kq;
+}
+
 // Tạo dữ liệu mẫu (THỬ NGHIỆM): mỗi ca được chọn có đủ soNguoi người, ghép cặp thành nhóm 2 người.
 // Giữ nguyên người/nhóm thật đang có; người còn thiếu là nhân sự giả mã "TN-xx" (không đăng nhập được).
 // Nút "Xóa dữ liệu thử nghiệm" dọn sạch: bản ghi THỬ NGHIỆM, nhóm MAU, phân ca và nhân sự TN-xx.

@@ -1947,6 +1947,17 @@ tbody tr:last-child td { border-bottom: none; }
       </div>
       <div id="dlMsg"></div>
     </div>
+    <div class="card" id="chCard">
+      <h2>Chuẩn hóa báo cáo theo nhóm (cá nhân → nhóm)</h2>
+      <div class="muted">Dùng khi báo cáo của người đã có nhóm bị ghi dạng cá nhân. Luôn <b>Xem trước</b> rồi mới <b>Áp dụng</b>; áp dụng có sao lưu (tab SaoLuuXoa) và ghi nhật ký từng dòng.</div>
+      <div class="row" style="margin-top:12px;">
+        <div><label>Ngày</label><input type="date" id="chNgay"></div>
+        <div><label>Ca</label><select id="chCa"></select></div>
+        <div style="align-self:end"><button id="chXem" class="pri" style="width:100%;">Xem trước</button></div>
+      </div>
+      <div id="chMsg"></div>
+      <div id="chKq"></div>
+    </div>
     <div class="card hide" id="dlEdit"></div>
     <div class="card">
       <h2>Bản ghi báo cáo chi tiết</h2>
@@ -2864,7 +2875,7 @@ function loadNS() {
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */
 function initDL() {
   if (!$('dlNgay').value) $('dlNgay').value = ME.ngay;
-  $('dlLoad').onclick = loadDL;
+  $('dlLoad').onclick = loadDL; initCH();
   $('dlMau').onclick = function () { call('taoMau', { ngay: $('dlNgay').value, cas: $('dlMauCa').value.split(','), soNguoi: 6 }).then(function (r) { msg('dlMsg', 'Đã tạo ' + r.soBanGhi + ' bản ghi mẫu cho ' + r.soCa + ' ca ngày ' + r.ngay + ' (mỗi ca ' + r.soNguoi + ' người, thêm ' + r.soThem + ' người giả TN-xx). Ở Dashboard tick "gồm dữ liệu thử nghiệm" để xem.', 'ok'); loadDL(); }).catch(function (e) { msg('dlMsg', e); }); };
   $('dlThu').onclick = function () {
     if (confirm('Xóa mọi bản ghi đánh dấu THỬ NGHIỆM?')) call('resetDuLieu', { phamVi: 'THU' }).then(function (r) {
@@ -2892,6 +2903,50 @@ function initDL() {
   };
   loadDL();
 }
+/* ---------- Chuẩn hóa báo cáo cá nhân → nhóm (A2, ADMIN) ---------- */
+var CH_XEM = null;
+function initCH() {
+  if (!$('chNgay').value) $('chNgay').value = ME.ngay;
+  if (!$('chCa').innerHTML) $('chCa').innerHTML = CA_NAME.map(function (c) { return '<option>' + c + '</option>'; }).join('');
+  $('chXem').onclick = function () { chCall(false); };
+}
+function chCall(apDung) {
+  var p = { ngay: $('chNgay').value, ca: $('chCa').value, apDung: apDung };
+  if (apDung) {
+    var t = prompt('Áp dụng chuẩn hóa ca ' + p.ca + ' ngày ' + p.ngay + ': sẽ sao lưu rồi đổi/hủy các dòng trong bảng xem trước. Gõ NHOM để xác nhận:');
+    if (!t) return;
+    p.xacNhan = t;
+  }
+  $('chXem').disabled = true; msg('chMsg', apDung ? 'Đang áp dụng…' : 'Đang quét…', 'warn');
+  call('chuanHoaNhom', p).then(function (r) {
+    if (apDung) {
+      msg('chMsg', 'Đã áp dụng: đổi nhóm ' + r.daSua.doi + ' dòng, hủy trùng ' + r.daSua.huy + ' dòng' + (r.saoLuu ? ' (sao lưu: ' + r.saoLuu + ')' : '') + '. Xung đột còn lại: ' + r.xungDot.length + '.', 'ok');
+      $('chKq').innerHTML = ''; loadDL();
+    } else { CH_XEM = r; msg('chMsg', ''); veChXem(r); }
+  }).catch(function (e) { msg('chMsg', e); }).then(function () { $('chXem').disabled = false; });
+}
+function veChXem(r) {
+  var bang = function (ds, tieuDe) {
+    return ds.length ? '<h3 style="margin:14px 0 6px;">' + tieuDe + ' (' + ds.length + ')</h3><div class="scroll"><table><tr><th>Dòng</th><th>Giờ</th><th>Khâu</th><th>Hộp</th><th>Số liệu</th><th>Người</th><th>Cũ</th><th>Mới</th><th>Lý do</th></tr>' + ds.map(function (x) {
+      return '<tr><td><code>' + esc(x.id) + '</code></td><td>' + esc(x.gio) + '</td><td>' + esc(STEP_LABEL[x.buoc] || x.buoc) + '</td><td><b>' + esc(x.hop) + '</b></td><td>' + x.hs + ' hs / ' + x.trang + ' trang / ' + x.to + ' tờ' + (x.het ? ' ✔' : '') + '</td><td>' + esc(x.nguoi) + '</td>' +
+        '<td>' + esc(x.nhomCu) + ': ' + esc(x.tvCu) + '</td><td>' + (x.hanhDong === 'HUY_TRUNG' ? '<span class="chip bad">Hủy mềm</span>' : 'Nhóm ' + esc(x.nhomMoi) + ': ' + esc(x.tvMoi)) + '</td><td>' + esc(x.ly) + '</td></tr>';
+    }).join('') + '</table></div>' : '';
+  };
+  var h = '<div class="muted" style="margin-top:12px;">Ngày ' + esc(r.ngay) + ' · ca ' + esc(r.ca) + ' · đã quét ' + r.tongQuet + ' dòng báo cáo (Nhận hộp nhóm/Scan/Tách/OCR) · giữ nguyên dạng cá nhân ' + r.boQua + ' dòng (người chưa có nhóm)</div>';
+  h += bang(r.doiNhom, 'Đổi sang nhóm') + bang(r.huyTrung, 'Hủy mềm dòng trùng');
+  if (r.xungDot.length) {
+    h += '<h3 style="margin:14px 0 6px;">Xung đột – cần chủ dự án chọn dòng đúng (' + r.xungDot.length + ')</h3>' + r.xungDot.map(function (k) {
+      return '<div class="msg warn"><span><b>Nhóm ' + esc(k.nhom) + ' · ' + esc(STEP_LABEL[k.buoc] || k.buoc) + ' · hộp ' + esc(k.hop) + '</b> – ' + esc(k.ly) + '<br>' + k.dong.map(function (d) {
+        return '<code>' + esc(d.id) + '</code> ' + esc(d.gio) + ' ' + esc(d.nguoi) + ' (' + esc(d.nhomHienTai) + '): ' + d.hs + ' hs / ' + d.trang + ' trang / ' + d.to + ' tờ' + (d.het ? ' ✔' : '');
+      }).join('<br>') + '</span></div>';
+    }).join('');
+  }
+  if (!r.doiNhom.length && !r.huyTrung.length) h += '<div class="msg ok"><span>Không có dòng nào cần đổi' + (r.xungDot.length ? ' (chỉ còn xung đột ở trên)' : '') + '.</span></div>';
+  else h += '<p style="margin-top:14px;"><button class="pri bad" id="chApDung">Áp dụng (' + (r.doiNhom.length + r.huyTrung.length) + ' dòng)</button></p>';
+  $('chKq').innerHTML = h;
+  if ($('chApDung')) $('chApDung').onclick = function () { chCall(true); };
+}
+
 function loadDL() {
   $('dlEdit').classList.add('hide');
   call('nhatKy', { ngay: $('dlNgay').value, includeHuy: true }).then(function (rs) {
