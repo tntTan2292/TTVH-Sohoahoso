@@ -52,6 +52,10 @@ Kiểm tra L2 mỗi mục; cập nhật `CHUC_NANG.md` (F-BC-20 khóa cá nhân,
 ---
 
 ## ĐỢT C – Dashboard tiến độ + điện thoại
+**C0 (Claude Code (Sonnet), thêm 10/11/2026 theo chủ dự án) – Ô số liệu bấm được → danh sách chi tiết.** Phạm vi đợt này: các ô của khung "Ca trong ngày"/"ĐẦU CA" (Nhân sự, Hộp tồn đầu ca, Nhận từ TTLT, Chưa scan, Chờ tách file, Chờ OCR). Ô khác (Cuối ca, KPI) để sau khi chủ dự án dùng thử.
+- Bấm ô → hộp thoại (điện thoại: toàn màn hình) liệt kê chi tiết; ô có số 0 thì không bấm được. Hộp: mã hộp · nhận lúc (ngày, ca) · nhóm/người đang giữ (`NHAN_NHOM`) · khâu đã xong (Scan/Tách/OCR) · số tờ đã báo. Nhân sự: tên · nhóm · đã/chưa báo cáo (dùng `caNguoi` sẵn có, không gọi máy chủ). Có ô lọc nhanh theo mã hộp.
+- Máy chủ: action ĐỌC mới `chiTietCa {ngay, ca, loai}` (chỉ tải khi bấm, không làm `dash_` nặng thêm). Danh sách phải tính bằng **đúng hàm** ra con số của ô: tách logic `trangThaiTruoc`/`nhanHop` trong `dash_` thành hàm dùng chung trả về tập mã hộp, ô lấy `.length`. Mock: với mọi ca/loại, số dòng danh sách = số trên ô; `dash_` trước/sau giống hệt. Tổ viên không được gọi (như Dashboard).
+- Mức L2 (đụng `dash_`). Sonnet làm chức năng → viết prompt Antigravity làm đẹp hộp thoại → Opus review.
 **C1 (Claude Code (Sonnet)). Biểu đồ tiến độ hằng ngày (QĐ5)** ở tab Tổng quan: cột tờ Scan/Tách/OCR từng ngày từ 02/11 (gồm số đầu kỳ theo ngày) tới nay, tối đa 30 ngày, nút "◀ 30 ngày trước"; đường TB toàn dự án và TB 7 ngày; bấm một ngày → mở tab Theo ngày của ngày đó. `dash_` thêm tham số số ngày (tối đa 30) cho `series`, giữ mặc định 10 cho widget tab Báo cáo. Mock so `series` 10 ngày cũ không đổi.
 **C2 (Antigravity (Gemini)) – sau C1. Giao diện điện thoại (≤ 640px)**: thanh tab con Dashboard thấy đủ 5 tab (biểu tượng + nhãn ngắn, chia lưới hoặc cuộn có dấu hiệu); bảng chính (Nhân sự, nhóm, Ai nhập, Dữ liệu) **chuyển thành thẻ xếp dọc** thay vì kéo ngang; KPI 2 cột; biểu đồ cao vừa, chú thích dưới; form báo cáo một tay. Sonnet viết prompt Antigravity (mẫu 10.3 + khối 3b). Opus review sẽ kiểm ở khổ 375px.
 
