@@ -55,6 +55,13 @@ Kiểm tra L2 mỗi mục; cập nhật `CHUC_NANG.md` (F-BC-20 khóa cá nhân,
 **C1 (Claude Code (Sonnet)). Biểu đồ tiến độ hằng ngày (QĐ5)** ở tab Tổng quan: cột tờ Scan/Tách/OCR từng ngày từ 02/11 (gồm số đầu kỳ theo ngày) tới nay, tối đa 30 ngày, nút "◀ 30 ngày trước"; đường TB toàn dự án và TB 7 ngày; bấm một ngày → mở tab Theo ngày của ngày đó. `dash_` thêm tham số số ngày (tối đa 30) cho `series`, giữ mặc định 10 cho widget tab Báo cáo. Mock so `series` 10 ngày cũ không đổi.
 **C2 (Antigravity (Gemini)) – sau C1. Giao diện điện thoại (≤ 640px)**: thanh tab con Dashboard thấy đủ 5 tab (biểu tượng + nhãn ngắn, chia lưới hoặc cuộn có dấu hiệu); bảng chính (Nhân sự, nhóm, Ai nhập, Dữ liệu) **chuyển thành thẻ xếp dọc** thay vì kéo ngang; KPI 2 cột; biểu đồ cao vừa, chú thích dưới; form báo cáo một tay. Sonnet viết prompt Antigravity (mẫu 10.3 + khối 3b). Opus review sẽ kiểm ở khổ 375px.
 
+**B4 (thêm 10/11/2026 theo chủ dự án) – Đăng nhập: chọn Đơn vị trước, rồi chọn tên.** Làm SAU B1 (cần danh mục) và nên dùng thật sau khi B2 đã áp dụng (đơn vị hết trùng). Hiện trạng: `lgSearch` + một `<select id="lgUser">` dài gom theo đơn vị (`dsLogin`, `renderLoginSelect`) → 50+ người phải kéo tìm.
+- Bước 1: chọn **Đơn vị** (danh sách theo `ThuTu` trong danh mục, chỉ đơn vị đang hoạt động và có người; kèm số người). Bước 2: chỉ hiện tên của đơn vị đó (nút/thẻ dễ chạm, xếp theo tên). Bước 3: PIN.
+- **Nhớ trên máy:** lưu đơn vị + mã người đăng nhập thành công lần trước (`localStorage`, bọc try/catch; KHÔNG lưu PIN/token) → mở trang thấy sẵn "Đăng nhập là <Tên> (<Đơn vị>)", chỉ gõ PIN; có nút "Người khác".
+- Ô tìm `lgSearch` giữ lại: gõ tên/mã thì tìm trên **mọi** đơn vị (bỏ qua bước 1).
+- `dsLogin` (công khai) trả thêm danh mục đơn vị (tên + thứ tự); vẫn KHÔNG trả vai trò/email/PIN. Giữ `lgUser`, `lgPin`, `lgBtn`, hàm `login` (có thể ẩn `lgUser` và đồng bộ giá trị từ thẻ đã chọn).
+- Phân công: Sonnet làm chức năng; Antigravity làm đẹp sau đó (Sonnet viết prompt). Mức L2 (màn hình đầu tiên của mọi người dùng).
+
 ## ĐỢT T – Tốc độ + chống bấm lặp (Claude Code (Sonnet)) · thêm 10/11/2026 theo yêu cầu chủ dự án
 **Hiện trạng (chủ dự án):** ca < 10 người vẫn thấy chậm; bấm Nhận hộp/Báo cáo chưa thấy phản hồi nên người dùng bấm liên tục.
 **Opus đã khoanh (đọc mã, chưa đo):** mọi lệnh ghi qua `withLock_` (khóa chung toàn hệ thống, `waitLock(25000)`) → người sau xếp hàng; tab `NhatKy` (lớn nhất) **không** nằm trong `CACHE_TABS` nên mỗi lần ghi/`hopGoiY`/`lichSu` đọc lại cả tab; mỗi lần ghi còn ghi `log_` sang tab khác; sau khi ghi giao diện có thể gọi thêm vài lệnh đọc. `google.script.run` tự nó mất ~1–2 giây mỗi lượt. Bảng nhiều hộp (`ghiLo`) đã khóa nút + có `idLo` chống ghi trùng; các nút khác (Nhận hộp, Vào ca, Trả hộp, form Một hộp, Nhập hộ, quản lý) chưa thống nhất.
@@ -65,4 +72,4 @@ Kiểm tra L2 mỗi mục; cập nhật `CHUC_NANG.md` (F-BC-20 khóa cá nhân,
 ---
 
 ## Thứ tự
-A (khẩn) → triển khai → A2 dữ liệu thật (chủ dự án duyệt) → B → **T1 → T2 (đo + đề xuất)** → C1 → C2 → Opus review C → triển khai. Mỗi đợt: Sonnet dừng ở cuối đợt, báo cáo kênh B, cập nhật SNAPSHOT.
+A (khẩn) → triển khai → A2 dữ liệu thật (chủ dự án duyệt) → B (B1–B3) → B4 → **T1 → T2 (đo + đề xuất)** → C1 → C2 → Opus review C → triển khai. Mỗi đợt: Sonnet dừng ở cuối đợt, báo cáo kênh B, cập nhật SNAPSHOT.
