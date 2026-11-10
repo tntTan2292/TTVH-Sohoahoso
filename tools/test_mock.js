@@ -1558,5 +1558,97 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows.length = nk0; memo2();
 }
 
+// ===== DK1 (mục 26): số 02–08/11 theo từng người (tab DauKyNguoi; tên và mã GIẢ) =====
+{
+  const { execSync } = require('child_process');
+  let cu = ''; try { cu = execSync('git show eb1c47d:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && !/nhapDauKyNguoi_/.test(cu), 'DK1: đọc được Code.gs bản trước DK1 (commit eb1c47d) để so sánh');
+  const ctxO = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctxO[k] = ctx[k]; });
+  vm.createContext(ctxO); vm.runInContext(cu, ctxO); ctxO.now_ = (...a) => ctx.now_(...a);
+  const memoB = () => { ctxO.memoClear_(); ctx.memoClear_(); };
+  const J = JSON.stringify, tk = o => api(tAdmin, 'thongKeNhanSu', o), nsN = sh('NhanSu').rows.length, dkLuu = sh('DauKy').rows.map(r => r.slice()), lg0 = sh('LogHeThong').rows.length;
+  [['00000101', 'Giả Một'], ['00000102', 'Giả Hai'], ['00000103', 'Giả Ba'], ['00000104', 'Giả Bốn']].forEach(x => addUser(x[0], x[1], 'TOVIEN', '135790', false, 'Đơn vị B'));
+  ss.sheets = ss.sheets.filter(x => x.name !== 'DauKyNguoi'); memoB();      // các khối trước đã chạy setup() nên tab có sẵn; xóa để thử đường "tự tạo tab khi ghi"
+  // DauKy giả (như thật: có Ngay/Ca) – dòng Tách 766 tờ ngày 08/11 đang ở ca Tối. Thay hẳn nội dung DauKy trong khối này (các khối trước để lại dòng khác), khôi phục ở cuối khối.
+  sh('DauKy').rows = [sh('DauKy').rows[0]];
+  [['SCAN', '', '', '', 1000, 'x', '2026-11-03', 'Ngày'], ['TACH', '', '', '', 200, 'x', '2026-11-03', 'Ngày'], ['OCR', '', '', '', 100, 'x', '2026-11-04', 'Ngày'], ['SCAN', '', '', '', 300, 'x', '2026-11-04', 'Tối'], ['SCAN', '', '', '', 102, 'x', '2026-11-05', 'Ngày'], ['TACH', '', '', '', 766, 'x', '2026-11-08', 'Tối']].forEach(r => sh('DauKy').rows.push(r));
+  memoB();
+  const dong = () => [
+    { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 600, thanhVien: '101,00000102', gio: '8,8', tenGoc: 'Giả Một + Giả Hai', nguon: 'giả' },       // mã 101 thiếu số 0 đầu → vẫn khớp 00000101
+    { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 400, thanhVien: '00000103', gio: '8', tenGoc: 'Giả Ba' },
+    { ngay: '2026-11-03', ca: 'Ngày', buoc: 'TACH', soTo: 200, thanhVien: '00000101', gio: '8', tenGoc: 'Giả Một' },        // người có 2 dòng cùng ca Ngày 03/11: giờ chỉ tính một lần
+    { ngay: '2026-11-04', ca: 'Ngày', buoc: 'OCR', soTo: 100, thanhVien: '00000104', gio: '4', tenGoc: 'Giả Bốn' },
+    { ngay: '2026-11-04', ca: 'Tối', buoc: 'SCAN', soTo: 300, thanhVien: '00000102,00000103', gio: '3,3', tenGoc: 'Giả Hai + Giả Ba' },
+    { ngay: '2026-11-05', ca: 'Ngày', buoc: 'SCAN', soTo: 102, thanhVien: '', gio: '', tenGoc: 'Chưa rõ người' },
+    { ngay: '2026-11-08', ca: 'Ngày', buoc: 'TACH', soTo: 766, thanhVien: '00000104', gio: '4', tenGoc: 'Giả Bốn' }
+  ];
+  const snapAll = () => J(ss.sheets.map(s => [s.name, s.rows]));
+  // --- quyền ---
+  const tn0 = snapAll();
+  ok(!api(tTT, 'nhapDauKyNguoi', { dong: dong() }).ok && !api(tA, 'nhapDauKyNguoi', { dong: dong() }).ok && !api(tLD, 'nhapDauKyNguoi', { dong: dong() }).ok && snapAll() === tn0, 'DK1: chỉ ADMIN nhập (Tổ trưởng, tổ viên, Lãnh đạo bị chặn, không ghi gì)');
+  // --- trạng thái "trước" ---
+  const tkTruoc = tk({ tu: '2026-11-02', den: '2026-11-08' }).data, tk9Truoc = J(tk({ tu: '2026-11-09', den: '2026-11-09' }).data);
+  ok(J(ctx.thongKeNhanSu_({ tu: '2026-11-02', den: '2026-11-08' }, false)) === J(ctxO.thongKeNhanSu_({ tu: '2026-11-02', den: '2026-11-08' }, false)) && !('coDauKyNguoi' in tkTruoc) && !('chuaRo' in tkTruoc), 'DK1: chưa có DauKyNguoi → thongKeNhanSu_ giống hệt bản trước (không thêm trường mới)');
+  const ngKiem = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09'], dTruoc = {};
+  ngKiem.forEach(n => { dTruoc[n] = api(tAdmin, 'dashboard', { ngay: n }).data; });
+  const nkTruoc = J(sh('NhatKy').rows), dkTruoc = sh('DauKy').rows.map(r => r.slice());
+  // --- xem trước ---
+  const pv = api(tAdmin, 'nhapDauKyNguoi', { dong: dong() }), D = pv.data || {};
+  ok(pv.ok && D.apDung === false && D.soLoi === 0 && D.soLech === 0 && D.doiChieu.length === 6 && D.doiChieu.every(x => x.khop) && D.canChuyenCa === true && !sh('DauKyNguoi') && snapAll() === tn0, 'DK1: xem trước không ghi gì (chưa tạo tab); đối chiếu 6 mục khớp, dòng 766 tờ coi là ca Ngày và còn cần chuyển ca', pv.err || D);
+  ok(D.doiChieu.find(x => x.ngay === '2026-11-08').ca === 'Ngày' && D.doiChieu.find(x => x.ngay === '2026-11-08').nhap === 766, 'DK1: đối chiếu ngày 08/11 nằm ở ca Ngày');
+  // --- từ chối ---
+  const goi = (d, ex) => api(tAdmin, 'nhapDauKyNguoi', Object.assign({ dong: d, apDung: true, xacNhan: 'DAUKY' }, ex || {}));
+  ok(!api(tAdmin, 'nhapDauKyNguoi', { dong: dong(), apDung: true }).ok && !api(tAdmin, 'nhapDauKyNguoi', { dong: dong(), apDung: true, xacNhan: 'daukyx' }).ok && snapAll() === tn0, 'DK1: thiếu hoặc sai xacNhan → từ chối, không ghi gì');
+  const lech = dong(); lech[0].soTo = 601;
+  const rl = api(tAdmin, 'nhapDauKyNguoi', { dong: lech }), rl2 = goi(lech);
+  ok(rl.ok && rl.data.soLech === 1 && rl.data.doiChieu.find(x => !x.khop).lech === 1 && !rl2.ok && /lệch/.test(rl2.err) && snapAll() === tn0, 'DK1: tổng lệch 1 tờ → xem trước chỉ rõ mục lệch, áp dụng bị từ chối, không ghi gì', [rl2.err, rl.data && rl.data.doiChieu]);
+  const xau = dong().concat([{ ngay: '2026-11-09', ca: 'Ngày', buoc: 'SCAN', soTo: 5, thanhVien: '00000101', gio: '8' }, { ngay: '2026-11-03', ca: 'Sáng', buoc: 'SCAN', soTo: 5, thanhVien: '00000101', gio: '8' }, { ngay: '2026-11-03', ca: 'Ngày', buoc: 'XYZ', soTo: 5, thanhVien: '00000101', gio: '8' },
+    { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 0, thanhVien: '00000101', gio: '8' }, { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 5, thanhVien: '99999999', gio: '8' }, { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 5, thanhVien: '00000101,00000102', gio: '8' },
+    { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 5, thanhVien: '', gio: '', tenGoc: 'Giả Năm' }, { ngay: '2026-11-03', ca: 'Ngày', buoc: 'SCAN', soTo: 5, thanhVien: '00000101,101', gio: '8,8' }]);
+  const rx = api(tAdmin, 'nhapDauKyNguoi', { dong: xau }), Dx = rx.data || {};
+  ok(rx.ok && Dx.soLoi === 8 && Dx.dong.slice(0, 7).every(x => x.trangThai === 'OK') && Dx.dong.slice(7).every(x => x.trangThai === 'LOI' && x.loi.length), 'DK1: 8 dòng sai (ngày ngoài 02–08/11, ca, bước, số tờ, mã lạ, giờ lệch số người, thiếu thành viên, mã lặp) đều bị đánh lỗi riêng', Dx.dong && Dx.dong.map(x => x.trangThai + ':' + x.loi.join('|')));
+  ok(!goi(xau).ok && !sh('DauKyNguoi') && snapAll() === tn0, 'DK1: còn dòng lỗi → áp dụng bị từ chối, không ghi gì');
+  ok(!api(tAdmin, 'nhapDauKyNguoi', { dong: [] }).ok && !api(tAdmin, 'nhapDauKyNguoi', { dong: new Array(201).fill(dong()[0]) }).ok, 'DK1: rỗng hoặc quá 200 dòng bị từ chối');
+  // --- áp dụng ---
+  const lgDau = sh('LogHeThong').rows.length;
+  const ap = goi(dong());
+  const dkn = sh('DauKyNguoi');
+  ok(ap.ok && ap.data.daGhi === 7 && ap.data.daChuyenCa === 1 && dkn && dkn.rows[0].join() === 'Ngay,Ca,Buoc,SoTo,ThanhVien,Gio,TenGoc,Nguon,GhiChu' && dkn.rows.filter((r, i) => i > 0 && r[0]).length === 7, 'DK1: áp dụng → tự tạo tab DauKyNguoi, ghi đủ 7 dòng', ap.err || ap.data);
+  ok(dkn.rows[1][4] === '00000101,00000102' && dkn.rows[1][5] === '8,8' && dkn.rows[2][4] === '00000103' && typeof dkn.rows[2][4] === 'string' && dkn.fmts && [0, 1, 4, 5].every(c => dkn.fmts[2][c] === '@'), 'DK1: Ngay/Ca/ThanhVien/Gio ghi dạng văn bản; mã ghi theo mã chuẩn của NhanSu (101 → 00000101)', dkn.rows[1]);
+  const dkSau = sh('DauKy').rows, kh = [];
+  dkSau.forEach((r, i) => { if (J(r) !== J(dkTruoc[i])) kh.push(i); });
+  ok(kh.length === 1 && dkSau[kh[0]][7] === 'Ngày' && dkSau[kh[0]][4] === 766 && dkSau[kh[0]][0] === 'TACH' && dkSau[kh[0]][6] === '2026-11-08' && dkTruoc[kh[0]][7] === 'Tối' && dkSau.length === dkTruoc.length, 'DK1: DauKy chỉ đổi ĐÚNG một ô: ca của dòng Tách 766 tờ 08/11 từ Tối sang Ngày', kh);
+  ok(J(sh('NhatKy').rows) === nkTruoc, 'DK1: NhatKy không đổi');
+  ok(sh('SaoLuuXoa') && sh('SaoLuuXoa').rows.some(r => r[1] === 'DauKy' && /Tối/.test(r[3]) && /766/.test(r[3])), 'DK1: dòng DauKy bị đổi ca được sao lưu vào SaoLuuXoa (bản cũ ở ca Tối)');
+  const lg = sh('LogHeThong').rows.slice(lgDau).filter(x => x[4] === 'NHAP_DAU_KY_NGUOI');
+  ok(lg.length === 1 && /ghi 7 dòng/.test(lg[0][6]) && !/135790|PinHash|HASH/.test(lg[0][6]), 'DK1: có log NHAP_DAU_KY_NGUOI, không lộ PIN', lg.map(x => x[6]));
+  // --- thống kê nhân sự ---
+  const T = tk({ tu: '2026-11-02', den: '2026-11-08' }).data, nv = ma => T.nguoi.find(x => x.ma === ma) || {};
+  ok(nv('00000101').scanDV === 300 && nv('00000101').tachDV === 200 && nv('00000102').scanDV === 450 && nv('00000103').scanDV === 550 && nv('00000104').ocrDV === 100 && nv('00000104').tachDV === 766, 'DK1: ô hai tên chia đều (600 → 300 + 300; 300 → 150 + 150); ô một tên 100%', T.nguoi.filter(x => /^0000010/.test(x.ma)));
+  ok(nv('00000101').soCa === 2 && nv('00000101').gio === 8 && nv('00000102').soCa === 3 && nv('00000102').gio === 11 && nv('00000103').gio === 11 && nv('00000104').soCa === 2 && nv('00000104').gio === 8, 'DK1: người có 2 dòng cùng ca chỉ tính giờ một lần (Giả Một 8 giờ); ca Ngày 8 giờ tính 2 ca, ca Ngày 4 giờ và ca Tối tính 1; giờ lấy từ cột Gio, ca Ngày không gây lỗi', T.nguoi.filter(x => /^0000010/.test(x.ma)).map(x => [x.ma, x.soCa, x.gio]));
+  ok(T.coDauKyNguoi === true && T.chuaRo.scanDV === 102 && T.chuaRo.tachDV === 0 && T.chuaRo.ocrDV === 0 && !T.nguoi.some(x => /chưa rõ/i.test(x.ten)), 'DK1: coDauKyNguoi = true; 102 tờ chưa rõ người nằm riêng ở chuaRo, không thành người', T.chuaRo);
+  ok(T.tong.scanDV - tkTruoc.tong.scanDV === 1300 && T.tong.tachDV - tkTruoc.tong.tachDV === 966 && T.tong.ocrDV - tkTruoc.tong.ocrDV === 100 && T.tong.soNguoi - tkTruoc.tong.soNguoi === 4, 'DK1: tổng chỉ tăng đúng phần có người (Scan 1.300, Tách 966, OCR 100, 4 người); 102 tờ chưa rõ không vào tổng', [T.tong, tkTruoc.tong]);
+  ok(T.tong.dvGio === Math.round(((T.tong.scanDV + T.tong.tachDV + T.tong.ocrDV) / T.tong.gio) * 10) / 10, 'DK1: dòng tổng vẫn khớp công thức năng suất');
+  ok(J(tk({ tu: '2026-11-09', den: '2026-11-09' }).data) === tk9Truoc && J(ctx.thongKeNhanSu_({ tu: '2026-11-09', den: '2026-11-09' }, true)) === J(ctxO.thongKeNhanSu_({ tu: '2026-11-09', den: '2026-11-09' }, true)) && J(ctx.thongKeNhanSu_({ tu: '2026-11-01', den: '2026-11-01' }, true)) === J(ctxO.thongKeNhanSu_({ tu: '2026-11-01', den: '2026-11-01' }, true)), 'DK1: khoảng ngày không chạm 02–08/11 → thongKeNhanSu_ giống hệt bản trước (và trước/sau khi có DauKyNguoi)');
+  // --- mã đổi dạng sau này (F-NS-11) vẫn khớp ---
+  dkn.rows[2][4] = '103'; dkn.rows[3][4] = '101'; memoB();
+  ok(J(tk({ tu: '2026-11-02', den: '2026-11-08' }).data) === J(T), 'DK1: Sheet ghi mã bỏ số 0 đầu ("103", "101") thì thongKeNhanSu_ vẫn khớp đúng người, kết quả y hệt');
+  dkn.rows[2][4] = '00000103'; dkn.rows[3][4] = '00000101'; memoB();
+  // --- dash_ không đổi ---
+  const dSau = {}; ngKiem.forEach(n => { dSau[n] = api(tAdmin, 'dashboard', { ngay: n }).data; });
+  const exp08 = JSON.parse(J(dTruoc['2026-11-08'])); exp08.cas.find(c => c.ca === 'Tối').tachDV -= 766; exp08.caGop.tachDV += 766;
+  ok(ngKiem.filter(n => n !== '2026-11-08').every(n => J(dSau[n]) === J(dTruoc[n])) && J(dSau['2026-11-08']) === J(exp08), 'DK1: dash_ trước/sau giống hệt mọi ngày 02–09/11; riêng 08/11 chỉ khác đúng ca của dòng 766 tờ (Tối −766 → ca Ngày +766)', ngKiem.filter(n => J(dSau[n]) !== J(dTruoc[n])));
+  // --- chạy lại, thay toàn bộ ---
+  dkn.simulaSo0 = true; const dkMid = J(sh('DauKy').rows), nSh = ss.sheets.length;
+  const ap2 = goi(dong());
+  ok(ap2.ok && ap2.data.daGhi === 7 && ap2.data.daChuyenCa === 0 && dkn.rows.filter((r, i) => i > 0 && r[0]).length === 7 && J(sh('DauKy').rows) === dkMid && ss.sheets.length === nSh + 1 && /^SL_DauKyNguoi_/.test(ap2.data.saoLuu.dauKyNguoi), 'DK1: chạy lại → vẫn 7 dòng (không cộng dồn), DauKy không đổi thêm, không chuyển ca lần nữa, sao lưu DauKyNguoi cũ (SL_DauKyNguoi_…)', ap2.err || ap2.data);
+  ok(typeof dkn.rows[2][4] === 'string' && dkn.rows[2][4] === '00000103' && dkn.rows[1][5] === '8,8', 'DK1: ghi lại khi Sheets hay cắt số 0 đầu: mã 00000103 và giờ "8,8" vẫn nguyên');
+  const ap3 = goi(dong().slice(0, 4).concat([dong()[6]]).concat([dong()[4], dong()[5]]));
+  ok(ap3.ok && dkn.rows.filter((r, i) => i > 0 && r[0]).length === 7 && J(tk({ tu: '2026-11-02', den: '2026-11-08' }).data) === J(T), 'DK1: đổi thứ tự dòng, chạy lại → vẫn 7 dòng và thống kê y hệt', ap3.err);
+  // --- dọn ---
+  sh('DauKy').rows = dkLuu; sh('NhanSu').rows.length = nsN; sh('LogHeThong').rows.length = lg0;
+  ss.sheets = ss.sheets.filter(s => !/^(DauKyNguoi|SaoLuuXoa|SL_DauKyNguoi_.*|copy)$/.test(s.name)); memoB();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

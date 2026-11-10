@@ -31,9 +31,10 @@ const TAB = {
   ChotCa:   ['Ngay','Ca','TrangThai','NguoiXacNhan','ThoiGian','GhiChu'],
   DauKy:    ['Buoc','SoHop','SoHoSo','SoTrang','SoTo','GhiChu','Ngay','Ca'],
   LogHeThong: ['ThoiGian','MaHRM','HoTen','VaiTro','HanhDong','NgayCa','ChiTiet'],
-  DonVi:    ['TenDV','HoatDong','ThuTu']      // B1: danh mục đơn vị (tab tự tạo khi cần)
+  DonVi:    ['TenDV','HoatDong','ThuTu'],      // B1: danh mục đơn vị (tab tự tạo khi cần)
+  DauKyNguoi: ['Ngay','Ca','Buoc','SoTo','ThanhVien','Gio','TenGoc','Nguon','GhiChu']      // DK1: số 02–08/11 theo từng người (tab tự tạo khi ghi)
 };
-const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien','NguoiPhan','NguoiNhap','NguoiXacNhan','NguoiHuy','TenDV','DonVi'];   // dùng chung cho setup, append_, appendMany_
+const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien','NguoiPhan','NguoiNhap','NguoiXacNhan','NguoiHuy','TenDV','DonVi','Gio','TenGoc','Nguon'];   // dùng chung cho setup, append_, appendMany_
 const MIN_ROWS = { NhatKy: 20000, LogHeThong: 20000, PhanCa: 5000, PhanNhom: 5000, ChotCa: 5000 };   // setup bảo đảm đủ dòng TRƯỚC khi định dạng cột
 const VAI_TRO_QL = ['TOTRUONG', 'TOPHO', 'ADMIN'];
 const VAI_TRO_ALL = ['TOVIEN', 'TOTRUONG', 'TOPHO', 'LANHDAO', 'ADMIN'];
@@ -100,7 +101,7 @@ let PERF_ = null;
 function pt_(k, t0) { if (PERF_) { const o = PERF_[k] = PERF_[k] || { n: 0, ms: 0 }; o.n++; o.ms += Date.now() - t0; } }
 const MEMO_ = {};
 // Bộ nhớ đệm giữa các lượt gọi cho các tab nhỏ (đọc Sheet chậm). Mỗi lần ghi tab đổi "phiên bản" nên không đọc nhầm dữ liệu cũ.
-const CACHE_TABS = { NhanSu: 1, PhanCa: 1, PhanNhom: 1, ChotCa: 1, DauKy: 1, DonVi: 1 };
+const CACHE_TABS = { NhanSu: 1, PhanCa: 1, PhanNhom: 1, ChotCa: 1, DauKy: 1, DonVi: 1, DauKyNguoi: 1 };
 function verKey_() { return String(Date.now()) + Math.random().toString(36).slice(2, 6); }
 function tabVer_(name) {
   const c = CacheService.getScriptCache();
@@ -423,6 +424,7 @@ function route_(u, action, p) {
     case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
     case 'chuanHoaDonVi': needSuper_(u); return chuanHoaDonVi_(u, p);   // B2
     case 'chuanHoaMaHRM': needSuper_(u); return chuanHoaMaHRM_(u, p);      // F-NS-11
+    case 'nhapDauKyNguoi': needSuper_(u); return nhapDauKyNguoi_(u, p);      // DK1
     case 'xoaNhanSu': needSuper_(u); return xoaNhanSu_(u, p);           // B5
     case 'importNhanSu': needSuper_(u); return importNhanSu_(u, p);     // B3
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
@@ -1164,6 +1166,103 @@ function chuanHoaMaHRM_(u, p) {
   return kq;
 }
 
+/* ---------- DK1 (mục 26): số 02–08/11 theo TỪNG NGƯỜI (tab DauKyNguoi; chỉ ADMIN: xem trước → áp dụng) ---------- */
+// payload { dong: [{ngay, ca, buoc, soTo, thanhVien, gio, tenGoc, nguon, ghiChu}], apDung, xacNhan:'DAUKY' } (nhận cả khóa viết hoa đầu: Ngay, Ca, SoTo…).
+// thanhVien = Mã HRM cách nhau dấu phẩy; gio = giờ công từng người, CÙNG thứ tự. Ô nhiều người chia đều số tờ. thanhVien trống chỉ khi tenGoc là "Chưa rõ người" (không chia).
+// Đối chiếu tổng theo (ngày, ca, bước) với DauKy đang có (dòng Tách 766 tờ ngày 08/11 coi là ca Ngày). Áp dụng: sao lưu DauKyNguoi cũ + dòng DauKy bị đổi ca, thay toàn bộ DauKyNguoi, chuyển ca dòng 766 tờ.
+// KHÔNG đụng DauKy ngoài đúng dòng đó, không đụng NhatKy. dash_ không đọc DauKyNguoi nên số của dash_ không đổi (trừ ca của dòng 766 tờ).
+const DK_NGUOI_TOI_DA_ = 200;
+const DK_NGUOI_CA_ = ['Ngày', 'Tối'], DK_NGUOI_BUOC_ = ['SCAN', 'TACH', 'OCR'];
+const DK_CHUYEN_CA_ = { ngay: '2026-11-08', buoc: 'TACH', soTo: 766, caCu: 'Tối', caMoi: 'Ngày' };
+function maKhopSo0_(v) { return s_(v).replace(/^0+/, ''); }      // so khớp Mã HRM bỏ số 0 đầu (F-NS-11 có thể đổi dạng mã)
+function dkNguoiTab_() {      // tự tạo tab DauKyNguoi nếu chưa có
+  const ss = ss_(), h = TAB.DauKyNguoi;
+  let sh = ss.getSheetByName('DauKyNguoi');
+  if (!sh) {
+    sh = ss.insertSheet('DauKyNguoi');
+    sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    h.forEach(function (k, i) { if (TEXT_COLS.indexOf(k) >= 0) sh.getRange(1, i + 1, sh.getMaxRows(), 1).setNumberFormat('@'); });
+    memoClear_('DauKyNguoi');
+  }
+  return sh;
+}
+function nhapDauKyNguoi_(u, p) {
+  memoClear_('DauKy'); memoClear_('NhanSu'); memoClear_('DauKyNguoi');      // bài học E1/E2: không dùng đệm cũ
+  const apDung = p.apDung === true;
+  if (!Array.isArray(p.dong) || !p.dong.length) throw 'Không có dòng nào để nhập';
+  if (p.dong.length > DK_NGUOI_TOI_DA_) throw 'Mỗi lần nhập tối đa ' + DK_NGUOI_TOI_DA_ + ' dòng';
+  if (apDung && s_(p.xacNhan) !== 'DAUKY') throw 'Gõ đúng chữ DAUKY để xác nhận ghi số đầu kỳ theo từng người';
+  const canon = {}; read_('NhanSu').forEach(function (r) { const m = s_(r.MaHRM); canon[maKhopSo0_(m)] = m; });
+  const lay = function (x, k) { return x[k] !== undefined ? x[k] : x[k.charAt(0).toLowerCase() + k.slice(1)]; };
+  const out = [], hop = {};      // hop: tổng nhập theo "ngày|ca|bước"
+  p.dong.forEach(function (x, i) {
+    x = x || {};
+    const stt = i + 1, loi = [];
+    const ngay = d_(lay(x, 'Ngay')), ca = s_(lay(x, 'Ca')), buoc = s_(lay(x, 'Buoc')).toUpperCase(), tenGoc = chuanTen_(lay(x, 'TenGoc'));
+    const soToRaw = s_(lay(x, 'SoTo')), soTo = /^\d+$/.test(soToRaw) ? Number(soToRaw) : 0;
+    const tvRaw = lay(x, 'ThanhVien'), gioRaw = lay(x, 'Gio');
+    const ds = s_(tvRaw) ? s_(tvRaw).split(',').map(s_) : [], gioDs = s_(gioRaw) ? s_(gioRaw).split(',').map(s_) : [];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay < NGAY_BAT_DAU || ngay > DAU_KY_DEN) loi.push('Ngày phải từ ' + NGAY_BAT_DAU + ' đến ' + DAU_KY_DEN);
+    if (DK_NGUOI_CA_.indexOf(ca) < 0) loi.push('Ca phải là Ngày hoặc Tối');
+    if (DK_NGUOI_BUOC_.indexOf(buoc) < 0) loi.push('Bước phải là SCAN, TACH hoặc OCR');
+    if (!(soTo > 0)) loi.push('Số tờ phải là số nguyên dương');
+    const maChuan = [], gioSo = [];
+    if (!ds.length) { if (boDau_(tenGoc) !== 'chuaronguoi') loi.push('Thiếu thành viên (chỉ dòng "Chưa rõ người" mới được để trống)'); if (gioDs.length) loi.push('Có giờ công nhưng không có thành viên'); }
+    else {
+      if (ds.length !== gioDs.length) loi.push('Số giờ công (' + gioDs.length + ') khác số thành viên (' + ds.length + ')');
+      const thay = {};
+      ds.forEach(function (m, j) {
+        const c = m ? canon[maKhopSo0_(m)] : '';
+        if (!c) loi.push('Mã "' + m + '" không có trong NhanSu'); else if (thay[c]) loi.push('Mã ' + c + ' bị lặp trong cùng một dòng'); else { thay[c] = 1; maChuan.push(c); }
+        const g = gioDs[j] !== undefined && /^\d+(\.\d+)?$/.test(gioDs[j]) ? Number(gioDs[j]) : 0;
+        if (gioDs[j] !== undefined && !(g > 0)) loi.push('Giờ công "' + gioDs[j] + '" không hợp lệ'); else gioSo.push(g);
+      });
+    }
+    if (!loi.length) { const k = ngay + '|' + ca + '|' + buoc; hop[k] = (hop[k] || 0) + soTo; }
+    out.push({ stt: stt, ngay: ngay, ca: ca, buoc: buoc, soTo: soTo, thanhVien: maChuan.length === ds.length ? maChuan.join(',') : ds.join(','), gio: gioSo.length === gioDs.length ? gioSo.join(',') : gioDs.join(','), tenGoc: tenGoc, nguon: s_(lay(x, 'Nguon')), ghiChu: s_(lay(x, 'GhiChu')), trangThai: loi.length ? 'LOI' : 'OK', loi: loi });
+  });
+  // Đối chiếu tổng với DauKy đang có (chỉ dòng có Ngay trong 02–08/11; dòng 766 tờ ngày 08/11 coi là ca Ngày)
+  const co = {}, dkRowsCan = [];
+  read_('DauKy').forEach(function (r) {
+    const nd = d_(r.Ngay), b = s_(r.Buoc).toUpperCase(); if (!nd || nd < NGAY_BAT_DAU || nd > DAU_KY_DEN) return;
+    const dv = n_(r.SoTo) > 0 ? n_(r.SoTo) : n_(r.SoTrang);
+    let ca = s_(r.Ca);
+    if (nd === DK_CHUYEN_CA_.ngay && b === DK_CHUYEN_CA_.buoc && dv === DK_CHUYEN_CA_.soTo && ca === DK_CHUYEN_CA_.caCu) { dkRowsCan.push(r._row); ca = DK_CHUYEN_CA_.caMoi; }
+    const k = nd + '|' + ca + '|' + b; co[k] = (co[k] || 0) + dv;
+  });
+  const keys = {}; Object.keys(hop).forEach(function (k) { keys[k] = 1; }); Object.keys(co).forEach(function (k) { keys[k] = 1; });
+  const doiChieu = Object.keys(keys).sort().map(function (k) {
+    const a = k.split('|'), nhap = hop[k] || 0, daCo = co[k] || 0;
+    return { ngay: a[0], ca: a[1], buoc: a[2], nhap: nhap, daCo: daCo, lech: nhap - daCo, khop: nhap === daCo };
+  });
+  const soLoi = out.filter(function (x) { return x.trangThai === 'LOI'; }).length, soLech = doiChieu.filter(function (x) { return !x.khop; }).length;
+  const kq = { apDung: apDung, dong: out, soDong: out.length, soLoi: soLoi, doiChieu: doiChieu, soLech: soLech, canChuyenCa: dkRowsCan.length > 0 };
+  if (!apDung) return kq;
+  if (soLoi) throw 'Còn ' + soLoi + ' dòng lỗi – chưa ghi gì. Sửa dữ liệu rồi Xem trước lại';
+  if (soLech) throw 'Tổng theo (ngày, ca, bước) lệch ' + soLech + ' mục so với số đầu kỳ đang có – chưa ghi gì. Xem bảng đối chiếu';
+  const sh = dkNguoiTab_(), h = TAB.DauKyNguoi;
+  let saoLuuCu = '';
+  if (sh.getLastRow() >= 2) saoLuuCu = backupTab_('DauKyNguoi');      // sao lưu bản cũ (nếu có dữ liệu)
+  const vals = out.map(function (x) { return [x.ngay, x.ca, x.buoc, x.soTo, x.thanhVien, x.gio, x.tenGoc, x.nguon, x.ghiChu].map(safe_); });
+  const lastR = sh.getLastRow();
+  if (lastR >= 2) sh.getRange(2, 1, lastR - 1, h.length).clearContent();
+  if (1 + vals.length > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), Math.max(1000, vals.length));
+  const rg = sh.getRange(2, 1, vals.length, h.length);
+  textFmt_(rg, h, vals.length);      // Ngay, ThanhVien ("00109101,00109102"), Gio ("8,8") phải là văn bản trước khi ghi
+  rg.setValues(vals);
+  let saoLuuDk = '';
+  if (dkRowsCan.length) {      // chuyển ca đúng dòng Tách 766 tờ 08/11: Tối → Ngày (chạy lại: không còn dòng ở Tối nên không làm gì)
+    const dkSh = ss_().getSheetByName('DauKy'), cu = dkRowsCan.map(function (r) { return dkSh.getRange(r, 1, 1, TAB.DauKy.length).getValues()[0]; });
+    saoLuuDk = saoLuuDong_('DauKy', cu, u.ma);
+    dkRowsCan.forEach(function (r) { setCell_('DauKy', r, 'Ca', DK_CHUYEN_CA_.caMoi); });
+  }
+  memoClear_('DauKyNguoi'); memoClear_('DauKy'); memoClear_();
+  log_(u.ma, 'NHAP_DAU_KY_NGUOI', 'ghi ' + vals.length + ' dòng DauKyNguoi, chuyển ca ' + dkRowsCan.length + ' dòng DauKy (Tách ' + DK_CHUYEN_CA_.soTo + ' tờ ' + DK_CHUYEN_CA_.ngay + ' ' + DK_CHUYEN_CA_.caCu + '→' + DK_CHUYEN_CA_.caMoi + ') | sao lưu ' + (saoLuuCu || 'không có bản cũ') + (saoLuuDk ? ', ' + saoLuuDk : ''));
+  kq.daGhi = vals.length; kq.daChuyenCa = dkRowsCan.length; kq.saoLuu = { dauKyNguoi: saoLuuCu, dauKy: saoLuuDk };
+  return kq;
+}
+
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */
 function appendMany_(name, objs) {
   if (!objs.length) return;
@@ -1815,7 +1914,8 @@ function dash_(ngayIn, gomThu, soNgayIn) {
 
 // Thống kê theo NHÂN SỰ trong một khoảng ngày [tu, den] (tối đa 366 ngày). Cùng quy tắc với dash_.canhan: dv = tờ nếu > 0 ngược lại trang,
 // chia công theo ThanhVien chốt lúc báo cáo (không có thì theo thành viên nhóm trong PhanNhom ngày đó), bỏ bản hủy và THỬ NGHIỆM (trừ gomThu).
-// Số đầu kỳ DauKy (02–08/11) không có chi tiết từng người nên KHÔNG cộng vào đây (dauKyDen cho giao diện ghi chú).
+// Số đầu kỳ DauKy (02–08/11) không có chi tiết từng người nên KHÔNG cộng vào đây (dauKyDen cho giao diện ghi chú);
+// DK1: riêng số theo từng người trong tab DauKyNguoi thì có (coDauKyNguoi, chuaRo trả thêm khi khoảng ngày có dữ liệu này).
 function thongKeNhanSu_(p, gomThu) {
   const t = now_(), tu = d_(p.tu) || t.ngay;
   let den = d_(p.den) || t.ngay;
@@ -1830,7 +1930,7 @@ function thongKeNhanSu_(p, gomThu) {
     (tvNhom[key] = tvNhom[key] || []).push({ ma: s_(r.MaHRM), ten: s_(r.HoTen) || ns[s_(r.MaHRM)] || s_(r.MaHRM) });
   });
   const rows = nhatKyRows_(gomThu).filter(function (r) { return r.ngay >= tu && r.ngay <= den && (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR'); });
-  const canhan = {}, ngayCo = {};
+  const canhan = {}, ngayCo = {}, chuaRo = { scanDV: 0, tachDV: 0, ocrDV: 0 };
   rows.forEach(function (r) {
     ngayCo[r.ngay] = 1;
     const mem = thanhVienBanGhi_(r, ns);
@@ -1838,11 +1938,20 @@ function thongKeNhanSu_(p, gomThu) {
     const dv = r.to > 0 ? r.to : r.trang;
     congCaNhan_(canhan, tvs, r.ngay + '|' + r.ca, r.buoc.toLowerCase(), { Hs: r.hs, Trang: r.trang, To: r.to, Hop: r.het ? 1 : 0, DV: dv });
   });
+  // DK1: số 02–08/11 theo từng người (tab DauKyNguoi). Chia đều theo ô; giờ lấy từ cột Gio (ca "Ngày" không có trong CA); mỗi người mỗi (ngày, ca) tính giờ một lần.
+  const dkn = dauKyNguoiRows_(tu, den, ns), gioDK = {};
+  dkn.forEach(function (r) {
+    ngayCo[r.ngay] = 1;
+    if (!r.tvs.length) { chuaRo[r.buoc.toLowerCase() + 'DV'] += r.to; return; }
+    const key = r.ngay + '|' + r.ca;
+    congCaNhan_(canhan, r.tvs, key, r.buoc.toLowerCase(), { Hs: 0, Trang: 0, To: r.to, Hop: 0, DV: r.to });
+    r.tvs.forEach(function (m) { const g = gioDK[m.ma] = gioDK[m.ma] || {}; if (g[key] === undefined) g[key] = m.gio; });
+  });
   const r1 = function (v) { return Math.round(v * 10) / 10; };
   const nguoi = Object.keys(canhan).filter(function (ma) { return gomThu || ma.indexOf('TN-') !== 0; }).map(function (ma) {
-    const c = canhan[ma], keys = Object.keys(c.ca);
-    c.soCa = keys.length;
-    c.gio = keys.reduce(function (a, k) { return a + CA[k.split('|')[1]].gio; }, 0);
+    const c = canhan[ma], keys = Object.keys(c.ca), gk = gioDK[ma] || {};
+    c.soCa = keys.reduce(function (a, k) { return a + (gk[k] !== undefined && k.split('|')[1] === 'Ngày' && gk[k] >= 8 ? 2 : 1); }, 0);      // DK1: ca Ngày 8 giờ tính 2 ca
+    c.gio = keys.reduce(function (a, k) { return a + (gk[k] !== undefined ? gk[k] : CA[k.split('|')[1]].gio); }, 0);
     const dvTong = c.scanDV + c.tachDV + c.ocrDV;
     c.dvGio = c.gio ? r1(dvTong / c.gio) : 0;
     delete c.ca;
@@ -1853,5 +1962,20 @@ function thongKeNhanSu_(p, gomThu) {
   nguoi.forEach(function (c) { Object.keys(tong).forEach(function (f) { if (f !== 'soNguoi') tong[f] += c[f] || 0; }); });
   Object.keys(tong).forEach(function (f) { tong[f] = r1(tong[f]); });
   tong.dvGio = tong.gio ? r1((tong.scanDV + tong.tachDV + tong.ocrDV) / tong.gio) : 0;
-  return { tu: tu, den: den, soNgay: Object.keys(ngayCo).length, dauKyDen: DAU_KY_DEN, nguoi: nguoi, tong: tong };
+  const kq = { tu: tu, den: den, soNgay: Object.keys(ngayCo).length, dauKyDen: DAU_KY_DEN, nguoi: nguoi, tong: tong };
+  if (dkn.length) { kq.coDauKyNguoi = true; kq.chuaRo = chuaRo; }      // DK1: chỉ thêm khi khoảng ngày có số theo từng người (khoảng khác: kết quả y hệt bản trước)
+  return kq;
+}
+// DK1: các dòng DauKyNguoi trong [tu, den] → [{ngay, ca, buoc, to, tvs:[{ma, ten, gio}]}]; mã so khớp với NhanSu bỏ số 0 đầu; tvs rỗng = "Chưa rõ người"
+function dauKyNguoiRows_(tu, den, ns) {
+  const canon = {}; Object.keys(ns).forEach(function (m) { canon[maKhopSo0_(m)] = m; });
+  const out = [];
+  read_('DauKyNguoi').forEach(function (r) {
+    const ngay = d_(r.Ngay), b = s_(r.Buoc).toUpperCase(), to = n_(r.SoTo);
+    if (!ngay || ngay < tu || ngay > den || DK_NGUOI_BUOC_.indexOf(b) < 0 || !(to > 0)) return;
+    const ds = s_(r.ThanhVien) ? s_(r.ThanhVien).split(',').map(s_).filter(Boolean) : [], gio = s_(r.Gio) ? s_(r.Gio).split(',').map(s_) : [];
+    const tvs = ds.map(function (m, j) { const ma = canon[maKhopSo0_(m)] || m, g = Number(gio[j]); return { ma: ma, ten: ns[ma] || ma, gio: isFinite(g) && g > 0 ? g : 0 }; });
+    out.push({ ngay: ngay, ca: s_(r.Ca), buoc: b, to: to, tvs: tvs });
+  });
+  return out;
 }
