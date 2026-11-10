@@ -156,6 +156,8 @@ Opus được tự chốt **ĐẠT** một báo cáo kỹ thuật mà không h�
 Thiếu một điều → hỏi chủ dự án. Phân vân → coi như không được tự duyệt. Việc của Antigravity **không bao giờ** được tự duyệt.
 
 ## 9. Chat quá dài: bàn giao sang chat mới
+> **Bắt buộc (chủ dự án yêu cầu 10/11/2026):** Opus **tự theo dõi và tự báo**, không chờ chủ dự án nhắc. Mỗi lượt tương tác trong chat dài đọc lại toàn bộ lịch sử nên tốn quota hơn một chat mới đọc từ repo. Khi thấy dấu hiệu dưới đây, cuối câu trả lời phải có mục **"### Chuyển chat CTO mới"** gồm lời báo ngắn + prompt mở đầu chat mới (mẫu 10.1, điền sẵn) trong khối code. Sonnet/Antigravity cũng tự báo theo cách tương tự khi chat của mình quá dài.
+
 Dấu hiệu: đã xong nhiều việc trong cùng chat, kết quả dán vào quá dài, phải đọc lại tài liệu đã đọc, khó phân biệt quyết định cũ và mới, hệ thống báo đã tóm tắt hội thoại. Không bịa con số token.
 
 Khi thấy dấu hiệu, chủ động làm 4 bước:

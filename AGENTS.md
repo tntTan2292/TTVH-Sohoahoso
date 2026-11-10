@@ -11,6 +11,7 @@ Dự án: **Báo cáo ca Số hóa hồ sơ – Bưu điện TP Huế** (Google 
 6. `docs/CHUAN_PROMPT.md` — chuẩn viết prompt và chuẩn báo cáo. **Opus đọc trước khi viết bất kỳ prompt nào.** Sonnet/Antigravity báo cáo theo **kênh B** (mục 7). Việc trong prompt khác việc trong SNAPSHOT → dừng và báo.
    - **Sonnet:** xong việc, nếu không có "điểm phải dừng" (mục 3a) thì tự viết prompt cho Antigravity; Opus review tổng thể một lần cuối đợt.
    - **Antigravity:** CẤM mở trình duyệt, tìm kiếm web, chụp màn hình, chạy dev server (mục 3b).
+   - **Chat dài (mọi developer, nhất là Opus):** tự báo chủ dự án chuyển chat mới khi chat nặng, kèm prompt mở đầu chat mới điền sẵn; trước đó ghi mọi quyết định/kết quả chỉ có trong chat vào repo, commit, push (mục 9).
 
 Prompt giao việc **đang dùng** nằm ở `docs/prompts/` (SNAPSHOT ghi prompt nào đang chạy). Các file `PROMPT_*.md` ở gốc là prompt **cũ**, có chỗ đã sai so với hiện tại. Khi mâu thuẫn, tin `docs/` và mã nguồn.
 
