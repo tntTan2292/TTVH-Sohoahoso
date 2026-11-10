@@ -7,7 +7,7 @@
 //  5. không có id trùng trong phần HTML tĩnh
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const root = path.join(__dirname, '..');
-const rd = f => fs.readFileSync(path.join(root, f), 'utf8');
+const rd = f => fs.readFileSync(path.join(root, f), 'utf8').split(String.fromCharCode(13)).join('');   // bỏ CR: checkout Windows (core.autocrlf=true) là CRLF
 const html = rd('apps-script/Index.html'), gs = rd('apps-script/Code.gs');
 const cn = rd('docs/CHUC_NANG.md'), api = rd('docs/API.md');
 let pass = 0, fail = 0;
