@@ -353,6 +353,20 @@ ok(r.ok && sh('PhanNhom').rows.some(x => x[5] === 'MAU'), 'taoMau sinh nhóm đ�
 r = api(tAdmin, 'resetDuLieu', { phamVi: 'THU' });
 ok(r.ok && r.data.saoLuu[0] === 'SaoLuuXoa' && !sh('PhanNhom').rows.some(x => x[5] === 'MAU') && sh('SaoLuuXoa').rows.length > 1, 'xóa THU xóa luôn nhóm mẫu và lưu dòng bị xóa vào SaoLuuXoa', r);
 ok(!['PhanCa', 'PhanNhom', 'NhanSu'].some(n => sh(n).rows.some(x => /^TN-/.test(x[n === 'NhanSu' ? 0 : n === 'PhanCa' ? 2 : 3]))), 'xóa THU dọn sạch người giả TN-xx (phân ca, nhóm, nhân sự)');
+{
+  // B5b: người TN-xx có ChucVu KHÁC 'THỬ NGHIỆM' (và mọi DonVi) vẫn bị xóa; người thật (cả mã có chữ TN không ở đầu) không bị đụng
+  sh('NhanSu').rows.push(['TN-77', 'Giả 77', 'Tổ viên', 'Đơn vị bất kỳ', '', 'TOVIEN', '', '', '', false, 0, false, true], ['TN-78', 'Giả 78', '', '', '', 'TOVIEN', 'HASH78', 'SALT78', '123456', false, 0, false, false], ['XTN-79', 'Người thật mã lạ', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true]);
+  sh('PhanCa').rows.push(['2026-11-09', 'Sáng', 'TN-77', 'Giả 77', '', ''], ['2026-11-09', 'Sáng', 'XTN-79', 'Người thật mã lạ', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Sáng', '8', 'TN-78', 'Giả 78', 'MAU', '']);
+  ctx.memoClear_();
+  const nsTruoc = sh('NhanSu').rows.filter(x => x[0] !== '' && !/^TN-/.test(x[0])).length, sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length;
+  const rr = api(tAdmin, 'resetDuLieu', { phamVi: 'THU' });
+  ok(rr.ok && rr.data.nguoiGia === 2 && !sh('NhanSu').rows.some(x => /^TN-/.test(x[0])) && sh('NhanSu').rows.filter(x => x[0] !== '' && !/^TN-/.test(x[0])).length === nsTruoc, 'B5b: TN-xx có ChucVu/DonVi khác vẫn bị xóa; trả về số người giả đã xóa; người thật không bị đụng', rr);
+  ok(!sh('PhanCa').rows.some(x => /^TN-/.test(x[2])) && !sh('PhanNhom').rows.some(x => /^TN-/.test(x[3])) && sh('PhanCa').rows.some(x => x[2] === 'XTN-79') && sh('NhanSu').rows.some(x => x[0] === 'XTN-79'), 'B5b: dọn PhanCa/PhanNhom của TN-xx; mã XTN-79 (không bắt đầu TN-) còn nguyên');
+  const slB = sh('SaoLuuXoa').rows.slice(sl0).filter(x => x[1] === 'NhanSu');
+  ok(slB.length === 2 && !slB.some(x => /HASH78|SALT78|123456/.test(x[3])), 'B5b: sao lưu người giả không kèm PinHash/Salt/PinTam', slB.map(x => x[3]));
+  sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === 'XTN-79'), 1); sh('PhanCa').rows = sh('PhanCa').rows.filter(x => x[2] !== 'XTN-79'); ctx.memoClear_();
+}
 ok(sh('PhanNhom').rows.some(x => x[3] === 'B1' && x[1] === 'Chiều'), 'xóa THU không đụng nhóm thật');
 r = api(tAdmin, 'resetDuLieu', { phamVi: 'NGAY', ngay: '2026-11-08' });
 ok(!r.ok && /XOA/.test(r.err), 'phạm vi NGAY cần gõ XOA ở server', r);

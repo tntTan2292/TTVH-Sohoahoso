@@ -3103,7 +3103,7 @@ function initDL() {
   $('dlThu').onclick = function () {
     if (confirm('Xóa mọi bản ghi đánh dấu THỬ NGHIỆM?')) call('resetDuLieu', { phamVi: 'THU' }).then(function (r) {
       var sl = r.saoLuu && r.saoLuu.length ? ' (Đã tạo sao lưu: ' + r.saoLuu.join(', ') + ')' : '';
-      msg('dlMsg', 'Đã xóa ' + r.daXoa + ' bản ghi thử nghiệm' + sl, 'ok');
+      msg('dlMsg', 'Đã xóa ' + r.daXoa + ' bản ghi thử nghiệm và ' + (r.nguoiGia || 0) + ' người giả TN-xx (kèm phân ca, phân nhóm của họ)' + sl, 'ok');
       loadDL();
     }).catch(function (e) { msg('dlMsg', e); });
   };

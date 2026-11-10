@@ -41,7 +41,7 @@
 | `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
 | `khoiPhuc` | ADMIN | `{id}` | — |
 | `taoMau` | ADMIN | `{ngay, cas:[ca], soNguoi}` | `{soBanGhi, soCa, ngay, soNguoi, soThem}` |
-| `resetDuLieu` | ADMIN | `{phamVi:'THU'}`; `{phamVi:'NGAY', ngay, xacNhan:'XOA', caPhanCa}`; `{phamVi:'TATCA', xacNhan:'XOA'}` | có `saoLuu` |
+| `resetDuLieu` | ADMIN | `{phamVi:'THU'}`; `{phamVi:'NGAY', ngay, xacNhan:'XOA', caPhanCa}`; `{phamVi:'TATCA', xacNhan:'XOA'}` | có `saoLuu`; `THU` trả thêm `nguoiGia` (số người giả TN-xx đã xóa) |
 | `chuanHoaNhom` | ADMIN | `{ngay, ca, apDung:false}` (xem trước, không ghi); `{ngay, ca, apDung:true, xacNhan:"NHOM"}` (áp dụng) | `{ngay, ca, apDung, tongQuet, boQua, doiNhom:[{id,gio,buoc,hop,hs,trang,to,loi,het,maHoSo,nguoi,nhomCu,nhomMoi,tvCu,tvMoi,ly}], huyTrung:[{...,giuId}], xungDot:[{nhom,buoc,hop,dong:[],ly}], daSua:{doi,huy}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |
 | `dsDonVi` | TT/TP/ADMIN | — | `[{ten, hoatDong, thuTu, soNguoi}]` theo thứ tự; tab `DonVi` chưa có → `[]` (B1) |
 | `luuDonVi` | ADMIN | `{ten, tenCu?, thuTu?, hoatDong?}` — không có `tenCu` = thêm mới; có `tenCu` = sửa/ẩn/đổi tên (đổi tên chỉ khi đơn vị chưa có người dùng; không xóa) | `{moi, ten}` (B1) |

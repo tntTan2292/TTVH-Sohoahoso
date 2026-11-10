@@ -1016,7 +1016,10 @@ function rewrite_(name, dropFn, saoLuu) {      // xóa các dòng thỏa dropFn(
     if (s_(v[i][0]) !== '' && dropFn(o)) { dropped++; if (saoLuu) bo.push(v[i]); } else if (s_(v[i][0]) !== '') keep.push(v[i]);
   }
   if (!dropped) return 0;
-  if (saoLuu) saoLuuDong_(name, bo, saoLuu);
+  if (saoLuu) {      // sao lưu KHÔNG kèm PIN: tab NhanSu bỏ PinHash/Salt/PinTam
+    const kin = name === 'NhanSu' ? ['PinHash', 'Salt', 'PinTam'].map(function (k) { return h.indexOf(k); }).filter(function (i) { return i >= 0; }) : [];
+    saoLuuDong_(name, kin.length ? bo.map(function (row) { return row.map(function (x, i) { return kin.indexOf(i) >= 0 ? '' : x; }); }) : bo, saoLuu);
+  }
   sh.getRange(2, 1, v.length - 1, h.length).clearContent();
   if (keep.length) sh.getRange(2, 1, keep.length, h.length).setValues(keep);
   memoClear_(name);
@@ -1041,7 +1044,7 @@ function suaBanGhi_(u, p) {
 }
 function resetDuLieu_(u, p) {
   const pv = s_(p.phamVi), sl = u.ma;     // mọi dòng bị xóa được lưu vào tab SaoLuuXoa
-  let n = 0;
+  let n = 0, nguoiGia = 0;
   if (pv === 'TATCA') {
     if (s_(p.xacNhan) !== 'XOA') throw 'Gõ đúng chữ XOA để xác nhận xóa toàn bộ dữ liệu báo cáo';
     n = rewrite_('NhatKy', function () { return true; }, sl);
@@ -1051,7 +1054,7 @@ function resetDuLieu_(u, p) {
     n = rewrite_('NhatKy', function (o) { return s_(o.Loai) === 'THỬ NGHIỆM'; }, sl);
     rewrite_('PhanNhom', function (o) { return s_(o.NguoiPhan) === 'MAU' || /^TN-/.test(s_(o.MaHRM)); }, sl);   // nhóm do "Tạo dữ liệu mẫu" sinh ra
     rewrite_('PhanCa', function (o) { return /^TN-/.test(s_(o.MaHRM)); }, sl);      // người giả TN-xx
-    rewrite_('NhanSu', function (o) { return /^TN-/.test(s_(o.MaHRM)) && s_(o.ChucVu) === 'THỬ NGHIỆM'; }, sl);
+    nguoiGia = rewrite_('NhanSu', function (o) { return /^TN-/.test(s_(o.MaHRM)); }, sl);      // B5b: theo tiền tố TN- (dành riêng, import đã chặn), không phụ thuộc ChucVu
   } else if (pv === 'NGAY') {
     if (s_(p.xacNhan) !== 'XOA') throw 'Gõ đúng chữ XOA để xác nhận xóa dữ liệu của ngày này';
     const ngay = d_(p.ngay);
@@ -1061,8 +1064,8 @@ function resetDuLieu_(u, p) {
     rewrite_('PhanNhom', function (o) { return d_(o.Ngay) === ngay; }, sl);
     if (p.caPhanCa) rewrite_('PhanCa', function (o) { return d_(o.Ngay) === ngay; }, sl);   // tùy chọn: xóa luôn danh sách vào ca
   } else throw 'Phạm vi không hợp lệ';
-  log_(u.ma, 'RESET_DU_LIEU', pv + ' ' + s_(p.ngay) + ' xóa ' + n + ' | sao lưu: SaoLuuXoa');
-  return { daXoa: n, saoLuu: ['SaoLuuXoa'] };
+  log_(u.ma, 'RESET_DU_LIEU', pv + ' ' + s_(p.ngay) + ' xóa ' + n + (pv === 'THU' ? ', người giả TN-xx ' + nguoiGia : '') + ' | sao lưu: SaoLuuXoa');
+  return { daXoa: n, nguoiGia: nguoiGia, saoLuu: ['SaoLuuXoa'] };
 }
 /* ---------- Chuẩn hóa báo cáo cá nhân → nhóm (A2, QĐ1; chỉ ADMIN): xem trước rồi mới áp dụng ---------- */
 // Quét NhatKy (không hủy, không THỬ NGHIỆM) của ngày/ca, khâu NHAN_NHOM/SCAN/TACH/OCR, dòng có Nhom rỗng mà người báo cáo (ThanhVien, hoặc NguoiNhap nếu trống)
