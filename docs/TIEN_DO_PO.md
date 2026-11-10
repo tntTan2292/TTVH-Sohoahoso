@@ -31,4 +31,4 @@
 | 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
 | 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử F5 trong khung Apps Script thật |
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
-| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | ⬜ Đã đối chiếu, chờ chủ dự án quyết định 4 điểm |
+| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | ⬜ Chủ dự án đã chốt (10/11), có phiếu, chờ Sonnet làm; người phụ trách ca điền phiếu xác nhận |
