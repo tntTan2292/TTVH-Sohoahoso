@@ -31,7 +31,7 @@
 | 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | ✅ Xong (chủ dự án xác nhận 10/11, phiên bản 28) |
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
-| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), Xem trước trên link đạt (61 dòng, 0 lỗi, 0 lệch); chờ chủ dự án bấm Áp dụng, sau đó nạp lại khi phiếu xác nhận về |
+| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), Xem trước đạt (61 dòng, 0 lỗi, 0 lệch); chủ dự án báo đã Áp dụng (10/11); chờ phiếu xác nhận người làm về để nạp lại lần cuối |
 | 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 28 | Hộp xác nhận tự vẽ, thay popup trình duyệt có dòng đường link lạ | XN1 | ⬜ Có phiếu, chờ giao Sonnet (cùng đợt mục 30) |
 | 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
