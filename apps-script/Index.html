@@ -4320,39 +4320,55 @@ function dashVeBieuDo(d, t) {
   }
 }
 // ----- Tab 4: Nhân sự (thống kê theo khoảng ngày, action thongKeNhanSu) -----
+// LOC1: các lựa chọn nhanh tính ĐẾN NGÀY ĐANG XEM (#dNgay, trống thì hôm nay); "Tùy chọn" giữ đúng khoảng người dùng đã chọn.
+function nsNgayXem() { var v = $('dNgay') && $('dNgay').value; return v || ME.ngay; }
 function nsKhoangTinh() {
-  var k = DASH.ns.k, hn = ME.ngay, tu = hn, den = hn;
+  var k = DASH.ns.k, hn = nsNgayXem(), tu = hn, den = hn;
   var dt = new Date(hn + 'T00:00:00Z');
   if (k === '7') { dt.setUTCDate(dt.getUTCDate() - 6); tu = dt.toISOString().slice(0, 10); }
   else if (k === 'thang') tu = hn.slice(0, 8) + '01';
   else if (k === 'dau') tu = (DASH.d && DASH.d.khoangNgay && DASH.d.khoangNgay.tu) || '2026-11-02';
   else if (k === 'tuychon') { tu = DASH.ns.tu || hn; den = DASH.ns.den || hn; }
+  if (tu > den) tu = den;      // "Từ đầu dự án" khi xem ngày trước ngày đầu có dữ liệu
   return { tu: tu, den: den };
 }
+function nsChonKhoang() {      // đổi lựa chọn nhanh: hai ô tự điền theo ngày đang xem
+  var S = DASH.ns, v = $('nsKhoang').value, cu = nsKhoangTinh();
+  S.k = v; if (v === 'tuychon') { S.tu = cu.tu; S.den = cu.den; }
+  S.data = null; dashTabNhanSu();
+}
+function nsSuaTay() {      // sửa tay một trong hai ô: tự chuyển "Tùy chọn" và tải số; Từ > Đến thì báo lỗi tại chỗ, KHÔNG xóa bảng đang có
+  var S = DASH.ns, tu = $('nsTu').value, den = $('nsDen').value;
+  if (!tu || !den) { msg('nsLoi', 'Chọn đủ Từ ngày và Đến ngày', 'warn'); return; }
+  if (tu > den) { msg('nsLoi', 'Từ ngày phải trước hoặc bằng Đến ngày – khoảng cũ vẫn giữ nguyên', 'warn'); return; }
+  msg('nsLoi', '');
+  S.k = 'tuychon'; S.tu = tu; S.den = den;
+  if ($('nsKhoang')) $('nsKhoang').value = 'tuychon';
+  dashNsTai();
+}
 function dashTabNhanSu() {
-  var S = DASH.ns, opt = function (v, t) { return '<option value="' + v + '"' + (S.k === v ? ' selected' : '') + '>' + t + '</option>'; };
+  var S = DASH.ns, kh0 = nsKhoangTinh(), opt = function (v, t) { return '<option value="' + v + '"' + (S.k === v ? ' selected' : '') + '>' + t + '</option>'; };
   var h = '<div class="card noprint ns-filter-card">' +
     '<div class="ns-filter-head">' +
       '<div class="ns-filter-title"><h3>👤 Thống kê theo nhân sự</h3><span class="muted ns-filter-sub">Năng suất và sản lượng từng cá nhân theo khoảng thời gian</span></div>' +
     '</div>' +
     '<div class="ns-filter-controls">' +
-      '<div class="ns-filter-col"><label class="dash-lbl">Khoảng thời gian</label><select id="nsKhoang" class="dash-date-input">' + opt('homnay', 'Hôm nay') + opt('7', '7 ngày gần nhất') + opt('thang', 'Tháng này') + opt('dau', 'Từ đầu dự án') + opt('tuychon', 'Tùy chọn (từ – đến)') + '</select></div>' +
-      '<div id="nsTuyChon" class="ns-filter-col ' + (S.k === 'tuychon' ? '' : 'hide') + '"><label class="dash-lbl">Từ ngày – đến ngày</label><div class="ns-range-inputs"><input type="date" id="nsTu" class="dash-date-input" value="' + esc(S.tu || ME.ngay) + '" max="' + ME.ngay + '"><span class="ns-range-sep">→</span><input type="date" id="nsDen" class="dash-date-input" value="' + esc(S.den || ME.ngay) + '" max="' + ME.ngay + '"></div></div>' +
+      '<div class="ns-filter-col"><label class="dash-lbl">Khoảng thời gian</label><select id="nsKhoang" class="dash-date-input">' + opt('homnay', 'Ngày đang xem') + opt('7', '7 ngày gần nhất') + opt('thang', 'Tháng này') + opt('dau', 'Từ đầu dự án') + opt('tuychon', 'Tùy chọn (từ – đến)') + '</select></div>' +
+      '<div id="nsTuyChon" class="ns-filter-col"><label class="dash-lbl">Từ ngày – đến ngày</label><div class="ns-range-inputs"><input type="date" id="nsTu" class="dash-date-input" value="' + esc(kh0.tu) + '" max="' + ME.ngay + '"><span class="ns-range-sep">→</span><input type="date" id="nsDen" class="dash-date-input" value="' + esc(kh0.den) + '" max="' + ME.ngay + '"></div><div id="nsLoi"></div></div>' +
     '</div></div><div id="nsBody"><div class="empty-state"><div class="muted">Đang tải thống kê nhân sự…</div></div></div>';
   $('dBody').innerHTML = h;
-  $('nsKhoang').onchange = function () { S.k = $('nsKhoang').value; S.data = null; dashTabNhanSu(); };
-  if ($('nsTu')) { $('nsTu').onchange = $('nsDen').onchange = function () { S.tu = $('nsTu').value; S.den = $('nsDen').value; S.data = null; dashNsTai(); }; }
+  $('nsKhoang').onchange = nsChonKhoang;
+  $('nsTu').onchange = nsSuaTay; $('nsDen').onchange = nsSuaTay;
   if (S.data) { dashNsBang(); return; }
   dashNsTai();
 }
 function dashNsTai() {
   var S = DASH.ns, kh = nsKhoangTinh(), gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
-  if (S.k === 'tuychon' && (!S.tu || !S.den)) { if ($('nsBody')) $('nsBody').innerHTML = '<div class="muted" style="padding:14px;">Chọn ngày bắt đầu và ngày kết thúc.</div>'; return; }
-  var tuKey = kh.tu + '|' + kh.den;
+  var tuKey = kh.tu + '|' + kh.den, my = S.seq = (S.seq || 0) + 1;      // LOC1: mỗi lần tải một số thứ tự; kết quả cũ về muộn không đè kết quả mới
   call('thongKeNhanSu', { tu: kh.tu, den: kh.den, gomThu: gomThu }).then(function (r) {
-    if (DASH.tab !== 'nhansu' || tuKey !== nsKhoangTinh().tu + '|' + nsKhoangTinh().den) return;   // người dùng đã đổi tab/khoảng trong lúc chờ
+    if (my !== S.seq || DASH.tab !== 'nhansu' || tuKey !== nsKhoangTinh().tu + '|' + nsKhoangTinh().den) return;   // người dùng đã đổi tab/khoảng/ngày xem trong lúc chờ
     S.data = r; dashNsBang();
-  }).catch(function (e) { if ($('nsBody')) $('nsBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+  }).catch(function (e) { if (my === S.seq && $('nsBody')) $('nsBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
 function dashNsBang() {
   var S = DASH.ns, r = S.data; if (!r || !$('nsBody')) return;

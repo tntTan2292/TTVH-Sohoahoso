@@ -119,6 +119,51 @@ const chay = async () => {
   { const T = taoMoi(); T.sb.maCall(true); ok(T.moXN(), 'XN1: Áp dụng mở hộp xác nhận'); T.els.xnHuy.onclick(); await cho(); await cho(); ok(T.calls.length === 0, 'XN1: Hủy → KHÔNG gọi máy chủ'); }
   { const T = taoMoi(); T.sb.maCall(true); T.els.xnNhap.value = 'MAHRM'; T.els.xnNhap.oninput(); T.els.xnDongY.onclick(); await cho(); await cho();
     ok(T.calls.length === 1 && T.calls[0][1].apDung === true && T.calls[0][1].xacNhan === 'MAHRM', 'XN1: đúng từ khóa → call nhận đúng xacNhan = MAHRM, gọi đúng một lần', T.calls); }
+  // ---- LOC1 (mục 31): tab Nhân sự luôn có ô từ ngày – đến ngày, tính theo ngày đang xem ----
+  {
+    const els = {}, ds = [], msgs = [];
+    const sb = { console, Date, String, Promise, esc: x => String(x), dashNsBang() { sb.bang = (sb.bang || 0) + 1; }, msg: (id, t) => { msgs.push([id, t]); },
+      $: id => els[id] || (els[id] = Object.assign(mkEl(), { checked: false })),
+      call: (a, p) => new Promise((res, rej) => { ds.push({ a, p, res, rej }); }),
+      ME: { ngay: '2026-11-10', user: { vaiTro: 'TOTRUONG' } }, DASH: { d: { khoangNgay: { tu: '2026-11-02' } }, tab: 'nhansu', ns: { k: 'homnay', tu: '', den: '', data: null } } };
+    vm.createContext(sb);
+    vm.runInContext(['nsNgayXem', 'nsKhoangTinh', 'nsChonKhoang', 'nsSuaTay', 'dashTabNhanSu', 'dashNsTai'].map(trich).join('\n'), sb);
+    const ngayXem = v => { sb.$('dNgay').value = v; };
+    const ve = () => { const h = sb.$('dBody').innerHTML; return { sel: (h.match(/<option value="([^"]+)" selected>/) || [])[1], tu: (h.match(/id="nsTu"[^>]*value="([^"]*)"/) || [])[1], den: (h.match(/id="nsDen"[^>]*value="([^"]*)"/) || [])[1], hienTuyChon: !/id="nsTuyChon" class="[^"]*hide/.test(h), nhan: /<option value="homnay"[^>]*>Ngày đang xem</.test(h) }; };
+    const k = () => JSON.stringify(sb.nsKhoangTinh());
+    const dat = (kk, nx) => { sb.DASH.ns.k = kk; ngayXem(nx); sb.DASH.ns.data = null; sb.dashTabNhanSu(); return ve(); };
+    // 1) bốn lựa chọn với ngày xem 08/11
+    let v = dat('homnay', '2026-11-08'); ok(v.sel === 'homnay' && v.tu === '2026-11-08' && v.den === '2026-11-08' && v.nhan && v.hienTuyChon, 'LOC1: "Ngày đang xem" 08/11 → từ = đến = 08/11; hai ô luôn hiện; nhãn đổi chữ', v);
+    v = dat('7', '2026-11-08'); ok(v.tu === '2026-11-02' && v.den === '2026-11-08', 'LOC1: 7 ngày gần nhất kết thúc ở ngày xem 08/11 (02/11 → 08/11)', v);
+    v = dat('thang', '2026-11-08'); ok(v.tu === '2026-11-01' && v.den === '2026-11-08', 'LOC1: Tháng này = đầu tháng của ngày xem → ngày xem', v);
+    v = dat('dau', '2026-11-08'); ok(v.tu === '2026-11-02' && v.den === '2026-11-08', 'LOC1: Từ đầu dự án = ngày đầu có dữ liệu → ngày xem', v);
+    // 2) ngày xem là hôm nay → giống bản hiện tại
+    ok(dat('homnay', '2026-11-10').tu === '2026-11-10' && dat('7', '2026-11-10').tu === '2026-11-04' && dat('thang', '2026-11-10').tu === '2026-11-01' && dat('dau', '2026-11-10').den === '2026-11-10', 'LOC1: ngày xem là hôm nay → cùng kết quả bản cũ (hôm nay / 7 ngày / tháng / đầu dự án)');
+    ngayXem(''); sb.DASH.ns.k = 'homnay'; ok(k() === '{"tu":"2026-11-10","den":"2026-11-10"}', 'LOC1: ô ngày xem trống → dùng hôm nay');
+    // 3) đổi ngày xem: lựa chọn nhanh tự tính lại và tải lại số (loadDash → dashTabNhanSu → dashNsTai)
+    ds.length = 0; dat('7', '2026-11-10'); ds.length = 0; ngayXem('2026-11-08'); sb.DASH.ns.data = null; sb.dashTabNhanSu();
+    ok(ds.length === 1 && ds[0].a === 'thongKeNhanSu' && ds[0].p.tu === '2026-11-02' && ds[0].p.den === '2026-11-08', 'LOC1: đổi ngày xem sang 08/11 khi đang ở "7 ngày" → tải lại với 02/11–08/11', ds.map(x => x.p));
+    // 4) đang Tùy chọn: đổi ngày xem không mất khoảng đã chọn
+    sb.DASH.ns.k = 'tuychon'; sb.DASH.ns.tu = '2026-11-03'; sb.DASH.ns.den = '2026-11-05'; ds.length = 0; ngayXem('2026-11-09'); sb.DASH.ns.data = null; sb.dashTabNhanSu();
+    v = ve(); ok(v.sel === 'tuychon' && v.tu === '2026-11-03' && v.den === '2026-11-05' && ds[0].p.tu === '2026-11-03' && ds[0].p.den === '2026-11-05', 'LOC1: đang "Tùy chọn", đổi ngày xem → hai ô và số gửi lên giữ nguyên khoảng đã chọn', [v, ds.map(x => x.p)]);
+    // 5) sửa tay một ô → chuyển Tùy chọn và tải số
+    dat('7', '2026-11-08'); ds.length = 0; sb.$('nsTu').value = '2026-11-04'; sb.$('nsDen').value = '2026-11-08'; sb.$('nsTu').onchange();
+    ok(sb.DASH.ns.k === 'tuychon' && sb.DASH.ns.tu === '2026-11-04' && sb.$('nsKhoang').value === 'tuychon' && ds.length === 1 && ds[0].p.tu === '2026-11-04' && ds[0].p.den === '2026-11-08', 'LOC1: sửa tay ô Từ ngày → tự chuyển "Tùy chọn" và tải số', [sb.DASH.ns.k, ds.map(x => x.p)]);
+    // 6) Từ > Đến: báo lỗi tại chỗ, không tải, không xóa bảng, giữ khoảng cũ
+    const truoc = JSON.stringify([sb.DASH.ns.k, sb.DASH.ns.tu, sb.DASH.ns.den]); sb.DASH.ns.data = { nguoi: [{ ma: 'x' }] }; ds.length = 0; msgs.length = 0;
+    sb.$('nsTu').value = '2026-11-09'; sb.$('nsDen').value = '2026-11-05'; sb.$('nsTu').onchange();
+    ok(ds.length === 0 && msgs.some(m => m[0] === 'nsLoi' && /trước hoặc bằng/.test(m[1])) && sb.DASH.ns.data && sb.DASH.ns.data.nguoi.length === 1 && JSON.stringify([sb.DASH.ns.k, sb.DASH.ns.tu, sb.DASH.ns.den]) === truoc, 'LOC1: Từ ngày sau Đến ngày → báo lỗi tại chỗ (#nsLoi), không gọi máy chủ, không xóa bảng, giữ khoảng cũ', msgs);
+    ds.length = 0; sb.$('nsTu').value = ''; sb.$('nsTu').onchange(); ok(ds.length === 0 && sb.DASH.ns.data, 'LOC1: xóa trống một ô → báo lỗi, không tải');
+    // 7) kết quả cũ về muộn không đè kết quả mới
+    dat('tuychon', '2026-11-10'); sb.DASH.ns.tu = '2026-11-01'; sb.DASH.ns.den = '2026-11-02'; sb.DASH.ns.data = null; ds.length = 0; sb.bang = 0;
+    sb.dashNsTai(); sb.DASH.ns.tu = '2026-11-03'; sb.DASH.ns.den = '2026-11-04'; sb.dashNsTai();
+    ds[1].res({ tag: 'moi' }); await cho(); ds[0].res({ tag: 'cu' }); await cho();
+    ok(sb.DASH.ns.data && sb.DASH.ns.data.tag === 'moi' && sb.bang === 1, 'LOC1: kết quả của lần tải cũ về muộn không đè kết quả mới', [sb.DASH.ns.data, sb.bang]);
+    // 8) đổi ngày xem trong lúc chờ: kết quả cũ bị bỏ
+    dat('7', '2026-11-10'); sb.DASH.ns.data = null; ds.length = 0; sb.bang = 0; sb.dashNsTai(); ngayXem('2026-11-08'); ds[0].res({ tag: 'cu' }); await cho();
+    ok(sb.DASH.ns.data === null && sb.bang === 0, 'LOC1: đổi ngày xem trong lúc chờ → kết quả theo ngày cũ bị bỏ');
+    ok(/function nsChonKhoang|function nsSuaTay|function nsNgayXem/.test(js) && hasId('nsKhoang') && hasId('nsTuyChon') && hasId('nsTu') && hasId('nsDen') && hasJs('nsKhoangTinh') && hasJs('dashTabNhanSu'), 'LOC1: giữ #nsKhoang, #nsTuyChon, #nsTu, #nsDen, nsKhoangTinh, dashTabNhanSu');
+  }
 };
 
 console.log('Kiểm tra giao diện: ' + nId + ' id, ' + nJs + ' hàm giao diện, ' + nGs + ' hàm máy chủ, ' + Object.keys(calls).length + ' call()');
