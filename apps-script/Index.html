@@ -1787,6 +1787,16 @@ tbody tr:last-child td { border-bottom: none; }
   .chartbox { height: 200px; }
 }
 
+/* T1: lớp chờ khi gửi lệnh ghi (chặn bấm lặp) + thanh mảnh khi đọc */
+#busy { position: fixed; inset: 0; z-index: 9999; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; }
+#busy.on { display: flex; }
+#busy .bz { background: var(--card, #fff); color: inherit; border-radius: 14px; padding: 22px 26px; min-width: 260px; max-width: 86vw; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+#busy .sp { width: 34px; height: 34px; margin: 0 auto 12px; border: 4px solid var(--line, #cbd5e1); border-top-color: var(--col-scan, #2563eb); border-radius: 50%; animation: busyspin .8s linear infinite; }
+#busy .bar { height: 8px; background: var(--line, #e2e8f0); border-radius: 6px; overflow: hidden; margin-top: 12px; }
+#busy .bar > i { display: block; height: 100%; width: 0; background: var(--col-scan, #2563eb); transition: width .15s linear; }
+#busy.cham #busyTxt { color: #b45309; font-weight: 700; }
+#topBar { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 9998; background: var(--col-scan, #2563eb); opacity: 0; transition: width .3s ease, opacity .3s ease; pointer-events: none; }
+@keyframes busyspin { to { transform: rotate(360deg); } }
 .lg-nguoi-box { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-bottom: 12px; }
 .lg-nguoi { display: block; text-align: left; justify-content: flex-start; width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: var(--card-sub); color: inherit; border-radius: var(--radius-sm); cursor: pointer; font: inherit; }
 .lg-nguoi.on { border-color: var(--col-scan); background: var(--col-scan); color: #fff; }
@@ -1797,6 +1807,8 @@ tbody tr:last-child td { border-bottom: none; }
 
 <div class="wrap">
 
+<div id="busy" role="alert" aria-live="assertive"><div class="bz"><div class="sp"></div><div id="busyTxt">Đang gửi…</div><div class="bar"><i id="busyBar"></i></div></div></div>
+<div id="topBar"></div>
 <!-- VIEW LOGIN -->
 <div id="vLogin" class="card" style="max-width:440px;margin:40px auto;border-radius:var(--radius-lg);padding:28px 24px;">
   <div style="text-align:center;margin-bottom:20px;">
@@ -2122,9 +2134,48 @@ function toLogin() {
   if (ALL_NS && ALL_NS.length) { renderLoginSelect(''); lgKhoiPhuc(); }
 }
 
+/* T1: call() dùng chung. Lệnh GHI: lớp chờ toàn màn hình + thanh tiến trình ước lượng, chặn bấm, mỗi lúc chỉ một lệnh ghi; gửi kèm idGui (ghi, vaoCa) để gửi lại không ghi trùng.
+   Lệnh ĐỌC: thanh mảnh trên đầu trang, không chặn. Mọi đường kết thúc (thành công / lỗi / hết phiên) đều gọi xong() để tắt lớp chờ. */
+var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
+var GUI_ACT = ['ghi', 'vaoCa'];
+var WRITE_BUSY = false, READ_N = 0, BUSY_T0 = 0, BUSY_IV = null, GUI_ID = {};
+function idMoi() { var a = 'abcdefghijklmnopqrstuvwxyz0123456789', r = 'g'; for (var i = 0; i < 18; i++) r += a.charAt(Math.floor(Math.random() * a.length)); return r + Date.now().toString(36); }
+function busyBat() {
+  WRITE_BUSY = true; BUSY_T0 = Date.now();
+  $('busyTxt').textContent = 'Đang gửi…'; $('busy').classList.remove('cham'); $('busyBar').style.width = '0'; $('busy').classList.add('on');
+  BUSY_IV = setInterval(function () {
+    var t = (Date.now() - BUSY_T0) / 1000;
+    $('busyBar').style.width = (90 * (1 - Math.exp(-t / 4))).toFixed(1) + '%';      // ước lượng, chậm dần tới ~90% (không phải % thật)
+    if (t >= 8) { $('busy').classList.add('cham'); $('busyTxt').textContent = 'Hệ thống đang bận, vui lòng chờ – KHÔNG bấm lại'; }
+  }, 120);
+}
+function busyTat() {
+  if (BUSY_IV) { clearInterval(BUSY_IV); BUSY_IV = null; }
+  $('busyBar').style.width = '100%';
+  setTimeout(function () { if (!WRITE_BUSY) $('busy').classList.remove('on'); }, 150);
+  WRITE_BUSY = false;
+}
+function topBar(on) {
+  READ_N = Math.max(0, READ_N + (on ? 1 : -1));
+  var b = $('topBar'); if (!b) return;
+  if (READ_N > 0) { b.style.opacity = '1'; b.style.width = '70%'; } else { b.style.width = '100%'; setTimeout(function () { if (READ_N === 0) { b.style.opacity = '0'; setTimeout(function () { if (READ_N === 0) b.style.width = '0'; }, 300); } }, 150); }
+}
 function call(action, p) {
+  var ghi = READ_ACT.indexOf(action) < 0, sig = '';
+  if (ghi && WRITE_BUSY) return Promise.reject('Đang gửi lệnh trước, vui lòng chờ');      // chỉ một lệnh ghi tại một thời điểm
+  p = p || {};
+  if (ghi && GUI_ACT.indexOf(action) >= 0 && !p.idGui) {      // gửi lại cùng nội dung sau khi KHÔNG biết kết quả (lỗi mạng) dùng lại idGui cũ → máy chủ không ghi trùng
+    try { sig = action + JSON.stringify(p); } catch (e) { sig = ''; }
+    var q = {}; Object.keys(p).forEach(function (k) { q[k] = p[k]; });
+    q.idGui = (sig && GUI_ID[sig] && Date.now() - GUI_ID[sig].t < 600000) ? GUI_ID[sig].id : idMoi();
+    if (sig) GUI_ID[sig] = { id: q.idGui, t: Date.now() };
+    p = q;
+  }
+  if (ghi) busyBat(); else topBar(true);
+  var xong = function (chacChan) { if (ghi) busyTat(); else topBar(false); if (chacChan && sig) delete GUI_ID[sig]; };
   return new Promise(function (res, rej) {
     google.script.run.withSuccessHandler(function (r) {
+      xong(true);
       if (r && r.ok === false) {
         if (r.err && /phiên|token|đăng nhập/i.test(r.err)) {
           alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
@@ -2136,6 +2187,7 @@ function call(action, p) {
         res(r ? r.data : null);
       }
     }).withFailureHandler(function (e) {
+      xong(false);      // không biết máy chủ đã ghi chưa → giữ idGui để lần gửi lại không ghi trùng
       var errStr = e && e.message ? e.message : String(e);
       if (/phiên|token|đăng nhập/i.test(errStr)) {
         alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
@@ -2143,7 +2195,7 @@ function call(action, p) {
         return;
       }
       rej(errStr);
-    }).api(TOKEN, action, p || {});
+    }).api(TOKEN, action, p);
   });
 }
 function msg(el, text, cls) {

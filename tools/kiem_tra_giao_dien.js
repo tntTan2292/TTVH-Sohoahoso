@@ -25,6 +25,11 @@ const staticHtml = html.replace(/<script[\s\S]*?<\/script>/g, '');
 const ids = {}; staticHtml.replace(/\bid="([^"]+)"/g, (m, x) => { ids[x] = (ids[x] || 0) + 1; return m; });
 Object.keys(ids).forEach(k => ok(ids[k] === 1, 'id tĩnh bị trùng trong HTML: ' + k));
 
+
+// ---- T1: danh sách action ĐỌC của giao diện (READ_ACT) phải khớp READ_ACTIONS của máy chủ ----
+{ const a = (gs.match(/const READ_ACTIONS = \[([^\]]*)\]/) || [])[1], b = (html.match(/var READ_ACT = \[([^\]]*)\]/) || [])[1];
+  const norm = x => (x || '').replace(/['\s]/g, '').split(',').sort().join();
+  ok(a && b && norm(a) === norm(b), 'READ_ACT (Index.html) khớp READ_ACTIONS (Code.gs)'); }
 // ---- đọc bảng CHUC_NANG.md ----
 const hasId = id => new RegExp('id=\\\\?["\']' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\\\?["\']').test(html);
 const hasJs = n => new RegExp('function\\s+' + n + '\\s*\\(|(var|let|const)\\s+' + n + '\\b|\\b' + n + '\\s*[:=]').test(js);

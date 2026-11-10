@@ -348,11 +348,23 @@ function api(token, action, p) {
     const u = auth_(token); p = p || {};
     if (u.doiPin && action !== 'me' && action !== 'doiPin') throw 'Cần đổi PIN lần đầu trước khi dùng hệ thống';
     if (u.vaiTro === 'LANHDAO' && LANHDAO_ACTIONS.indexOf(action) < 0) throw 'Tài khoản Lãnh đạo chỉ được xem';
-    const data = READ_ACTIONS.indexOf(action) >= 0 ? route_(u, action, p) : withLock_(function () { return route_(u, action, p); });
+    const data = READ_ACTIONS.indexOf(action) >= 0 ? route_(u, action, p) : withLock_(function () { return idGui_(u, action, p, function () { return route_(u, action, p); }); });
     return { ok: true, data: data };
   } catch (e) {
     return { ok: false, err: String(e && e.message ? e.message : e) };
   }
+}
+// T1: chống ghi trùng khi giao diện gửi lại do không biết kết quả (mạng chậm/đứt): ghi / vaoCa nhận idGui tùy chọn; cùng idGui (cùng người, cùng action) → trả kết quả cũ (guiLai=true), KHÔNG ghi thêm. Không gửi idGui → chạy như cũ. Chạy trong withLock_.
+const IDGUI_ACTIONS = ['ghi', 'vaoCa'];
+function idGui_(u, action, p, fn) {
+  const id = s_(p.idGui);
+  if (IDGUI_ACTIONS.indexOf(action) < 0 || !/^[A-Za-z0-9_\-]{8,64}$/.test(id)) return fn();
+  const cache = CacheService.getScriptCache(), key = 'gui_' + u.ma + '_' + action + '_' + id;
+  const da = cache.get(key);
+  if (da) { const kq = JSON.parse(da); return (kq && typeof kq === 'object') ? Object.assign({}, kq, { guiLai: true }) : kq; }
+  const kq = fn();
+  try { cache.put(key, JSON.stringify(kq === undefined ? null : kq), 600); } catch (e) { }
+  return kq;
 }
 function route_(u, action, p) {
   switch (action) {

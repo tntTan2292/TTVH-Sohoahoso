@@ -1285,6 +1285,29 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   S.rows = S.rows.filter(x => !/^(B5E|TN-)/.test(String(x[0]))); S.rows.length = Math.min(S.rows.length, nS0); cu13();
 }
 
+// ===== T1: idGui chống ghi trùng khi gửi lại =====
+{
+  const pn0 = sh('PhanNhom').rows.length, pc0 = sh('PhanCa').rows.length;
+  if (!sh('PhanCa').rows.some(x => x[0] === '2026-11-09' && x[1] === 'Chiều' && x[2] === 'A1')) sh('PhanCa').rows.push(['2026-11-09', 'Chiều', 'A1', 'Nhân viên A', '', '']);
+  sh('PhanNhom').rows.push(['2026-11-09', 'Chiều', '1', 'A1', 'Nhân viên A', 'TT1', '']); ctx.memoClear_();
+  const dem = () => sh('NhatKy').rows.filter(x => x[6] === 'T1-HOP').length;
+  const g = (o) => api(tTT, 'ghi', Object.assign({ buoc: 'SCAN', boSung: true, ngay: '2026-11-09', ca: 'Chiều', nhom: '1', nguoiHo: 'A1', hop: 'T1-HOP', soHoSo: 1, soTrang: 7 }, o));
+  const r1 = g({ idGui: 'GUI-TEST-0001' }), n1 = dem();
+  const r2 = g({ idGui: 'GUI-TEST-0001' }), n2 = dem();
+  ok(r1.ok && n1 >= 1 && r2.ok && n2 === n1 && r2.data.guiLai === true, 'T1: gửi lại cùng idGui trả kết quả cũ, KHÔNG ghi thêm bản ghi', [r1.err, n1, n2, r2.data]);
+  const r3 = g({ idGui: 'GUI-TEST-0002', soTrang: 9 }), n3 = dem();
+  ok(r3.ok && n3 === n2 + 1 && !r3.data.guiLai, 'T1: idGui khác = lệnh mới, ghi bình thường', [r3.err, n2, n3]);
+  const k = (id, u) => 'gui_' + u + '_ghi_' + id;
+  const r4 = g({ idGui: 'GUI-TEST-0001', hop: 'T1-HOP-KHAC' });
+  ok(r4.ok && r4.data.guiLai === true && !sh('NhatKy').rows.some(x => x[6] === 'T1-HOP-KHAC'), 'T1: idGui chỉ gắn với (người, action, idGui) — cùng idGui thì không ghi dù nội dung khác (giao diện luôn tạo idGui mới cho lệnh mới)');
+  const rr = g({ idGui: 'x' }), nr = dem();
+  ok(rr.ok === true || /trùng|đã/i.test(String(rr.err || '')), 'T1: idGui sai định dạng bị bỏ qua, chạy như không có idGui', rr);
+  const ra = api(tA, 'ghi', { buoc: 'SCAN', ngay: '2026-11-09', ca: 'Chiều', hop: 'T1-HOP', soHoSo: 1, soTrang: 7, idGui: 'GUI-TEST-0001' });
+  ok(!(ra.ok && ra.data && ra.data.guiLai), 'T1: người khác dùng cùng idGui không nhận lại kết quả của người trước');
+  ok(api(tTT, 'vaoCa', { ca: 'Chiều', idGui: 'GUI-VAOCA-01' }).ok, 'T1: vaoCa nhận idGui không lỗi');
+  sh('NhatKy').rows = sh('NhatKy').rows.filter(x => !/^T1-HOP/.test(x[6])); sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; ctx.memoClear_();
+}
+
 // ===== E2: chuanHoaMaHRM_ / chuanHoaDonVi_ không dùng đệm cũ =====
 // ctx.__memoThat = true: memoClear_() không tên KHÔNG xóa đệm tab (đúng như Apps Script thật), để thấy lỗi đệm cũ.
 {

@@ -22,7 +22,7 @@
 | 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟢 Đã lên link chính (phiên bản 26); chờ chủ dự án xác nhận |
 | 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | 🟢 Đã lên link chính (phiên bản 26); chủ dự án nhập Trung = 1, Mười = 2 rồi xác nhận |
 | 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 17 | Màn hình chờ và chống bấm lặp | T1 | ⬜ Chưa làm |
+| 17 | Màn hình chờ và chống bấm lặp | T1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 18 | Đo tốc độ, đề xuất tối ưu | T2 | ⬜ Chưa làm |
 | 19 | Tab Đối soát hộp | H2 | ⬜ Chưa làm |
 | 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | ⬜ Chưa làm |
