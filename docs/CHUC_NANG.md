@@ -36,6 +36,7 @@ Tab trong giao diện: `pBao`, `pQL`, `pNS`, `pDL`, `pLG`, `pDash` (hàm `showTa
 | F-DN-07 | PIN băm SHA-256 + muối | `hash_` | — |
 | F-DN-08 | Cấp lại PIN: TT/TP chỉ cho tổ viên; quản lý/lãnh đạo/ADMIN chỉ ADMIN cấp | `resetPin_`, `quyenTrenNguoi_` | `#qlRs` (Quản lý ca), nút cấp PIN ở `loadNS` |
 | F-DN-09 | Mở khóa tài khoản (cùng quy tắc quyền như F-DN-08) | `moKhoaTK_` | `#qlUk` |
+| F-DN-10 | F5 không bị đăng xuất: mã phiên lưu `sessionStorage` (`tokenLuu`/`tokenDoc`), mở trang có mã thì khôi phục bằng `me`; lỗi/hết phiên → xóa mã, hiện đăng nhập im lặng (`KP`); đăng xuất xóa mã; `mustChange` chỉ lưu sau khi đổi PIN; đóng tab = phải đăng nhập lại | — (dùng `me`) | `tokenLuu`, `tokenDoc`, `KP`, khối khôi phục cuối `<script>` |
 | F-DN-10 | Bỏ kiểm tra Gmail (chạy chế độ ẩn danh) | — | — |
 | F-DN-11 | Hết phiên → báo và tải lại trang | `auth_` | `call()` |
 

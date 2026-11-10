@@ -4059,12 +4059,12 @@ function dashTabCaNhom(d) {
   if (d.caNguoi && (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN')) h += tungCaHtml(d);
   if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
       h += zone('z4', 'CHI TIẾT', 'Theo nhóm và cá nhân', 'Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Cá nhân chia đều 50/50 trong nhóm');
-      h += '<div class="card"><h3>Năng suất và sản lượng theo nhóm</h3><div class="scroll"><table><tr><th>Ca – Nhóm</th><th>Thành viên</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>Giờ-người</th><th>Scan/giờ</th><th>Tách/giờ</th><th>OCR/giờ</th></tr>' +
+      h += '<div class="card"><h3>Năng suất và sản lượng theo nhóm</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca – Nhóm</th><th>Thành viên</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>Giờ-người</th><th>Scan/giờ</th><th>Tách/giờ</th><th>OCR/giờ</th></tr>' +
         (d.nhom.map(function (g) {
           var sGio = g.scanDVGio !== undefined ? g.scanDVGio : (g.scanTrangGio || 0);
           var tGio = g.tachDVGio !== undefined ? g.tachDVGio : (g.tachTrangGio || 0);
           var oGio = g.ocrDVGio !== undefined ? g.ocrDVGio : (g.ocrTrangGio || 0);
-          return '<tr><td><b>Ca ' + g.ca + ' – N' + esc(g.nhom) + '</b></td><td style="white-space:normal;text-align:left">' + esc(g.tv.map(function (x) { return x.ten; }).join(' + ')) + '</td><td><b>' + nf(g.scanDV) + '</b></td><td>' + g.scanHs + '</td><td><b>' + nf(g.tachDV) + '</b></td><td>' + g.tachHs + '</td><td><b>' + nf(g.ocrDV) + '</b></td><td>' + nf(g.gioNguoi) + '</td><td>' + nf(sGio) + '</td><td>' + nf(tGio) + '</td><td>' + nf(oGio) + '</td></tr>';
+          return '<tr><td><b>Ca ' + g.ca + ' – N' + esc(g.nhom) + '</b></td><td data-label="Thành viên" style="white-space:normal;text-align:left">' + esc(g.tv.map(function (x) { return x.ten; }).join(' + ')) + '</td><td data-label="Tờ scan"><b>' + nf(g.scanDV) + '</b></td><td data-label="HS scan">' + g.scanHs + '</td><td data-label="Tờ tách"><b>' + nf(g.tachDV) + '</b></td><td data-label="HS tách">' + g.tachHs + '</td><td data-label="Tờ OCR"><b>' + nf(g.ocrDV) + '</b></td><td data-label="Giờ-người">' + nf(g.gioNguoi) + '</td><td data-label="Scan/giờ">' + nf(sGio) + '</td><td data-label="Tách/giờ">' + nf(tGio) + '</td><td data-label="OCR/giờ">' + nf(oGio) + '</td></tr>';
         }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có dữ liệu nhóm</td></tr>') + '</table></div></div>';
   }
   return h;
