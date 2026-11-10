@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-NS-06 · **B1** Danh mục Đơn vị: tab `DonVi` tự tạo; actions `dsDonVi`, `luuDonVi`; `#nsDv` thành danh sách chọn ở form ADMIN và form TT/TP; máy chủ từ chối đơn vị ngoài danh mục (trừ giữ nguyên giá trị cũ). Mock +23 (336/0), giao diện 445/0. Chưa triển khai.
 - Triển khai **phiên bản 23** lên `…MlRA` (commit `6692d34`: F-DB-06). Bản trước: phiên bản 22 (`5ccfbbc`). Bản trên Apps Script khớp `5ccfbbc` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp `main`. Mở `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca", hiện màn hình đăng nhập. Chưa tự nghiệm thu giao diện (chủ dự án xem).
 - F-DB-06 · `dash_` trả thêm `cas[].nhanNhom` (số hộp nhận khác nhau theo nhóm, cùng bộ lọc hủy/THỬ NGHIỆM/TN-xx); `caNguoi[].nhanHop` chỉ đếm nhận cá nhân; ca-card hiện "nhận N hộp" một lần ở tiêu đề nhóm. Hết lệch Tân 2 hộp / Phát 1 hộp. Không đổi cách chia Scan/Tách/OCR. Mock +6 (313/0), giao diện 420/0. Chưa triển khai.
 - A2 · **Đã áp dụng** `chuanHoaNhom` trên dữ liệu thật ca Sáng 10/11/2026 sau khi chủ dự án duyệt: đổi 2 dòng Nhận hộp (2.1.83, 2.1.88) của Dương Thị Hòe sang Nhóm 2, có sao lưu `SaoLuuXoa` + log. Xem trước lại: 0 dòng cần đổi.

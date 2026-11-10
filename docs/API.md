@@ -13,7 +13,7 @@
 3. `LANHDAO` → chỉ được `me`, `dashboard`, `thongKeNhanSu`, `doiPin`, `lichSu`.
 4. Action không thuộc `READ_ACTIONS` chạy trong khóa (`withLock_`).
 
-`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','nhatKyHT','lichSu','thongKeNhanSu']`
+`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','dsDonVi','nhatKyHT','lichSu','thongKeNhanSu']`
 
 ## Danh sách action
 
@@ -37,12 +37,14 @@
 | `resetPin` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | `{ten, pin}` (PIN tạm, chỉ hiện 1 lần) |
 | `moKhoaTK` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | chuỗi thông báo |
 | `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa}` (không có cột PIN) |
-| `luuNhanSu` | ADMIN (đầy đủ, tạo mới được); TT/TP: chỉ sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, tạo mới, sửa quản lý/LĐ/ADMIN → từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong}` | `{moi, ma, pin?}` |
+| `luuNhanSu` | ADMIN (đầy đủ, tạo mới được; `donVi` phải thuộc danh mục — B1); TT/TP: chỉ sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, tạo mới, sửa quản lý/LĐ/ADMIN → từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong}` | `{moi, ma, pin?}` |
 | `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
 | `khoiPhuc` | ADMIN | `{id}` | — |
 | `taoMau` | ADMIN | `{ngay, cas:[ca], soNguoi}` | `{soBanGhi, soCa, ngay, soNguoi, soThem}` |
 | `resetDuLieu` | ADMIN | `{phamVi:'THU'}`; `{phamVi:'NGAY', ngay, xacNhan:'XOA', caPhanCa}`; `{phamVi:'TATCA', xacNhan:'XOA'}` | có `saoLuu` |
 | `chuanHoaNhom` | ADMIN | `{ngay, ca, apDung:false}` (xem trước, không ghi); `{ngay, ca, apDung:true, xacNhan:"NHOM"}` (áp dụng) | `{ngay, ca, apDung, tongQuet, boQua, doiNhom:[{id,gio,buoc,hop,hs,trang,to,loi,het,maHoSo,nguoi,nhomCu,nhomMoi,tvCu,tvMoi,ly}], huyTrung:[{...,giuId}], xungDot:[{nhom,buoc,hop,dong:[],ly}], daSua:{doi,huy}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |
+| `dsDonVi` | TT/TP/ADMIN | — | `[{ten, hoatDong, thuTu, soNguoi}]` theo thứ tự; tab `DonVi` chưa có → `[]` (B1) |
+| `luuDonVi` | ADMIN | `{ten, tenCu?, thuTu?, hoatDong?}` — không có `tenCu` = thêm mới; có `tenCu` = sửa/ẩn/đổi tên (đổi tên chỉ khi đơn vị chưa có người dùng; không xóa) | `{moi, ten}` (B1) |
 | `nhatKyHT` | ADMIN | `{tu, den, ma, hanhDong}` | dòng log |
 
 ## Kết quả `dashboard` (hàm `dash_`)

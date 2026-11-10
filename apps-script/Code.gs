@@ -30,9 +30,10 @@ const TAB = {
   NhatKy:   ['ID','ThoiGian','Ngay','Ca','Nhom','Buoc','MaHop','SoHoSo','SoTrang','SoTo','TrangLoi','HetHop','MaHoSo','GhiChu','NguoiNhap','Loai','Huy','NguoiHuy','ThanhVien'],
   ChotCa:   ['Ngay','Ca','TrangThai','NguoiXacNhan','ThoiGian','GhiChu'],
   DauKy:    ['Buoc','SoHop','SoHoSo','SoTrang','SoTo','GhiChu','Ngay','Ca'],
-  LogHeThong: ['ThoiGian','MaHRM','HoTen','VaiTro','HanhDong','NgayCa','ChiTiet']
+  LogHeThong: ['ThoiGian','MaHRM','HoTen','VaiTro','HanhDong','NgayCa','ChiTiet'],
+  DonVi:    ['TenDV','HoatDong','ThuTu']      // B1: danh mục đơn vị (tab tự tạo khi cần)
 };
-const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien','NguoiPhan','NguoiNhap','NguoiXacNhan','NguoiHuy'];   // dùng chung cho setup, append_, appendMany_
+const TEXT_COLS = ['Ngay','Ca','MaHRM','MaHop','MaHoSo','Nhom','PinTam','PinHash','Salt','ID','GioBD','GioKT','ThoiGian','GhiChu','HoTen','ChiTiet','ThanhVien','NguoiPhan','NguoiNhap','NguoiXacNhan','NguoiHuy','TenDV','DonVi'];   // dùng chung cho setup, append_, appendMany_
 const MIN_ROWS = { NhatKy: 20000, LogHeThong: 20000, PhanCa: 5000, PhanNhom: 5000, ChotCa: 5000 };   // setup bảo đảm đủ dòng TRƯỚC khi định dạng cột
 const VAI_TRO_QL = ['TOTRUONG', 'TOPHO', 'ADMIN'];
 const VAI_TRO_ALL = ['TOVIEN', 'TOTRUONG', 'TOPHO', 'LANHDAO', 'ADMIN'];
@@ -96,7 +97,7 @@ function now_() {
 }
 const MEMO_ = {};
 // Bộ nhớ đệm giữa các lượt gọi cho các tab nhỏ (đọc Sheet chậm). Mỗi lần ghi tab đổi "phiên bản" nên không đọc nhầm dữ liệu cũ.
-const CACHE_TABS = { NhanSu: 1, PhanCa: 1, PhanNhom: 1, ChotCa: 1, DauKy: 1 };
+const CACHE_TABS = { NhanSu: 1, PhanCa: 1, PhanNhom: 1, ChotCa: 1, DauKy: 1, DonVi: 1 };
 function verKey_() { return String(Date.now()) + Math.random().toString(36).slice(2, 6); }
 function tabVer_(name) {
   const c = CacheService.getScriptCache();
@@ -293,7 +294,7 @@ function auth_(token) {
 }
 
 /* ====================== API ====================== */
-const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
+const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu'];
 const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu'];
 function api(token, action, p) {
   try {
@@ -331,6 +332,8 @@ function route_(u, action, p) {
     case 'resetDuLieu': needSuper_(u); return resetDuLieu_(u, p);
     case 'taoMau': needSuper_(u); return taoMau_(u, p);
     case 'chuanHoaNhom': needSuper_(u); return chuanHoaNhom_(u, p);
+    case 'dsDonVi': need_(u); return dsDonVi_();            // B1: TT/TP cần danh sách chọn đơn vị khi sửa tổ viên
+    case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
     case 'luuNhanSu': need_(u); return luuNhanSu_(u, p);     // QĐ2: TT/TP chỉ sửa tổ viên (hàm tự kiểm)
     case 'dsCa': need_(u); return dsCa_(p);
@@ -717,10 +720,11 @@ function luuToVien_(u, p) {      // QĐ2 (F-NS-04): TT/TP sửa TỔ VIÊN: họ
   if (s_(p.vaiTro) && s_(p.vaiTro) !== 'TOVIEN') throw 'Tổ trưởng/Tổ phó không được đổi vai trò tài khoản';
   if (!ten) throw 'Nhập Họ tên';
   const hoatDong = p.hoatDong === false ? false : true, chucVu = s_(p.chucVu) || s_(cu.ChucVu);
+  const dv = donViChon_(p.donVi, cu.DonVi);      // B1: chỉ đơn vị trong danh mục (hoặc giữ nguyên giá trị cũ)
   const cuStr = 'tên ' + s_(cu.HoTen) + ', chức vụ ' + s_(cu.ChucVu) + ', đơn vị ' + s_(cu.DonVi) + ', hoạt động ' + b_(cu.HoatDong);
   setCell_('NhanSu', cu._row, 'HoTen', ten); setCell_('NhanSu', cu._row, 'ChucVu', chucVu);
-  setCell_('NhanSu', cu._row, 'DonVi', s_(p.donVi)); setCell_('NhanSu', cu._row, 'HoatDong', hoatDong);
-  log_(u.ma, 'SUA_NHAN_SU', ma + ' (tổ viên, do ' + s_(u.vaiTro) + ' sửa) | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + chucVu + ', đơn vị ' + s_(p.donVi) + ', hoạt động ' + hoatDong);
+  setCell_('NhanSu', cu._row, 'DonVi', dv); setCell_('NhanSu', cu._row, 'HoatDong', hoatDong);
+  log_(u.ma, 'SUA_NHAN_SU', ma + ' (tổ viên, do ' + s_(u.vaiTro) + ' sửa) | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + chucVu + ', đơn vị ' + dv + ', hoạt động ' + hoatDong);
   return { moi: false, ma: ma };
 }
 function luuNhanSu_(u, p) {
@@ -732,19 +736,100 @@ function luuNhanSu_(u, p) {
   const hoatDong = p.hoatDong === false ? false : true;
   if (cu) {
     if (cu.MaHRM && s_(cu.MaHRM) === u.ma && (!hoatDong || vai !== 'ADMIN')) throw 'Không tự khóa hoặc hạ quyền chính mình';
+    const dv = donViChon_(p.donVi, cu.DonVi);      // B1
     const cuStr = 'tên ' + s_(cu.HoTen) + ', chức vụ ' + s_(cu.ChucVu) + ', đơn vị ' + s_(cu.DonVi) + ', email ' + s_(cu.Email) + ', vai trò ' + s_(cu.VaiTro) + ', hoạt động ' + b_(cu.HoatDong);
     setCell_('NhanSu', cu._row, 'HoTen', ten); setCell_('NhanSu', cu._row, 'ChucVu', s_(p.chucVu));
-    setCell_('NhanSu', cu._row, 'DonVi', s_(p.donVi)); setCell_('NhanSu', cu._row, 'Email', s_(p.email));
+    setCell_('NhanSu', cu._row, 'DonVi', dv); setCell_('NhanSu', cu._row, 'Email', s_(p.email));
     setCell_('NhanSu', cu._row, 'VaiTro', vai); setCell_('NhanSu', cu._row, 'HoatDong', hoatDong);
-    log_(u.ma, 'SUA_NHAN_SU', ma + ' | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + s_(p.chucVu) + ', đơn vị ' + s_(p.donVi) + ', email ' + s_(p.email) + ', vai trò ' + vai + ', hoạt động ' + hoatDong);
+    log_(u.ma, 'SUA_NHAN_SU', ma + ' | cũ: ' + cuStr + ' | mới: tên ' + ten + ', chức vụ ' + s_(p.chucVu) + ', đơn vị ' + dv + ', email ' + s_(p.email) + ', vai trò ' + vai + ', hoạt động ' + hoatDong);
     return { moi: false, ma: ma };
   }
+  const dvMoi = donViChon_(p.donVi, undefined);   // B1: tạo mới bắt buộc chọn đơn vị trong danh mục
   const pin = ('' + Math.floor(100000 + Math.random() * 900000));
-  append_('NhanSu', { MaHRM: ma, HoTen: ten, ChucVu: s_(p.chucVu) || 'Tổ viên', DonVi: s_(p.donVi), Email: s_(p.email), VaiTro: vai,
+  append_('NhanSu', { MaHRM: ma, HoTen: ten, ChucVu: s_(p.chucVu) || 'Tổ viên', DonVi: dvMoi, Email: s_(p.email), VaiTro: vai,
     PinHash: '', Salt: '', PinTam: pin, DoiPin: true, SaiPin: 0, Khoa: false, HoatDong: hoatDong });
   log_(u.ma, 'THEM_NHAN_SU', ma + ' ' + vai);
   return { moi: true, ma: ma, pin: pin };
 }
+
+/* ---------- B1: Danh mục Đơn vị (QĐ3; chỉ ADMIN sửa danh mục, TT/TP chỉ xem để chọn) ---------- */
+function chuanTen_(v) {      // bỏ khoảng trắng thừa (đầu/cuối/giữa, kể cả NBSP, tab), chuẩn Unicode NFC
+  let x = s_(v);
+  try { x = x.normalize('NFC'); } catch (e) { }
+  return x.replace(/\s+/g, ' ').trim();
+}
+function khoaTen_(v) { return chuanTen_(v).toLowerCase(); }     // khóa so sánh: không phân biệt hoa/thường, khoảng trắng, NFC
+function donViList_() {
+  return read_('DonVi').map(function (r) {
+    return { ten: chuanTen_(r.TenDV), hoatDong: (r.HoatDong === '' || r.HoatDong === undefined) ? true : b_(r.HoatDong), thuTu: n_(r.ThuTu), _row: r._row };
+  }).filter(function (x) { return x.ten; });
+}
+function donViTim_(ten) { const k = khoaTen_(ten); return donViList_().filter(function (x) { return khoaTen_(x.ten) === k; })[0] || null; }
+function donViTab_() {       // tự tạo tab DonVi nếu chưa có (không bắt chạy setup)
+  const ss = ss_();
+  let sh = ss.getSheetByName('DonVi');
+  if (!sh) {
+    const h = TAB.DonVi;
+    sh = ss.insertSheet('DonVi');
+    sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    h.forEach(function (k, i) { if (TEXT_COLS.indexOf(k) >= 0) sh.getRange(1, i + 1, sh.getMaxRows(), 1).setNumberFormat('@'); });
+    memoClear_('DonVi');
+  }
+  return sh;
+}
+// Chọn tên đơn vị để ghi cho một nhân sự. cuDv = đơn vị hiện tại (undefined khi tạo mới).
+// Không gửi đơn vị (undefined/null) → giữ nguyên. Gửi đúng đơn vị cũ (sau chuẩn hóa) → ghi tên danh mục nếu có, không thì giữ nguyên giá trị cũ (kể cả khi nó không thuộc danh mục).
+// Ngược lại phải là đơn vị ĐANG HOẠT ĐỘNG trong danh mục; trả về đúng tên trong danh mục.
+function donViChon_(moi, cuDv) {
+  if ((moi === undefined || moi === null) && cuDv !== undefined) return s_(cuDv);
+  const m = chuanTen_(moi), dm = m ? donViTim_(m) : null;
+  if (cuDv !== undefined && khoaTen_(cuDv) === khoaTen_(m)) return dm ? dm.ten : s_(cuDv);   // cùng đơn vị cũ: có trong danh mục thì ghi đúng tên danh mục, không thì giữ nguyên giá trị cũ
+  if (!m) throw 'Chọn Đơn vị từ danh mục';
+  if (!dm) throw 'Đơn vị "' + m + '" chưa có trong danh mục – nhờ Quản trị hệ thống tạo đơn vị trước (tab Nhân sự → Danh mục Đơn vị)';
+  if (!dm.hoatDong) throw 'Đơn vị "' + dm.ten + '" đang bị ẩn – chọn đơn vị khác hoặc nhờ Quản trị hệ thống bật lại';
+  return dm.ten;
+}
+function soNguoiDonVi_() {   // khóa tên → số nhân sự thật (bỏ người giả TN-xx) đang dùng đơn vị đó
+  const c = {};
+  read_('NhanSu').forEach(function (r) { if (/^TN-/.test(s_(r.MaHRM))) return; const k = khoaTen_(r.DonVi); if (k) c[k] = (c[k] || 0) + 1; });
+  return c;
+}
+function dsDonVi_() {
+  const c = soNguoiDonVi_();
+  return donViList_().map(function (x) { return { ten: x.ten, hoatDong: x.hoatDong, thuTu: x.thuTu, soNguoi: c[khoaTen_(x.ten)] || 0 }; })
+    .sort(function (a, b) { return a.thuTu - b.thuTu || a.ten.localeCompare(b.ten, 'vi'); });
+}
+function luuDonVi_(u, p) {   // thêm / sửa thứ tự / ẩn–hiện / đổi tên (chỉ khi chưa ai dùng). Không xóa đơn vị: ẩn đi.
+  const ten = chuanTen_(p.ten), tenCu = p.tenCu === undefined || p.tenCu === null ? '' : chuanTen_(p.tenCu);
+  if (!ten) throw 'Nhập tên đơn vị';
+  if (ten.length > 100) throw 'Tên đơn vị tối đa 100 ký tự';
+  const ds = donViList_(), hoatDong = p.hoatDong === false ? false : true, c = soNguoiDonVi_();
+  if (!tenCu) {      // thêm mới
+    if (ds.some(function (x) { return khoaTen_(x.ten) === khoaTen_(ten); })) throw 'Đơn vị "' + ten + '" đã có trong danh mục (không phân biệt hoa/thường, khoảng trắng)';
+    donViTab_();
+    const thuTu = p.thuTu !== undefined && p.thuTu !== '' ? Math.max(0, Math.floor(n_(p.thuTu))) : ds.reduce(function (m, x) { return Math.max(m, x.thuTu); }, 0) + 1;
+    append_('DonVi', { TenDV: ten, HoatDong: hoatDong, ThuTu: thuTu });
+    log_(u.ma, 'THEM_DON_VI', ten);
+    return { moi: true, ten: ten };
+  }
+  const cu = ds.filter(function (x) { return khoaTen_(x.ten) === khoaTen_(tenCu); })[0];
+  if (!cu) throw 'Không tìm thấy đơn vị "' + tenCu + '"';
+  const doiTen = ten !== cu.ten;
+  if (doiTen) {
+    if (ds.some(function (x) { return x !== cu && khoaTen_(x.ten) === khoaTen_(ten); })) throw 'Đã có đơn vị khác tên "' + ten + '"';
+    if ((c[khoaTen_(cu.ten)] || 0) > 0) throw 'Đơn vị "' + cu.ten + '" đang có ' + c[khoaTen_(cu.ten)] + ' người – không đổi tên trực tiếp. Tạo đơn vị mới rồi dùng "Chuẩn hóa đơn vị" để chuyển người sang, hoặc chỉ ẩn đơn vị này';
+  }
+  const thuTu = p.thuTu !== undefined && p.thuTu !== '' ? Math.max(0, Math.floor(n_(p.thuTu))) : cu.thuTu;
+  const sh = donViTab_();
+  if (doiTen) ghiVanBan_(sh, cu._row, TAB.DonVi.indexOf('TenDV') + 1, ten);
+  sh.getRange(cu._row, TAB.DonVi.indexOf('HoatDong') + 1).setValue(hoatDong);
+  sh.getRange(cu._row, TAB.DonVi.indexOf('ThuTu') + 1).setValue(thuTu);
+  memoClear_('DonVi');
+  log_(u.ma, 'SUA_DON_VI', cu.ten + ' | cũ: tên ' + cu.ten + ', ' + (cu.hoatDong ? 'hoạt động' : 'ẩn') + ', thứ tự ' + cu.thuTu + ' | mới: tên ' + ten + ', ' + (hoatDong ? 'hoạt động' : 'ẩn') + ', thứ tự ' + thuTu);
+  return { moi: false, ten: ten };
+}
+
 
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */
 function appendMany_(name, objs) {

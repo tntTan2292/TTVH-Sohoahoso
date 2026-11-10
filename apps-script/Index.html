@@ -1903,7 +1903,7 @@ tbody tr:last-child td { border-bottom: none; }
         <div><label>Mã HRM</label><input id="nsMa" placeholder="VD: HRM123"></div>
         <div><label>Họ và tên</label><input id="nsTen" placeholder="Họ và tên đầy đủ"></div>
         <div><label>Chức vụ</label><input id="nsCv" placeholder="Tổ viên"></div>
-        <div><label>Đơn vị</label><input id="nsDv" placeholder="Tên phòng ban / đơn vị"></div>
+        <div><label>Đơn vị (chọn từ danh mục)</label><select id="nsDv"><option value="">– Chọn đơn vị –</option></select></div>
         <div><label>Gmail (Tổ trưởng / Tổ phó / Quản trị)</label><input id="nsMail" type="email" placeholder="example@gmail.com"></div>
         <div><label>Vai trò hệ thống</label>
           <select id="nsVai">
@@ -1929,6 +1929,17 @@ tbody tr:last-child td { border-bottom: none; }
       <div id="nsMsg2"></div>
       <input id="nsTim" placeholder="Tìm theo tên, mã HRM hoặc đơn vị…" autocomplete="off" style="margin-bottom:10px;">
       <div class="scroll" id="nsList"></div>
+    </div>
+    <div class="card hide" id="dvCard">
+      <h2>Danh mục Đơn vị</h2>
+      <div class="muted">Ô Đơn vị khi tạo/sửa nhân sự chỉ chọn từ danh mục này. Đơn vị không xóa được, chỉ <b>Ẩn</b>. Chỉ đổi tên được khi chưa có ai dùng đơn vị đó.</div>
+      <div class="row" style="margin-top:12px;">
+        <div><label>Tên đơn vị</label><input id="dvTen" placeholder="VD: Trung tâm Kinh doanh" autocomplete="off"></div>
+        <div><label>Thứ tự hiển thị</label><input id="dvThuTu" type="number" min="0" placeholder="Tự động (cuối danh sách)"></div>
+        <div style="align-self:end"><button class="pri" id="dvLuu" style="width:100%;">Thêm đơn vị</button></div>
+      </div>
+      <div id="dvMsg"></div>
+      <div class="scroll" id="dvList"></div>
     </div>
   </section>
 
@@ -2858,9 +2869,11 @@ function initNS() {
   $('nsTitle').textContent = sup ? 'Thêm / Cập nhật thông tin nhân sự' : 'Sửa thông tin tổ viên';
   $('nsListTitle').textContent = sup ? 'Danh sách nhân sự hệ thống' : 'Tổ viên của tổ';
   $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; $('nsTim').oninput = veNS; loadNS();
+  loadDV();      // B1: danh sách chọn Đơn vị (cả ADMIN và TT/TP)
+  $('dvCard').classList.toggle('hide', !sup); $('dvLuu').onclick = saveDV;      // B1
 }
 function clearNS() {
-  ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; msg('nsMsg', '');
+  ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; fillNsDv(''); msg('nsMsg', '');
   if (!ME.isSuper) $('nsFormCard').classList.add('hide');
 }
 function saveNS() {
@@ -2886,7 +2899,7 @@ function veNS() {
   }).join('') : '<tr><td colspan="6" class="muted">Không có người nào khớp.</td></tr>') + '</table>';
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-e]'), function (b) {
     b.onclick = function () {
-      var x = NS_DS[+b.dataset.e]; $('nsFormCard').classList.remove('hide'); $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; $('nsDv').value = x.donVi;
+      var x = NS_DS[+b.dataset.e]; $('nsFormCard').classList.remove('hide'); $('nsMa').value = x.ma; $('nsMa').disabled = true; $('nsTen').value = x.ten; $('nsCv').value = x.chucVu; fillNsDv(x.donVi);
       $('nsMail').value = x.email; $('nsVai').value = x.vaiTro; $('nsAct').checked = x.hoatDong; msg('nsMsg', ''); window.scrollTo(0, 0);
     };
   });
@@ -2896,6 +2909,39 @@ function veNS() {
   Array.prototype.forEach.call($('nsList').querySelectorAll('[data-k]'), function (b) {
     b.onclick = function () { call('moKhoaTK', { ma: b.dataset.k }).then(function (r) { msg('nsMsg2', r, 'ok'); loadNS(); }).catch(function (e) { msg('nsMsg2', e); }); };
   });
+}
+
+/* ---------- B1: Danh mục Đơn vị (ADMIN thêm/sửa/ẩn; ô Đơn vị của form nhân sự chọn từ danh mục) ---------- */
+var DV_DS = [], DV_SUA = '';
+function dvKhoa(s) { s = String(s == null ? '' : s); try { s = s.normalize('NFC'); } catch (e) { } return s.replace(/\s+/g, ' ').trim().toLowerCase(); }
+function loadDV() {
+  return call('dsDonVi').then(function (rs) { DV_DS = rs; fillNsDv(); if (ME.isSuper) veDV(); }).catch(function (e) { if (ME.isSuper) $('dvList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
+function fillNsDv(giaTri) {      // danh sách chọn Đơn vị = đơn vị đang hoạt động trong danh mục; giá trị cũ ngoài danh mục vẫn hiện để giữ nguyên
+  var sel = $('nsDv'), cur = giaTri !== undefined ? giaTri : sel.value, ops = '<option value="">– Chọn đơn vị –</option>', thay = '';
+  DV_DS.forEach(function (x) { if (!x.hoatDong) return; if (cur && dvKhoa(x.ten) === dvKhoa(cur)) thay = x.ten; ops += '<option value="' + esc(x.ten) + '">' + esc(x.ten) + '</option>'; });
+  if (cur && !thay) ops += '<option value="' + esc(cur) + '">' + esc(cur) + ' (ngoài danh mục – giữ nguyên)</option>';
+  sel.innerHTML = ops; sel.value = thay || cur || '';
+}
+function veDV() {
+  $('dvList').innerHTML = '<table><tr><th>Đơn vị</th><th>Thứ tự</th><th>Số người</th><th>Trạng thái</th><th>Thao tác</th></tr>' + (DV_DS.length ? DV_DS.map(function (x, i) {
+    return '<tr' + (x.hoatDong ? '' : ' style="opacity:.55"') + '><td><b>' + esc(x.ten) + '</b></td><td>' + x.thuTu + '</td><td>' + x.soNguoi + '</td><td>' + (x.hoatDong ? '<span class="chip ok">Hoạt động</span>' : '<span class="chip chip-mut">Ẩn</span>') + '</td>' +
+      '<td><button class="sm" data-dve="' + i + '">Sửa</button> <button class="sm" data-dvh="' + i + '">' + (x.hoatDong ? 'Ẩn' : 'Hiện lại') + '</button></td></tr>';
+  }).join('') : '<tr><td colspan="5" class="muted">Chưa có đơn vị nào. Thêm đơn vị ở trên (hoặc dùng "Chuẩn hóa đơn vị" để lấy từ tên đang có ở nhân sự).</td></tr>') + '</table>';
+  Array.prototype.forEach.call($('dvList').querySelectorAll('[data-dve]'), function (b) {
+    b.onclick = function () { var x = DV_DS[+b.dataset.dve]; DV_SUA = x.ten; $('dvTen').value = x.ten; $('dvThuTu').value = x.thuTu; $('dvLuu').textContent = 'Lưu đơn vị'; msg('dvMsg', ''); };
+  });
+  Array.prototype.forEach.call($('dvList').querySelectorAll('[data-dvh]'), function (b) {
+    b.onclick = function () { var x = DV_DS[+b.dataset.dvh]; call('luuDonVi', { ten: x.ten, tenCu: x.ten, thuTu: x.thuTu, hoatDong: !x.hoatDong }).then(function () { msg('dvMsg', x.hoatDong ? 'Đã ẩn đơn vị' : 'Đã bật lại đơn vị', 'ok'); loadDV(); }).catch(function (e) { msg('dvMsg', e); }); };
+  });
+}
+function saveDV() {
+  var cu = DV_DS.filter(function (x) { return x.ten === DV_SUA; })[0];
+  var p = { ten: $('dvTen').value, tenCu: DV_SUA, thuTu: $('dvThuTu').value, hoatDong: cu ? cu.hoatDong : true };
+  call('luuDonVi', p).then(function (r) {
+    msg('dvMsg', r.moi ? 'Đã thêm đơn vị' : 'Đã lưu đơn vị', 'ok');
+    DV_SUA = ''; $('dvTen').value = ''; $('dvThuTu').value = ''; $('dvLuu').textContent = 'Thêm đơn vị'; loadDV();
+  }).catch(function (e) { msg('dvMsg', e); });
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */

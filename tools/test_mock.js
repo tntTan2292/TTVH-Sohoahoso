@@ -24,6 +24,7 @@ class Sheet {
           ensure(r + i);
           for (let j = 0; j < vs[i].length; j++) {
             let v = vs[i][j]; const m = typeof v === 'string' && v.match(/^(\d\d)\.(\d\d)\.(\d\d)$/);
+            if (me.simulaSo0 && typeof v === 'string' && /^0\d+$/.test(v) && !(me.fmts && me.fmts[r + i] && me.fmts[r + i][c - 1 + j] === '@')) v = Number(v);   // (chỉ khi me.simulaSo0, bật ở khối B3) giả lập Sheets cắt số 0 đầu ("00109101" → 109101) khi ô chưa là văn bản
             if (m && !(me.fmts && me.fmts[r + i] && me.fmts[r + i][c - 1 + j] === '@')) v = new Date(Date.UTC(+m[3] >= 30 ? 1900 + +m[3] : 2000 + +m[3], +m[2] - 1, +m[1]));   // giả lập Sheets tự đổi "02.01.85" thành ngày khi ô chưa là văn bản
             me.rows[r + i - 1][c - 1 + j] = v;
           }
@@ -50,6 +51,7 @@ const TABS = {
 };
 const ss = { sheets: [], getSheetByName(n) { return this.sheets.find(s => s.name === n) || null; }, insertSheet(n) { const s = new Sheet(n, []); this.sheets.push(s); return s; }, getId() { return 'X'; }, setSpreadsheetTimeZone() { } };
 Object.keys(TABS).forEach(n => ss.sheets.push(new Sheet(n, TABS[n])));
+{ const dv = new Sheet('DonVi', ['TenDV', 'HoatDong', 'ThuTu']); ['Bưu điện TP Huế', 'Trung tâm vận hành', 'Phòng Tổ chức hành chính', 'Phòng Tài chính kế hoạch', 'Lãnh đạo BĐTP', 'Đơn vị B'].forEach((t, i) => dv.rows.push([t, true, i + 1])); ss.sheets.push(dv); }   // B1: danh mục đơn vị
 const fmt = (d, tz, f) => {
   const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(d).map(x => [x.type, x.value]));
   const H = p.hour === '24' ? '00' : p.hour;
@@ -361,7 +363,7 @@ ok(sh('PhanCa').rows.some(x => x[0] === '2026-11-06'), 'xóa NGAY mặc định 
 api(tAdmin, 'resetDuLieu', { phamVi: 'NGAY', ngay: '2026-11-06', xacNhan: 'XOA', caPhanCa: true });
 ok(!sh('PhanCa').rows.some(x => x[0] === '2026-11-06'), 'xóa NGAY + caPhanCa xóa luôn danh sách vào ca');
 ok(!api(tAdmin, 'resetDuLieu', { phamVi: 'TATCA', xacNhan: 'xoa' }).ok, 'TATCA cần đúng chữ XOA');
-r = api(tAdmin, 'luuNhanSu', { ma: 'B1', ten: 'Nhân viên B2', chucVu: 'Tổ viên', donVi: 'DV', email: '', vaiTro: 'TOVIEN', hoatDong: true });
+r = api(tAdmin, 'luuNhanSu', { ma: 'B1', ten: 'Nhân viên B2', chucVu: 'Tổ viên', donVi: 'Phòng Tổ chức hành chính', email: '', vaiTro: 'TOVIEN', hoatDong: true });
 const lg2 = sh('LogHeThong').rows.filter(x => x[4] === 'SUA_NHAN_SU').slice(-1)[0];
 ok(r.ok && /cũ: .*Nhân viên B.*mới: .*Nhân viên B2/.test(lg2[6]), 'nhật ký sửa nhân sự có cũ → mới');
 api(tTT, 'luuNhom', { ngay: '2026-11-09', ca: 'Chiều', gan: [{ ma: 'A1', nhom: '3' }] });
@@ -898,6 +900,60 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(api(tAdmin, 'moKhoaTK', { ma: 'TT1' }).ok && nsRow('TT1')[11] === false, 'A3: ADMIN mở khóa được tài khoản quản lý từ tab Nhân sự');
   ok(api(tTT, 'resetPin', { ma: 'A1' }).ok && !api(tTT, 'resetPin', { ma: 'ADMIN' }).ok, 'A3: TT/TP cấp PIN cho tổ viên, không cho ADMIN');
   ok(api(tAdmin, 'luuNhanSu', { ma: 'A1', ten: tenCu, chucVu: 'Tổ viên', donVi: 'Phòng Tổ chức hành chính', email: '', vaiTro: 'TOVIEN', hoatDong: true }).ok, 'A3: ADMIN vẫn dùng luuNhanSu đầy đủ (đổi vai trò/email/tạo mới như cũ)');
+}
+
+
+// ===== B1: danh mục Đơn vị (QĐ3) =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const dvRows = () => sh('DonVi').rows.slice(1).filter(x => x[0] !== '');
+  // tự tạo tab khi chưa có (không cần chạy setup)
+  const daCo = sh('DonVi'); ss.sheets.splice(ss.sheets.indexOf(daCo), 1); ctx.memoClear_();
+  ok(api(tAdmin, 'dsDonVi').ok && api(tAdmin, 'dsDonVi').data.length === 0, 'B1: chưa có tab DonVi → danh sách rỗng, không lỗi');
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW0', ten: 'Chưa có danh mục', donVi: 'Phòng Tổ chức hành chính' });
+  ok(!r.ok && /chưa có trong danh mục/.test(r.err) && !nsRow('NEW0'), 'B1: chưa có danh mục thì không tạo được nhân sự mới (máy chủ từ chối)', r);
+  ok(!api(tTT, 'luuDonVi', { ten: 'Z' }).ok && !api(tA, 'dsDonVi').ok && !api(tLD, 'dsDonVi').ok && api(tTT, 'dsDonVi').ok, 'B1: chỉ ADMIN thêm/sửa đơn vị; TT/TP xem được danh sách để chọn; tổ viên, Lãnh đạo không');
+  r = api(tAdmin, 'luuDonVi', { ten: '  Phòng   Kỹ   thuật ' });
+  ok(r.ok && r.data.ten === 'Phòng Kỹ thuật' && sh('DonVi') && sh('DonVi').rows[0].join() === 'TenDV,HoatDong,ThuTu' && dvRows().length === 1 && dvRows()[0][0] === 'Phòng Kỹ thuật' && dvRows()[0][1] === true, 'B1: ADMIN thêm đơn vị → tab DonVi tự tạo, tên bỏ khoảng trắng thừa', [r, sh('DonVi') && sh('DonVi').rows]);
+  ss.sheets.splice(ss.sheets.indexOf(sh('DonVi')), 1); ss.sheets.push(daCo); ctx.memoClear_();   // trả lại danh mục đủ 6 đơn vị cho các kiểm tra sau
+  // chống trùng sau chuẩn hóa
+  for (const t of ['trung tâm  VẬN hành', 'Trung tâm vận hành'.normalize('NFD'), ' TRUNG TÂM VẬN HÀNH ']) { r = api(tAdmin, 'luuDonVi', { ten: t }); ok(!r.ok && /đã có/.test(r.err) && dvRows().length === 6, 'B1: thêm "' + t.trim() + '" bị từ chối (trùng sau chuẩn hóa hoa/thường, khoảng trắng, NFC)', r); }
+  ok(api(tAdmin, 'luuDonVi', { ten: 'Tổ Tạm' }).ok && api(tAdmin, 'luuDonVi', { ten: 'Tổ Tạm', tenCu: 'tổ tạm', thuTu: 9 }).ok && dvRows().length === 7 && dvRows()[6][2] === 9, 'B1: sửa thứ tự (tenCu so khớp không phân biệt hoa/thường)');
+  ok(api(tAdmin, 'luuDonVi', { ten: 'Tổ Tạm 2', tenCu: 'Tổ Tạm' }).ok && dvRows()[6][0] === 'Tổ Tạm 2' && typeof dvRows()[6][0] === 'string', 'B1: đổi tên đơn vị chưa ai dùng được');
+  r = api(tAdmin, 'luuDonVi', { ten: 'Đơn vị B mới', tenCu: 'Đơn vị B' });
+  ok(!r.ok && /đang có \d+ người/.test(r.err) && dvRows()[5][0] === 'Đơn vị B', 'B1: đổi tên đơn vị đang có người dùng bị từ chối (tránh mồ côi)', r);
+  const dsD = api(tTT, 'dsDonVi').data;
+  ok(dsD.length === 7 && dsD.find(x => x.ten === 'Trung tâm vận hành').soNguoi >= 2 && dsD.find(x => x.ten === 'Tổ Tạm 2').soNguoi === 0 && dsD[0].ten === 'Bưu điện TP Huế', 'B1: dsDonVi có số người dùng từng đơn vị, sắp theo thứ tự', dsD);
+  // luuNhanSu (ADMIN)
+  const n0 = sh('NhanSu').rows.length;
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Gõ tay', donVi: 'Phòng tự bịa' });
+  ok(!r.ok && /chưa có trong danh mục/.test(r.err) && sh('NhanSu').rows.length === n0, 'B1: ADMIN tạo nhân sự với đơn vị ngoài danh mục → máy chủ từ chối, không ghi', r);
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Thiếu đơn vị' });
+  ok(!r.ok && /Chọn Đơn vị/.test(r.err) && sh('NhanSu').rows.length === n0, 'B1: tạo mới không chọn đơn vị bị từ chối');
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Đúng danh mục', donVi: '  phòng tổ chức  HÀNH CHÍNH ' });
+  ok(r.ok && r.data.moi && nsRow('NEW1')[3] === 'Phòng Tổ chức hành chính', 'B1: đơn vị được chuẩn về đúng tên trong danh mục khi lưu', nsRow('NEW1'));
+  // đơn vị ẩn
+  ok(api(tAdmin, 'luuDonVi', { ten: 'Tổ Tạm 2', tenCu: 'Tổ Tạm 2', hoatDong: false }).ok && dvRows()[6][1] === false, 'B1: ẩn đơn vị');
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Đúng danh mục', donVi: 'Tổ Tạm 2' });
+  ok(!r.ok && /ẩn/.test(r.err) && nsRow('NEW1')[3] === 'Phòng Tổ chức hành chính', 'B1: không gán người vào đơn vị đang ẩn', r);
+  // giữ nguyên giá trị cũ (kể cả không thuộc danh mục)
+  nsRow('NEW1')[3] = 'Đơn vị cũ lạ'; ctx.memoClear_();
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Đổi tên thôi', donVi: 'đơn vị  CŨ lạ' });
+  ok(r.ok && nsRow('NEW1')[1] === 'Đổi tên thôi' && nsRow('NEW1')[3] === 'Đơn vị cũ lạ', 'B1: sửa người mà giữ nguyên đơn vị cũ (không thuộc danh mục) vẫn lưu được, không đổi giá trị cũ', nsRow('NEW1'));
+  r = api(tAdmin, 'luuNhanSu', { ma: 'NEW1', ten: 'Đổi tên thôi', donVi: 'Đơn vị lạ khác' });
+  ok(!r.ok && nsRow('NEW1')[3] === 'Đơn vị cũ lạ', 'B1: nhưng đổi sang đơn vị khác ngoài danh mục thì bị từ chối');
+  // TT/TP sửa tổ viên (luuToVien_)
+  const a1 = nsRow('A1')[3];
+  r = api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A', donVi: 'Phòng bịa' });
+  ok(!r.ok && /chưa có trong danh mục/.test(r.err) && nsRow('A1')[3] === a1, 'B1: TT/TP sửa tổ viên sang đơn vị ngoài danh mục → bị từ chối', r);
+  r = api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A', donVi: 'trung tâm vận hành' });
+  ok(r.ok && nsRow('A1')[3] === 'Trung tâm vận hành', 'B1: TT/TP chọn đơn vị trong danh mục được (chuẩn về tên danh mục)', nsRow('A1'));
+  nsRow('A1')[3] = 'Đơn vị cũ lạ'; ctx.memoClear_();
+  ok(api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A', chucVu: 'Tổ viên', donVi: 'Đơn vị cũ lạ' }).ok && nsRow('A1')[3] === 'Đơn vị cũ lạ', 'B1: TT/TP giữ nguyên đơn vị cũ (ngoài danh mục) vẫn lưu được');
+  ok(api(tTT, 'luuNhanSu', { ma: 'A1', ten: 'Nhân viên A' }).ok && nsRow('A1')[3] === 'Đơn vị cũ lạ', 'B1: không gửi trường đơn vị thì giữ nguyên (không xóa trắng)');
+  nsRow('A1')[3] = a1; ctx.memoClear_();
+  sh('NhanSu').rows.splice(sh('NhanSu').rows.indexOf(nsRow('NEW1')), 1); ctx.memoClear_();     // dọn
+  ok(sh('LogHeThong').rows.some(x => x[4] === 'THEM_DON_VI') && sh('LogHeThong').rows.some(x => x[4] === 'SUA_DON_VI' && /cũ: .*mới: /.test(x[6])), 'B1: log THEM_DON_VI / SUA_DON_VI (cũ → mới)');
 }
 
 

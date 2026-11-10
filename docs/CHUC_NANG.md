@@ -108,6 +108,7 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-NS-03 | Cấp PIN mới từ danh sách | `resetPin_` | nút `data-p` |
 | F-NS-04 | **Tab Nhân sự cho Tổ trưởng/Tổ phó (QĐ2):** TT/TP có tab "Nhân sự" chỉ thấy **tổ viên** (không email, không cột PIN, không tài khoản quản lý/LĐ/ADMIN, không người giả TN-xx): ô tìm (`#nsTim`), nút **Sửa** (họ tên, chức vụ, đơn vị, hoạt động), **Cấp PIN mới**, **Mở khóa**. Không đổi vai trò, không tạo mới. Máy chủ: `dsNhanSu_(u)` lọc theo vai trò; `luuToVien_` (gọi từ `luuNhanSu_` khi không phải ADMIN). Khối "Quản lý tài khoản ca" cũ (`#qlNs`…) **giữ nguyên** chờ nghiệm thu | `dsNhanSu_`, `luuToVien_`, `quyenTrenNguoi_` | `#pNS`, `#nsTim`, `#nsMsg2`, `veNS`, `#nsFormCard` |
 | F-NS-05 | ADMIN: nút **Mở khóa** trong bảng tab Nhân sự (gọi `moKhoaTK`, đặt lại bộ đếm sai PIN; ADMIN mở khóa được mọi vai trò) | `moKhoaTK_` | nút `data-k` trong `veNS` |
+| F-NS-06 | **Danh mục Đơn vị (B1, QĐ3), chỉ ADMIN sửa:** tab `DonVi` (`TenDV`, `HoatDong`, `ThuTu`) tự tạo khi cần (không phải chạy `setup`). ADMIN thêm / sửa thứ tự / ẩn–hiện / đổi tên (chỉ khi chưa ai dùng đơn vị đó; không xóa, chỉ ẩn). Tên chuẩn hóa khi lưu (bỏ khoảng trắng thừa, NFC); trùng không phân biệt hoa/thường/khoảng trắng bị chặn. Ô **Đơn vị** `#nsDv` ở form ADMIN **và** form TT/TP sửa tổ viên là danh sách chọn; máy chủ (`donViChon_` trong `luuNhanSu_`, `luuToVien_`) từ chối đơn vị ngoài danh mục hoặc đang ẩn, trừ khi giữ nguyên giá trị cũ của người đó (không gửi `donVi` = giữ nguyên). Tạo nhân sự mới bắt buộc chọn đơn vị trong danh mục. TT/TP gọi `dsDonVi` để lấy danh sách chọn | `dsDonVi_`, `luuDonVi_`, `donViChon_`, `donViTab_`, `chuanTen_` | `#dvCard`, `#dvTen`, `#dvThuTu`, `#dvLuu`, `#dvList`, `#nsDv`, `loadDV`, `fillNsDv`, `veDV`, `saveDV` |
 
 ## 7. Dữ liệu – chỉ ADMIN (F-DL)
 
@@ -164,11 +165,11 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 ## Bảng kiểm tra sau mỗi lần sửa (bắt buộc)
 
 **Tự động (máy):**
-1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 242).
+1. `node tools/test_mock.js` → phải `0 lỗi`, số kiểm tra **không được giảm** so với lần trước (hiện 371).
 2. `node tools/kiem_tra_giao_dien.js` → mọi `id` và `call('…')` trong sổ này vẫn còn trong `Index.html`.
 
 **Bằng tay trên link thử (sau khi triển khai), 4 tài khoản:**
 - [ ] Tổ viên: đăng nhập → Vào ca → Nhận hộp (Cá nhân/Nhóm) → Scan có tick "kèm Tách" → OCR → xem Lịch sử cá nhân. Không thấy tab Dashboard.
 - [ ] Tổ trưởng: Vào ca → Quản lý ca: Tự ghép cặp, đổi nhóm 1 ô, bỏ 1 người khỏi ca → Nhận từ TT Lưu trữ (có ghi chú mã hồ sơ) → Trả hộp → Nhập hộ (khâu Scan có tick kèm Tách) → Chốt ca → Mở khóa → Dashboard đủ 6 khu.
 - [ ] Lãnh đạo: chỉ thấy Dashboard; đổi ngày bằng ◀ ▶ và nút ngày; xem 02–08/11 có số đầu kỳ.
-- [ ] ADMIN: Nhân sự (thêm/sửa/cấp PIN), Dữ liệu (sửa, xóa, khôi phục, tạo mẫu, xóa thử nghiệm), Nhật ký (lọc), Dashboard tick "gồm dữ liệu thử nghiệm".
+- [ ] ADMIN: Nhân sự (thêm/sửa/cấp PIN/mở khóa; Danh mục Đơn vị), Dữ liệu (sửa, xóa, khôi phục, tạo mẫu, xóa thử nghiệm), Nhật ký (lọc), Dashboard tick "gồm dữ liệu thử nghiệm".
