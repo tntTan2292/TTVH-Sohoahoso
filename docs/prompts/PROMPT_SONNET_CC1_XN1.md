@@ -1,6 +1,6 @@
 # Phiếu Sonnet: CC1 (mục 30) + XN1 (mục 28) + LOC1 (mục 31)
 
-Opus chốt 10/11/2026 theo đề nghị của chủ dự án. Làm liền ba việc, **mỗi việc một commit, thứ tự CC1 → XN1 → LOC1**. Không triển khai, không ghi Sheet thật. Xong thì Sonnet viết prompt Antigravity theo `CHUAN_PROMPT.md` mục 3a; Opus review một lần cuối đợt. C3 (mục 25) vẫn hoãn, làm sau đợt này.
+Opus chốt 10/11/2026 theo đề nghị của chủ dự án. Làm liền ba việc, **mỗi việc một commit, thứ tự CC1 → XN1 → LOC1**. Không ghi Sheet thật. Triển khai theo mục "Review và triển khai" cuối phiếu (chủ dự án yêu cầu riêng đợt này). Antigravity làm đẹp sau khi đã triển khai, Sonnet chỉ viết sẵn prompt theo `CHUAN_PROMPT.md` mục 3a. C3 (mục 25) vẫn hoãn, làm sau đợt này.
 
 ## CC1 (mục 30): Chốt ca = "đã kiểm tra", hiện rõ ca chưa chốt (L2)
 
@@ -69,3 +69,20 @@ Chỉ sửa `Index.html` (`nsKhoangTinh`, `dashTabNhanSu`, chỗ đổi ngày �
 
 ## Tài liệu (cả ba việc)
 Mỗi việc thêm hoặc sửa dòng `CHUC_NANG.md` trong cùng commit (LOC1 sửa F-DB-15); CC1 thêm vào `API.md`; cập nhật `TIEN_DO_PO.md`, `SNAPSHOT.md`, `CHANGELOG.md`.
+
+## Review và triển khai (chủ dự án yêu cầu riêng đợt này, 10/11/2026)
+Chủ dự án bận, nhờ làm trọn đợt. Quy tắc "chỉ triển khai sau khi Opus review đạt" **không bỏ**. Làm đúng thứ tự:
+
+1. Xong cả ba commit, mock và giao diện 0 lỗi, đã push.
+2. **Opus review độc lập:** gọi subagent với model `opus`, không kèm suy luận của Sonnet, chỉ giao mẫu `CHUAN_PROMPT.md` 10.5 cho `848b751..HEAD`. Trọng tâm: `dash_` không đổi số; luồng xác nhận ghi dữ liệu thật không mất từ khóa, không gửi trùng; không có đường ghi `ChotCa` mới; lọc ngày tab Nhân sự. Opus tự ghi kết quả vào SNAPSHOT.
+   - Không gọi được subagent model `opus` → **dừng, không triển khai**, báo chủ dự án.
+   - CẦN SỬA → Sonnet sửa đúng danh sách, rồi review lại. Tối đa 2 vòng; vẫn chưa ĐẠT → **dừng, không triển khai**.
+3. Có ĐẠT/GO của Opus trong SNAPSHOT → triển khai bằng skill `update-code-sohoa`. Bản đang chạy phải khớp `848b751` (phiên bản 28); không khớp → dừng, không ghi đè.
+
+**Giữ link và dữ liệu (bắt buộc):**
+- Chỉ sửa bản triển khai `…MlRA` bằng Phiên bản mới. Cấm "Triển khai mới", cấm Lưu trữ, không đụng `…NIQ`. Link phải giữ nguyên.
+- Cấm chạy `setup`, `taoMau`, `resetDuLieu` hay hàm nào khác trong trình soạn. Không mở, không ghi Google Sheet. Không đăng nhập vào ứng dụng, không nhập PIN hay mật khẩu. Đợt này không đổi cột, không thêm tab.
+- Không ghi đè `appsscript.json`, không đổi quyền.
+- Sau khi triển khai chỉ kiểm: băm khớp `main`, `/exec` mở được màn đăng nhập. Lỗi thì quay lui phiên bản 28, ghi SNAPSHOT, báo chủ dự án.
+
+Ghi phiên bản mới vào SNAPSHOT mục 1, CHANGELOG, `HUONG_DAN_TRIEN_KHAI.md`; `TIEN_DO_PO` mục 28, 30, 31 ghi "đã lên link chính (phiên bản N), chờ chủ dự án thử", không ghi Xong.
