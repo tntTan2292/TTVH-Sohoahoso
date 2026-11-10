@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- Triển khai **phiên bản 25** lên `…MlRA` (commit `42e59fa`: nhóm B5 B5b/B5c/B5/B5d + E1 + F-NS-11). Bản trước: phiên bản 24 (`0bb84bb`). Bản trên Apps Script khớp `0bb84bb` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp `main`. Mở `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca". Không bấm xóa/áp dụng gì trên Sheet thật.
 - F-NS-09 · **E1** (Opus review B5) `xoaNhanSu_` đối chiếu dòng thật trước khi xóa: đọc thẳng ô MaHRM của `cu._row`, lệch → tìm lại trong cột MaHRM, không thấy → từ chối, không xóa. Mock +3 (412/0): đệm lệch dòng không xóa nhầm người khác.
 - F-NS-11 · Khôi phục số 0 đầu Mã HRM (chủ dự án yêu cầu): action `chuanHoaMaHRM` (xem trước → áp dụng gõ `MAHRM`), đệm về 8 chữ số, ghi văn bản, xung đột không đổi, sao lưu không PIN + log; thẻ "Khôi phục số 0 đầu của Mã HRM" ở tab Nhân sự (ADMIN). **CHƯA chạy trên Sheet thật** (cần Opus GO + chủ dự án duyệt bảng xem trước). Mock +14 (409/0), giao diện 506/0.
 - F-NS-10 · **B5d** Danh sách nhân sự: lọc theo Đơn vị / Vai trò (ADMIN) / Trạng thái cạnh ô tìm, hiện "x / y người", giữ lựa chọn khi tải lại. Chỉ sửa `Index.html`. Mock 395/0, giao diện 494/0. Chưa triển khai.

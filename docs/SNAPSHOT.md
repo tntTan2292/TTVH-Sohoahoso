@@ -9,11 +9,11 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 10/11/2026 — Sonnet: xong nhóm B5 (B5b, B5c, B5, B5d) trong mã, đã đẩy GitHub, CHƯA triển khai, chờ Opus review; bản chạy vẫn phiên bản 24 |
+| Cập nhật lúc | 10/11/2026 15:41 — Sonnet: triển khai phiên bản 25 (nhóm B5 + E1, Opus GO; kèm F-NS-11 chưa qua Opus review nhưng chưa chạy) |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 24** (10/11/2026 15:08) trên link chính `…MlRA/exec` = commit `407fbb7` (mã nguồn = `0bb84bb`: Đợt B B1–B3 + F-DB-03 ô Nhận từ TTLT). Phiên bản trước: 23 (`6692d34`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 23 → Triển khai** (tab `DonVi` đã tạo sau này vô hại với bản 23). Link phụ `…NIQ/exec` không đụng |
-| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` e4a1e0ff771b…, `Index.html` 518875908785… khớp `main` sau khi lưu và tải lại trang; bản 23 trước khi đẩy đã khớp `6692d34`) |
-| Mock | `node tools/test_mock.js` → **395 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 494 đạt, 0 lỗi |
+| Bản đang chạy | Apps Script **phiên bản 25** (10/11/2026 15:41) trên link chính `…MlRA/exec` = commit `42e59fa` (B5b, B5c, B5, B5d, E1 + **F-NS-11 khôi phục số 0 đầu Mã HRM — thêm sau review, chỉ chạy khi ADMIN bấm Áp dụng, CHƯA chạy**). Phiên bản trước: 24 (`0bb84bb`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 24 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` 0ee865877e4f…, `Index.html` 8b78263fb175… khớp `42e59fa` sau khi lưu và tải lại trang; bản 24 trước khi đẩy khớp `0bb84bb`) |
+| Mock | `node tools/test_mock.js` → **412 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 514 đạt, 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
 ## 2. Việc đang làm (dở dang)
