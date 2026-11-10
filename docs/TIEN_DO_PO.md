@@ -21,12 +21,12 @@
 | 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ⚠️ Đã lên link chính (phiên bản 26) nhưng CHƯA bấm Xem trước/Áp dụng; chờ chủ dự án đồng ý |
 | 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟢 Đã lên link chính (phiên bản 26); chờ chủ dự án xác nhận |
 | 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | ✅ Xong (chủ dự án xác nhận 10/11) |
-| 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 17 | Màn hình chờ và chống bấm lặp | T1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 18 | Đo tốc độ, đề xuất tối ưu | T2 | 🟡 Xong trong mã (bộ đo + bảng đề xuất, chưa tối ưu); chờ Opus review, triển khai, rồi ADMIN đo số thật |
-| 19 | Tab Đối soát hộp | H2 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟡 Xong trong mã, chờ Opus review và triển khai |
+| 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 17 | Màn hình chờ và chống bấm lặp | T1 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 18 | Đo tốc độ, đề xuất tối ưu | T2 | 🟢 Opus review ĐẠT (10/11/2026; bộ đo + bảng đề xuất, chưa tối ưu); chờ chủ dự án đẩy code, rồi ADMIN đo số thật |
+| 19 | Tab Đối soát hộp | H2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
-| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 23 | Giao diện điện thoại | C2 | 🟡 Xong trong mã, chờ Opus review và triển khai |
-| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟡 Xong trong mã (10/11/2026, Sonnet), chờ Opus review gộp rồi chủ dự án triển khai |
+| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử F5 trong khung Apps Script thật |
