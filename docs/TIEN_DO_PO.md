@@ -21,15 +21,15 @@
 | 13 | Khôi phục số 0 đầu Mã HRM | F-NS-11, E2 | ⚠️ Đã lên link chính (phiên bản 26) nhưng CHƯA bấm Xem trước/Áp dụng; chờ chủ dự án đồng ý |
 | 14 | Một hộp dù viết `2.1.87` hay `02.01.87` | H1 | 🟢 Đã lên link chính (phiên bản 26); chờ chủ dự án xác nhận |
 | 15 | Sắp thứ tự người ở màn hình đăng nhập | B5e | ✅ Xong (chủ dự án xác nhận 10/11) |
-| 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
-| 17 | Màn hình chờ và chống bấm lặp | T1 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
-| 18 | Đo tốc độ, đề xuất tối ưu | T2 | 🟢 Opus review ĐẠT (10/11/2026; bộ đo + bảng đề xuất, chưa tối ưu); chờ chủ dự án đẩy code, rồi ADMIN đo số thật |
-| 19 | Tab Đối soát hộp | H2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
-| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
+| 16 | Đăng nhập chọn Đơn vị trước, nhớ người lần trước | B4 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 17 | Màn hình chờ và chống bấm lặp | T1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 18 | Đo tốc độ, đề xuất tối ưu | T2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử (ADMIN đo số thật sau) |
+| 19 | Tab Đối soát hộp | H2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
-| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
-| 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử trên link |
-| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT (10/11/2026), chờ chủ dự án đẩy code và thử F5 trong khung Apps Script thật |
+| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 23 | Giao diện điện thoại | C2 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
+| 24 | F5 không bị đăng xuất (đóng tab thì đăng nhập lại) | F5 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
-| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT (10/11/2026, `f8fd221`, `3c43bfb`; mock 518/0), chờ chủ dự án đẩy code, nạp dữ liệu; người phụ trách ca điền phiếu xác nhận |
-| 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT (10/11/2026, `848b751`; mock 550/0), chờ chủ dự án đẩy code và thử trên link |
+| 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử (chưa nạp dữ liệu DK1, chưa ghi Sheet thật) |
+| 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
