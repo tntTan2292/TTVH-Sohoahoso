@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- **Triển khai phiên bản 29** (commit `8c80278`: CC1 + XN1 + LOC1, Opus review ĐẠT/GO) lên link chính, thay phiên bản 28 (`848b751`). Trước khi đẩy: `Code.gs`, `Index.html` trên Apps Script khớp `848b751`. Sau khi lưu và tải lại: khớp `main` (`Code.gs` 37b552db0a0d, `Index.html` f9f75d674abc). `/exec` mở được màn đăng nhập. Quay lui: phiên bản 28.
 - F-DB-15 · **LOC1** (mục 31) Tab Nhân sự: hai ô Từ ngày – Đến ngày luôn hiện, các lựa chọn nhanh tính đến ngày đang xem, sửa tay tự chuyển Tùy chọn, chống kết quả cũ về muộn. Commit `85bf4be`. Giao diện 664/0.
 - F-HT-10 · **XN1** (mục 28) `hoiXacNhan` thay 18 `confirm`/`prompt` (từ khóa MAHRM, DAUKY, NHOM, DONVI, IMPORT, XOA, Mã HRM; hai hộp liên tiếp ở xóa theo ngày). Commit `8a7b7e4`.
 - F-QL-12 · **CC1** (mục 30) Chốt ca = đã kiểm tra: mốc 2026-11-10, `cas[].trangThaiChot`, `soCaChuaChot`, action `caChuaChot`, hiển thị ca chưa chốt; không đổi số, `chot_`, `caState_`. Commit `8d2dff6`. Mock 571/0.
