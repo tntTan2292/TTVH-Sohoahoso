@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-10
+- F-NS-07 · Chạy **Xem trước** `chuanHoaDonVi` trên Sheet thật (ADMIN, không áp dụng, danh mục DonVi rỗng): quét 29 nhân sự, 6 nhóm tên chưa có trong danh mục (trùng thật: "Trung tâm kinh doanh" 4 người + "Trung tâm Kinh doanh" 1 người). Chờ chủ dự án chọn tên chuẩn.
 - Triển khai **phiên bản 24** lên `…MlRA` (Đợt B: B1 F-NS-06, B2 F-NS-07, B3 F-NS-08 + F-DB-03 ô Nhận từ TTLT; mã = `0bb84bb`, HEAD `407fbb7`). Bản trước: phiên bản 23 (`6692d34`). Bản trên Apps Script khớp `6692d34` trước khi đẩy; sau khi lưu và tải lại, băm `Code.gs`/`Index.html` khớp `main`. Mở `/exec`: tiêu đề "Số hóa hồ sơ - Báo cáo ca", hiện màn hình đăng nhập. Chưa chạy B2 Xem trước (cần ADMIN đăng nhập).
 - F-DB-03 · Khung "Ca trong ngày" (Dashboard › Tổng quan) thêm ô **Nhận từ TTLT** (`c.nhanHop`, hộp) sau "Hộp tồn đầu ca"; không thêm "Nhóm nhận". Chỉ sửa `Index.html`. Mock 371/0, giao diện 482/0. Chưa triển khai (gộp review Đợt B).
 - F-NS-08 · **B3** Import nhân sự từ Excel/CSV/dán (ADMIN): action `importNhanSu` (xem trước từng dòng → ghi một lần), mã HRM giữ văn bản (số 0 đầu), vai trò chỉ TOVIEN/TOTRUONG/TOPHO, mã đã có bỏ qua, có dòng lỗi thì không ghi gì; PIN tạm lưu dạng băm, hiện một lần, không vào log. SheetJS 0.18.5 từ cdnjs, nạp khi cần. Mock +18 (371/0), giao diện 482/0. Chưa triển khai.
