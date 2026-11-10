@@ -45,6 +45,7 @@
 | `chuanHoaNhom` | ADMIN | `{ngay, ca, apDung:false}` (xem trước, không ghi); `{ngay, ca, apDung:true, xacNhan:"NHOM"}` (áp dụng) | `{ngay, ca, apDung, tongQuet, boQua, doiNhom:[{id,gio,buoc,hop,hs,trang,to,loi,het,maHoSo,nguoi,nhomCu,nhomMoi,tvCu,tvMoi,ly}], huyTrung:[{...,giuId}], xungDot:[{nhom,buoc,hop,dong:[],ly}], daSua:{doi,huy}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |
 | `dsDonVi` | TT/TP/ADMIN | — | `[{ten, hoatDong, thuTu, soNguoi}]` theo thứ tự; tab `DonVi` chưa có → `[]` (B1) |
 | `luuDonVi` | ADMIN | `{ten, tenCu?, thuTu?, hoatDong?}` — không có `tenCu` = thêm mới; có `tenCu` = sửa/ẩn/đổi tên (đổi tên chỉ khi đơn vị chưa có người dùng; không xóa) | `{moi, ten}` (B1) |
+| `chuanHoaDonVi` | ADMIN | `{apDung:false, anhXa?}` (xem trước, không ghi); `{apDung:true, xacNhan:"DONVI", anhXa?}` (áp dụng). `anhXa` = `{<khóa tên chuẩn hóa>: <tên trong danh mục> \| "+"}` cho tên chưa khớp danh mục (B2) | `{apDung, soNguoiQuet, soDonViChuan, donViTrong, themVaoDanhMuc:[], doi:[{khoa,tenCu,tenMoi,soNguoi,nguon,nguoi:[]}], khongKhop:[{khoa,goiY,soNguoi,cacTen:[{ten,soNguoi}]}], daSua:{nguoi,themDanhMuc}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |
 | `nhatKyHT` | ADMIN | `{tu, den, ma, hanhDong}` | dòng log |
 
 ## Kết quả `dashboard` (hàm `dash_`)

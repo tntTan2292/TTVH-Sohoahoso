@@ -334,6 +334,7 @@ function route_(u, action, p) {
     case 'chuanHoaNhom': needSuper_(u); return chuanHoaNhom_(u, p);
     case 'dsDonVi': need_(u); return dsDonVi_();            // B1: TT/TP cần danh sách chọn đơn vị khi sửa tổ viên
     case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
+    case 'chuanHoaDonVi': needSuper_(u); return chuanHoaDonVi_(u, p);   // B2
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
     case 'luuNhanSu': need_(u); return luuNhanSu_(u, p);     // QĐ2: TT/TP chỉ sửa tổ viên (hàm tự kiểm)
     case 'dsCa': need_(u); return dsCa_(p);
@@ -828,6 +829,84 @@ function luuDonVi_(u, p) {   // thêm / sửa thứ tự / ẩn–hiện / đổ
   memoClear_('DonVi');
   log_(u.ma, 'SUA_DON_VI', cu.ten + ' | cũ: tên ' + cu.ten + ', ' + (cu.hoatDong ? 'hoạt động' : 'ẩn') + ', thứ tự ' + cu.thuTu + ' | mới: tên ' + ten + ', ' + (hoatDong ? 'hoạt động' : 'ẩn') + ', thứ tự ' + thuTu);
   return { moi: false, ten: ten };
+}
+
+/* ---------- B2: Chuẩn hóa tên đơn vị đang trùng (chỉ ADMIN): xem trước rồi mới áp dụng ---------- */
+// Gom các tên đơn vị của nhân sự giống nhau sau chuẩn hóa (khoảng trắng, hoa/thường, NFC) về ĐÚNG tên trong danh mục.
+// Tên không có trong danh mục → liệt kê (khongKhop) để ADMIN chọn: p.anhXa = { <khóa tên>: <tên trong danh mục> | '+' } ('+' = thêm tên gợi ý vào danh mục rồi gom).
+// Không đụng cột nào khác của NhanSu; người giả TN-xx bỏ qua. apDung=true cần xacNhan='DONVI'; sao lưu (mã, tên, đơn vị cũ — không PIN) vào SaoLuuXoa + log từng cặp cũ → mới.
+function chuanHoaDonVi_(u, p) {
+  const apDung = p.apDung === true, anhXa = (p.anhXa && typeof p.anhXa === 'object') ? p.anhXa : {};
+  if (apDung && s_(p.xacNhan) !== 'DONVI') throw 'Gõ đúng chữ DONVI để xác nhận áp dụng chuẩn hóa đơn vị';
+  const dm = donViList_(), dmTheoKhoa = {};
+  dm.forEach(function (x) { dmTheoKhoa[khoaTen_(x.ten)] = x; });
+  const nhom = {};      // khóa → { cacTen: { tenGoc: [người] } }
+  let soTrong = 0;
+  read_('NhanSu').forEach(function (r) {
+    if (/^TN-/.test(s_(r.MaHRM))) return;
+    const goc = s_(r.DonVi), k = khoaTen_(goc);
+    if (!k) { soTrong++; return; }
+    const g = nhom[k] = nhom[k] || { khoa: k, cacTen: {} };
+    (g.cacTen[goc] = g.cacTen[goc] || []).push({ ma: s_(r.MaHRM), ten: s_(r.HoTen), _row: r._row });
+  });
+  const them = [];      // đơn vị sẽ thêm vào danh mục ('+')
+  const doi = [], khongKhop = [], loiAnhXa = [];
+  Object.keys(nhom).sort().forEach(function (k) {
+    const g = nhom[k], tenGoc = Object.keys(g.cacTen);
+    const tong = tenGoc.reduce(function (a, t) { return a + g.cacTen[t].length; }, 0);
+    let dich = dmTheoKhoa[k] ? dmTheoKhoa[k].ten : '', nguon = 'TU_DONG';
+    if (!dich && anhXa[k] !== undefined && s_(anhXa[k]) !== '') {
+      const chon = chuanTen_(anhXa[k]);
+      if (chon === '+') {
+        const goiY = chuanTen_(tenGoc.sort(function (a, b) { return g.cacTen[b].length - g.cacTen[a].length; })[0]);
+        dich = goiY; them.push(goiY);
+      } else {
+        const x = dmTheoKhoa[khoaTen_(chon)];
+        if (!x) throw 'Đơn vị đích "' + chon + '" không có trong danh mục';
+        if (!x.hoatDong) throw 'Đơn vị đích "' + x.ten + '" đang bị ẩn';
+        dich = x.ten;
+      }
+      nguon = 'ADMIN_CHON';
+    }
+    if (!dich) {
+      tenGoc.sort(function (a, b) { return g.cacTen[b].length - g.cacTen[a].length; });
+      khongKhop.push({ khoa: k, goiY: chuanTen_(tenGoc[0]), soNguoi: tong, cacTen: tenGoc.map(function (t) { return { ten: t, soNguoi: g.cacTen[t].length }; }) });
+      return;
+    }
+    tenGoc.forEach(function (t) {
+      if (t === dich) return;      // đã đúng tên chuẩn
+      doi.push({ khoa: k, tenCu: t, tenMoi: dich, soNguoi: g.cacTen[t].length, nguon: nguon, nguoi: g.cacTen[t].map(function (x) { return x.ten; }), _ds: g.cacTen[t] });
+    });
+  });
+  const kq = {
+    apDung: apDung, soNguoiQuet: Object.keys(nhom).reduce(function (a, k) { return a + Object.keys(nhom[k].cacTen).reduce(function (b, t) { return b + nhom[k].cacTen[t].length; }, 0); }, 0),
+    soDonViChuan: dm.length, donViTrong: soTrong, themVaoDanhMuc: them,
+    doi: doi.map(function (x) { return { khoa: x.khoa, tenCu: x.tenCu, tenMoi: x.tenMoi, soNguoi: x.soNguoi, nguon: x.nguon, nguoi: x.nguoi }; }),
+    khongKhop: khongKhop
+  };
+  if (!apDung) return kq;
+  if (!doi.length && !them.length) { kq.daSua = { nguoi: 0, themDanhMuc: 0 }; kq.saoLuu = ''; return kq; }
+  // ÁP DỤNG
+  const thuTuMax = dm.reduce(function (m, x) { return Math.max(m, x.thuTu); }, 0);
+  const daThem = {};
+  them.forEach(function (ten, i) {
+    if (daThem[khoaTen_(ten)]) return; daThem[khoaTen_(ten)] = 1;
+    donViTab_(); append_('DonVi', { TenDV: ten, HoatDong: true, ThuTu: thuTuMax + i + 1 });
+    log_(u.ma, 'THEM_DON_VI', ten + ' (từ chuẩn hóa đơn vị)');
+  });
+  const rowsSL = [];
+  doi.forEach(function (x) { x._ds.forEach(function (n) { rowsSL.push([n.ma, n.ten, x.tenCu]); }); });
+  const saoLuu = saoLuuDong_('NhanSu(DonVi)', rowsSL, u.ma);      // chỉ ghi mã, họ tên, đơn vị cũ — không có cột PIN
+  const sh = ss_().getSheetByName('NhanSu'), cDV = TAB.NhanSu.indexOf('DonVi') + 1;
+  let n = 0;
+  doi.forEach(function (x) {
+    x._ds.forEach(function (nguoi) { ghiVanBan_(sh, nguoi._row, cDV, x.tenMoi); n++; });
+    log_(u.ma, 'CHUAN_HOA_DON_VI', '"' + x.tenCu + '" → "' + x.tenMoi + '": ' + x._ds.length + ' người (' + x._ds.map(function (m) { return m.ma; }).slice(0, 30).join(', ') + ') | sao lưu ' + saoLuu);
+  });
+  memoClear_('NhanSu');
+  log_(u.ma, 'CHUAN_HOA_DON_VI_TONG', 'đổi đơn vị của ' + n + ' người, thêm ' + Object.keys(daThem).length + ' đơn vị vào danh mục, còn ' + khongKhop.length + ' tên chưa khớp danh mục | sao lưu ' + saoLuu);
+  kq.daSua = { nguoi: n, themDanhMuc: Object.keys(daThem).length }; kq.saoLuu = saoLuu;
+  return kq;
 }
 
 

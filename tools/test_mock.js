@@ -956,6 +956,56 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(sh('LogHeThong').rows.some(x => x[4] === 'THEM_DON_VI') && sh('LogHeThong').rows.some(x => x[4] === 'SUA_DON_VI' && /cũ: .*mới: /.test(x[6])), 'B1: log THEM_DON_VI / SUA_DON_VI (cũ → mới)');
 }
 
+// ===== B2: chuẩn hóa tên đơn vị đang trùng (xem trước / áp dụng) =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma);
+  const dvRows = () => sh('DonVi').rows.slice(1).filter(x => x[0] !== '');
+  const NFD = 'Trung tâm vận hành'.normalize('NFD');
+  nsRow('NGHI')[3] = 'Đơn vị B'; ctx.memoClear_();      // người nghỉ có đơn vị 'X' (dữ liệu của kiểm tra đầu file): đưa về danh mục để không lẫn vào B2
+  const them = (ma, dv) => { addUser(ma, 'Người ' + ma, 'TOVIEN', '9' + ma.length + '1357', false, dv); };
+  them('DV1', 'trung tâm  vận hành'); them('DV2', 'TRUNG TÂM VẬN HÀNH'); them('DV3', NFD); them('DV4', 'Phòng Kế Toán'); them('DV5', 'Phòng Kế Toán'); them('DV6', 'phòng kế toán ');
+  them('DV7', 'Phòng Lạ');
+  if (!nsRow('TN-01')) sh('NhanSu').rows.push(['TN-01', 'Thử 1', 'THỬ NGHIỆM', 'Dữ liệu mẫu', '', 'TOVIEN', '', '', '', false, 0, false, false]);   // người giả (taoMau): chuẩn hóa phải bỏ qua
+  const tn0 = nsRow('TN-01')[3], tnDaCo = sh('NhanSu').rows.length;
+  ctx.memoClear_();
+  const snap = () => JSON.stringify([sh('NhanSu').rows, sh('LogHeThong').rows.length, sh('DonVi').rows.length]);
+  const truoc = snap();
+  ok(!api(tTT, 'chuanHoaDonVi', {}).ok && !api(tA, 'chuanHoaDonVi', {}).ok && !api(tLD, 'chuanHoaDonVi', {}).ok, 'B2: chỉ ADMIN gọi được chuanHoaDonVi');
+  const pv = api(tAdmin, 'chuanHoaDonVi', {}), D = pv.data || {};
+  ok(pv.ok && D.apDung === false && snap() === truoc, 'B2: xem trước KHÔNG ghi gì (NhanSu, DonVi, log không đổi)', pv.err);
+  ok(D.doi.length === 3 && D.doi.every(x => x.tenMoi === 'Trung tâm vận hành' && x.khoa === 'trung tâm vận hành' && x.soNguoi === 1 && x.nguon === 'TU_DONG') && D.doi.map(x => x.nguoi[0]).sort().join() === 'Người DV1,Người DV2,Người DV3', 'B2: gom 3 biến thể (khoảng trắng / HOA / NFD) về đúng tên danh mục', D.doi);
+  ok(D.khongKhop.length === 2 && D.khongKhop.find(x => x.khoa === 'phòng kế toán').soNguoi === 3 && D.khongKhop.find(x => x.khoa === 'phòng kế toán').goiY === 'Phòng Kế Toán' && D.khongKhop.find(x => x.khoa === 'phòng lạ'), 'B2: tên không khớp danh mục được liệt kê kèm gợi ý để ADMIN chọn', D.khongKhop);
+  ok(!JSON.stringify(D).includes(tn0) && !JSON.stringify(D).includes('TN-01'), 'B2: người giả TN-xx bị bỏ qua');
+  let r2 = api(tAdmin, 'chuanHoaDonVi', { apDung: true });
+  ok(!r2.ok && /DONVI/.test(r2.err) && snap() === truoc, 'B2: áp dụng thiếu chữ DONVI bị từ chối, không ghi gì', r2);
+  r2 = api(tAdmin, 'chuanHoaDonVi', { apDung: true, xacNhan: 'DONVI', anhXa: { 'phòng lạ': 'Không có trong danh mục' } });
+  ok(!r2.ok && /không có trong danh mục/.test(r2.err) && snap() === truoc, 'B2: ánh xạ tới đơn vị ngoài danh mục bị từ chối, không ghi gì', r2);
+  const luuKhac = ma => JSON.stringify(nsRow(ma).filter((_, i) => i !== 3));
+  const k1 = luuKhac('DV1'), k4 = luuKhac('DV4');
+  const sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length, lg0 = sh('LogHeThong').rows.length;
+  r2 = api(tAdmin, 'chuanHoaDonVi', { apDung: true, xacNhan: 'DONVI' });
+  ok(r2.ok && r2.data.daSua.nguoi === 3 && r2.data.saoLuu === 'SaoLuuXoa', 'B2: áp dụng (chỉ phần tự khớp): đổi 3 người, có sao lưu', r2);
+  ok(['DV1', 'DV2', 'DV3'].every(m => nsRow(m)[3] === 'Trung tâm vận hành') && luuKhac('DV1') === k1, 'B2: đơn vị đã gom; các cột khác của dòng không đổi');
+  ok(nsRow('DV4')[3] === 'Phòng Kế Toán' && nsRow('DV6')[3] === 'phòng kế toán ' && nsRow('DV7')[3] === 'Phòng Lạ' && luuKhac('DV4') === k4 && nsRow('TN-01')[3] === tn0, 'B2: tên không khớp danh mục và người giả TN-xx KHÔNG bị đụng');
+  const sl = sh('SaoLuuXoa').rows.slice(sl0);
+  ok(sl.length === 3 && sl.every(x => x[1] === 'NhanSu(DonVi)' && /"DV[123]"/.test(x[3])) && !sl.some(x => /9\d1357|PinTam|PinHash/.test(x[3])), 'B2: sao lưu (mã, họ tên, đơn vị cũ) — không có PIN', sl.map(x => x[3]));
+  const lgB = sh('LogHeThong').rows.slice(lg0).map(x => x[4] + ':' + x[6]);
+  ok(lgB.filter(x => /^CHUAN_HOA_DON_VI:.*→ "Trung tâm vận hành".*sao lưu SaoLuuXoa/.test(x)).length === 3 && lgB.some(x => /^CHUAN_HOA_DON_VI_TONG:/.test(x)), 'B2: log từng cặp cũ → mới + dòng tổng', lgB);
+  ok(ctx.dsLogin().nhanSu.filter(x => x.donVi.normalize('NFC').toLowerCase().replace(/\s+/g, ' ') === 'trung tâm vận hành').every(x => x.donVi === 'Trung tâm vận hành'), 'B2: màn hình đăng nhập chỉ còn MỘT dạng "Trung tâm vận hành"');
+  // ánh xạ tên không khớp
+  const kPv = api(tAdmin, 'chuanHoaDonVi', { anhXa: { 'phòng kế toán': '+', 'phòng lạ': 'phòng TÀI chính kế hoạch' } });
+  const dk = kPv.data;
+  ok(kPv.ok && dk.themVaoDanhMuc.join() === 'Phòng Kế Toán' && dk.doi.length === 2 && dk.khongKhop.length === 0 && dvRows().length === 7, 'B2: xem trước có ánh xạ: thêm "Phòng Kế Toán" vào danh mục + gom "Phòng Lạ" về đơn vị có sẵn, chưa ghi gì', dk);
+  r2 = api(tAdmin, 'chuanHoaDonVi', { apDung: true, xacNhan: 'DONVI', anhXa: { 'phòng kế toán': '+', 'phòng lạ': 'phòng TÀI chính kế hoạch' } });
+  ok(r2.ok && r2.data.daSua.nguoi === 2 && r2.data.daSua.themDanhMuc === 1 && dvRows().length === 8 && dvRows()[7][0] === 'Phòng Kế Toán', 'B2: áp dụng ánh xạ: thêm đơn vị vào danh mục + đổi người', r2);
+  ok(['DV4', 'DV5', 'DV6'].every(m => nsRow(m)[3] === 'Phòng Kế Toán') && nsRow('DV7')[3] === 'Phòng Tài chính kế hoạch', 'B2: người đã về đúng tên danh mục');
+  const r3 = api(tAdmin, 'chuanHoaDonVi', { apDung: true, xacNhan: 'DONVI' });
+  ok(r3.ok && r3.data.daSua.nguoi === 0 && r3.data.doi.length === 0 && r3.data.khongKhop.length === 0, 'B2: chạy lại không còn gì để đổi (idempotent)', r3.data);
+  // dọn
+  sh('NhanSu').rows.splice(sh('NhanSu').rows.findIndex(x => x[0] === 'DV1'), 7);
+  ctx.memoClear_();
+}
+
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

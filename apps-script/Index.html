@@ -1941,6 +1941,13 @@ tbody tr:last-child td { border-bottom: none; }
       <div id="dvMsg"></div>
       <div class="scroll" id="dvList"></div>
     </div>
+    <div class="card hide" id="dvChCard">
+      <h2>Chuẩn hóa đơn vị đang trùng</h2>
+      <div class="muted">Gom các tên đơn vị giống nhau (khác khoảng trắng, chữ hoa/thường, dạng Unicode) về đúng tên trong danh mục. Luôn <b>Xem trước</b> rồi mới <b>Áp dụng</b>; áp dụng có sao lưu (tab SaoLuuXoa) và ghi nhật ký. Tên chưa có trong danh mục: chọn gom về đơn vị có sẵn hoặc thêm vào danh mục.</div>
+      <p style="margin-top:12px;"><button class="pri" id="dvChXem">Xem trước</button></p>
+      <div id="dvChMsg"></div>
+      <div id="dvChKq"></div>
+    </div>
   </section>
 
   <!-- TAB 4: DỮ LIỆU -->
@@ -2871,6 +2878,7 @@ function initNS() {
   $('nsSave').onclick = saveNS; $('nsClear').onclick = clearNS; $('nsTim').oninput = veNS; loadNS();
   loadDV();      // B1: danh sách chọn Đơn vị (cả ADMIN và TT/TP)
   $('dvCard').classList.toggle('hide', !sup); $('dvLuu').onclick = saveDV;      // B1
+  $('dvChCard').classList.toggle('hide', !sup); $('dvChXem').onclick = function () { dvChCall(false); };      // B2
 }
 function clearNS() {
   ['nsMa', 'nsTen', 'nsCv', 'nsDv', 'nsMail'].forEach(function (i) { $(i).value = ''; }); $('nsVai').value = 'TOVIEN'; $('nsAct').checked = true; $('nsMa').disabled = false; fillNsDv(''); msg('nsMsg', '');
@@ -2942,6 +2950,45 @@ function saveDV() {
     msg('dvMsg', r.moi ? 'Đã thêm đơn vị' : 'Đã lưu đơn vị', 'ok');
     DV_SUA = ''; $('dvTen').value = ''; $('dvThuTu').value = ''; $('dvLuu').textContent = 'Thêm đơn vị'; loadDV();
   }).catch(function (e) { msg('dvMsg', e); });
+}
+
+/* ---------- B2: Chuẩn hóa đơn vị đang trùng (ADMIN: xem trước → áp dụng) ---------- */
+var DVCH_ANHXA = {};
+function dvChCall(apDung) {
+  var p = { apDung: apDung, anhXa: DVCH_ANHXA };
+  if (apDung) {
+    var t = prompt('Áp dụng chuẩn hóa đơn vị: sẽ sao lưu rồi đổi tên đơn vị của các nhân sự trong bảng xem trước. Gõ DONVI để xác nhận:');
+    if (!t) return;
+    p.xacNhan = t;
+  }
+  $('dvChXem').disabled = true; msg('dvChMsg', apDung ? 'Đang áp dụng…' : 'Đang quét…', 'warn');
+  call('chuanHoaDonVi', p).then(function (r) {
+    if (apDung) {
+      msg('dvChMsg', 'Đã áp dụng: đổi đơn vị của ' + r.daSua.nguoi + ' người, thêm ' + r.daSua.themDanhMuc + ' đơn vị vào danh mục' + (r.saoLuu ? ' (sao lưu: ' + r.saoLuu + ')' : '') + '. Còn ' + r.khongKhop.length + ' tên chưa khớp danh mục.', 'ok');
+      DVCH_ANHXA = {}; veDvCh(r); loadDV(); loadNS();
+    } else { msg('dvChMsg', ''); veDvCh(r); }
+  }).catch(function (e) { msg('dvChMsg', e); }).then(function () { $('dvChXem').disabled = false; });
+}
+function veDvCh(r) {
+  var h = '<div class="muted" style="margin-top:12px;">Đã quét ' + r.soNguoiQuet + ' nhân sự (bỏ qua người giả TN-xx) · ' + r.soDonViChuan + ' đơn vị trong danh mục' + (r.donViTrong ? ' · ' + r.donViTrong + ' người chưa có đơn vị' : '') + '</div>';
+  if (r.doi.length) {
+    h += '<h3 style="margin:14px 0 6px;">Sẽ đổi tên đơn vị (' + r.doi.length + ' tên, ' + r.doi.reduce(function (a, x) { return a + x.soNguoi; }, 0) + ' người)</h3><div class="scroll"><table><tr><th>Tên hiện tại</th><th>Đổi thành</th><th>Số người</th><th>Người</th><th></th></tr>' + r.doi.map(function (x) {
+      return '<tr><td>' + esc(x.tenCu) + '</td><td><b>' + esc(x.tenMoi) + '</b></td><td>' + x.soNguoi + '</td><td>' + esc(x.nguoi.join(', ')) + '</td><td>' + (x.nguon === 'ADMIN_CHON' ? '<button class="sm" data-dvb="' + esc(x.khoa) + '">Bỏ chọn</button>' : '') + '</td></tr>';
+    }).join('') + '</table></div>';
+  }
+  if (r.themVaoDanhMuc.length) h += '<div class="msg warn"><span>Sẽ thêm vào danh mục: <b>' + esc(r.themVaoDanhMuc.join(', ')) + '</b></span></div>';
+  if (r.khongKhop.length) {
+    h += '<h3 style="margin:14px 0 6px;">Tên chưa có trong danh mục – chọn cách xử lý (' + r.khongKhop.length + ')</h3><div class="scroll"><table><tr><th>Tên đang dùng</th><th>Số người</th><th>Xử lý</th></tr>' + r.khongKhop.map(function (k, i) {
+      return '<tr><td>' + k.cacTen.map(function (t) { return esc(t.ten) + ' (' + t.soNguoi + ')'; }).join('<br>') + '</td><td>' + k.soNguoi + '</td><td><select data-dvk="' + esc(k.khoa) + '"><option value="">(để nguyên, chưa xử lý)</option><option value="+">Thêm "' + esc(k.goiY) + '" vào danh mục</option>' +
+        DV_DS.filter(function (x) { return x.hoatDong; }).map(function (x) { return '<option value="' + esc(x.ten) + '">Gom về: ' + esc(x.ten) + '</option>'; }).join('') + '</select></td></tr>';
+    }).join('') + '</table></div>';
+  }
+  if (!r.doi.length && !r.themVaoDanhMuc.length) h += '<div class="msg ok"><span>Không có tên nào cần đổi' + (r.khongKhop.length ? ' (còn tên chưa khớp danh mục ở trên)' : '') + '.</span></div>';
+  else if (!r.apDung) h += '<p style="margin-top:14px;"><button class="pri bad" id="dvChApDung">Áp dụng (' + r.doi.reduce(function (a, x) { return a + x.soNguoi; }, 0) + ' người)</button></p>';
+  $('dvChKq').innerHTML = h;
+  Array.prototype.forEach.call($('dvChKq').querySelectorAll('[data-dvk]'), function (s) { s.onchange = function () { if (s.value) { DVCH_ANHXA[s.dataset.dvk] = s.value; dvChCall(false); } }; });
+  Array.prototype.forEach.call($('dvChKq').querySelectorAll('[data-dvb]'), function (b) { b.onclick = function () { delete DVCH_ANHXA[b.dataset.dvb]; dvChCall(false); }; });
+  if ($('dvChApDung')) $('dvChApDung').onclick = function () { dvChCall(true); };
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */
