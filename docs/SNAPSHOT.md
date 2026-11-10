@@ -103,7 +103,7 @@
 - Tick "Scan kèm Tách" thiếu ở form Nhập hộ · F-QL-10 · 09/11/2026 · chủ dự án báo → **đã sửa trong mã, chưa triển khai**.
 
 ## 5. Quyết định đang chờ chủ dự án
-- **Mã hộp (H3, 10/11/2026):** (a) Đoạn đầu có khi nào 3 chữ số (vd `208.18.17`)? (b) Hộp `TEST-…`/mã không theo mẫu số: giữ nguyên, không ép? (c) Hộp chưa có nhận TTLT khi báo cáo: giữ **cảnh báo** như hiện nay hay **chặn cứng**? (Opus khuyến nghị: a – cho phép, giữ nguyên số chữ số; b – giữ nguyên; c – cảnh báo, vì nhóm có thể làm trước khi Quản lý kịp ghi nhận.)
+- ~~Mã hộp (H3)~~ → **ĐÃ CHỐT 10/11/2026 (chủ dự án đồng ý cả 3 khuyến nghị Opus), ghi ở phiếu mục ĐỢT H.**
 - **Chuẩn hóa báo cáo Q8:** Mã hồ sơ có bắt buộc khi hộp chưa xong không? (Đợt 1 mặc định: không bắt buộc, hiển thị nổi bật, nhắc khi trống.)
 - Hộp đã trả có còn được Tách file không.
 - Số 571 trang "Tách file" ngày 05/11 ca tối (đã chuyển sang Tách) — cần Lãnh đạo xác nhận.
