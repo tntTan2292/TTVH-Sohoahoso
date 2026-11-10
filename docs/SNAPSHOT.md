@@ -9,10 +9,10 @@
 ## 1. Trạng thái hệ thống
 | Mục | Giá trị |
 |---|---|
-| Cập nhật lúc | 10/11/2026 — Sonnet: xong Đợt B (B1–B3), đã đẩy GitHub, CHƯA triển khai, dừng chờ Opus review |
+| Cập nhật lúc | 10/11/2026 15:08 — Sonnet: triển khai phiên bản 24 (Đợt B, Opus GO); chờ ADMIN đăng nhập để chạy Xem trước chuẩn hóa đơn vị |
 | Nhánh / commit | `main`, đã đẩy lên GitHub `tntTan2292/TTVH-Sohoahoso` (xem `git log -1`) |
-| Bản đang chạy | Apps Script **phiên bản 23** (10/11/2026 14:41) trên link chính `…MlRA/exec` = commit `6692d34` (F-DB-06: Từng ca đếm hộp nhận theo nhóm). Phiên bản trước: 22 (`5ccfbbc`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 22 → Triển khai**. Link phụ `…NIQ/exec` không đụng |
-| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` 81099ca1a9ec…, `Index.html` 52abecf23f38… khớp `6692d34` sau khi lưu và tải lại trang; bản 22 trước khi đẩy đã khớp `5ccfbbc`) |
+| Bản đang chạy | Apps Script **phiên bản 24** (10/11/2026 15:08) trên link chính `…MlRA/exec` = commit `407fbb7` (mã nguồn = `0bb84bb`: Đợt B B1–B3 + F-DB-03 ô Nhận từ TTLT). Phiên bản trước: 23 (`6692d34`) — **quay lui: Quản lý triển khai → `…MlRA` → ✏️ → chọn phiên bản 23 → Triển khai** (tab `DonVi` đã tạo sau này vô hại với bản 23). Link phụ `…NIQ/exec` không đụng |
+| Mã trên Apps Script khớp repo? | **Có** (băm SHA-256 `Code.gs` e4a1e0ff771b…, `Index.html` 518875908785… khớp `main` sau khi lưu và tải lại trang; bản 23 trước khi đẩy đã khớp `6692d34`) |
 | Mock | `node tools/test_mock.js` → **371 đạt, 0 lỗi**; `node tools/kiem_tra_giao_dien.js` → 482 đạt, 0 lỗi |
 | Kiểm thử trên Sheet thật | **Chưa đầy đủ** (xem `HUONG_DAN_TRIEN_KHAI.md` mục E) |
 
