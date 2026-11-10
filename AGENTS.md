@@ -33,7 +33,8 @@ Chỉ `apps-script/Code.gs`, `apps-script/Index.html`, `apps-script/appsscript.j
 8. Xong một việc: ghi một dòng vào `CHANGELOG.md`.
 
 ## Triển khai
-- Triển khai lên Apps Script: chỉ dùng skill `update-code-sohoa` (`.claude/skills/update-code-sohoa/SKILL.md`).
+- **Từ 10/11/2026 (chủ dự án quyết định, để tiết kiệm quota): chủ dự án tự đẩy code lên Apps Script bằng tay, chỉ sau khi Opus review đạt TOÀN BỘ đợt.** AI không tự triển khai. Chủ dự án báo số phiên bản mới thì developer ghi vào tài liệu.
+- Skill `update-code-sohoa` (`.claude/skills/update-code-sohoa/SKILL.md`) chỉ dùng khi chủ dự án yêu cầu rõ.
 
 ## Bảo mật
 - Không đưa lên Git: file Excel/TSV (tên, Mã HRM, PIN tạm), `backup/`, `TaiLieu/` (đã có trong `.gitignore`).
