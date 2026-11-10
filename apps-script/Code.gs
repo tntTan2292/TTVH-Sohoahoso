@@ -335,6 +335,7 @@ function route_(u, action, p) {
     case 'dsDonVi': need_(u); return dsDonVi_();            // B1: TT/TP cần danh sách chọn đơn vị khi sửa tổ viên
     case 'luuDonVi': needSuper_(u); return luuDonVi_(u, p);   // B1
     case 'chuanHoaDonVi': needSuper_(u); return chuanHoaDonVi_(u, p);   // B2
+    case 'chuanHoaMaHRM': needSuper_(u); return chuanHoaMaHRM_(u, p);      // F-NS-11
     case 'xoaNhanSu': needSuper_(u); return xoaNhanSu_(u, p);           // B5
     case 'importNhanSu': needSuper_(u); return importNhanSu_(u, p);     // B3
     case 'dsNhanSu': need_(u); return dsNhanSu_(u);          // QĐ2: TT/TP chỉ thấy tổ viên
@@ -1016,6 +1017,41 @@ function xoaNhanSu_(u, p) {
   memoClear_('NhanSu');
   log_(u.ma, 'XOA_NHAN_SU', ma + ' ' + s_(cu.HoTen) + ' | ' + s_(cu.VaiTro) + ' | ' + s_(cu.DonVi) + (gia ? ' | người giả TN-xx, kèm ' + pc + ' dòng phân ca, ' + pn + ' dòng phân nhóm' : ' | chưa từng dùng') + ' | sao lưu ' + saoLuu);
   return { ma: ma, ten: s_(cu.HoTen), daXoa: 1, phanCa: pc, phanNhom: pn, saoLuu: saoLuu };
+}
+
+/* ---------- F-NS-11: Khôi phục số 0 đầu của Mã HRM trong tab NhanSu (chỉ ADMIN): xem trước rồi mới áp dụng ---------- */
+// Mã HRM toàn chữ số ngắn hơn `doDai` (mặc định 8, ví dụ 61887 → 00061887) bị Sheets cắt số 0 đầu → đệm lại cho đủ độ dài, ghi dạng VĂN BẢN.
+// Mã đệm xong trùng mã đã có / trùng nhau → liệt kê xung đột, KHÔNG đổi. Bỏ qua mã có chữ (ADMIN, TN-xx). Chỉ đổi cột MaHRM của NhanSu:
+// các tab khác tự khớp nhờ read_ (so mã bỏ số 0 đầu). Áp dụng cần xacNhan='MAHRM'; sao lưu [mã cũ, họ tên, mã mới] (không PIN) + log; đặt cả cột MaHRM dạng văn bản.
+// Hệ quả: người đang đăng nhập bằng mã cũ phải đăng nhập lại.
+const MA_HRM_DO_DAI_ = 8;
+function chuanHoaMaHRM_(u, p) {
+  const apDung = p.apDung === true, dai = Math.max(2, Math.min(12, Math.floor(n_(p.doDai)) || MA_HRM_DO_DAI_));
+  if (apDung && s_(p.xacNhan) !== 'MAHRM') throw 'Gõ đúng chữ MAHRM để xác nhận đổi Mã HRM';
+  const ns = read_('NhanSu'), co = {};
+  ns.forEach(function (x) { co[s_(x.MaHRM)] = 1; });
+  const doi = [], xungDot = [], dich = {};
+  let daDung = 0;
+  ns.forEach(function (x) {
+    const ma = s_(x.MaHRM);
+    if (!/^\d+$/.test(ma)) return;
+    if (ma.length >= dai) { daDung++; return; }
+    const moi = new Array(dai - ma.length + 1).join('0') + ma;
+    const mo = { ma: ma, moi: moi, ten: s_(x.HoTen), donVi: s_(x.DonVi), vaiTro: s_(x.VaiTro), _row: x._row };
+    if (co[moi] || dich[moi]) { xungDot.push({ ma: ma, moi: moi, ten: s_(x.HoTen), ly: co[moi] ? 'Mã ' + moi + ' đã có trong NhanSu' : 'Trùng mã đệm với một dòng khác trong danh sách đổi' }); return; }
+    dich[moi] = 1; doi.push(mo);
+  });
+  const kq = { apDung: apDung, doDai: dai, doi: doi.map(function (x) { return { ma: x.ma, moi: x.moi, ten: x.ten, donVi: x.donVi, vaiTro: x.vaiTro }; }), xungDot: xungDot, daDungDoDai: daDung };
+  if (!apDung) return kq;
+  if (!doi.length) { kq.daSua = 0; kq.saoLuu = ''; return kq; }
+  const saoLuu = saoLuuDong_('NhanSu(MaHRM)', doi.map(function (x) { return [x.ma, x.ten, x.moi]; }), u.ma);
+  const sh = ss_().getSheetByName('NhanSu'), c = TAB.NhanSu.indexOf('MaHRM') + 1;
+  sh.getRange(1, c, sh.getMaxRows(), 1).setNumberFormat('@');
+  doi.forEach(function (x) { ghiVanBan_(sh, x._row, c, x.moi); });
+  memoClear_();
+  log_(u.ma, 'CHUAN_HOA_MA_HRM', 'đệm số 0 đầu cho ' + doi.length + ' mã (độ dài ' + dai + '), xung đột bỏ qua ' + xungDot.length + ' | ' + doi.slice(0, 40).map(function (x) { return x.ma + '→' + x.moi; }).join(', ') + (doi.length > 40 ? ' …' : '') + ' | sao lưu ' + saoLuu);
+  kq.daSua = doi.length; kq.saoLuu = saoLuu;
+  return kq;
 }
 
 /* ---------- Quản trị dữ liệu báo cáo: sửa / reset / tạo mẫu (chỉ ADMIN) ---------- */

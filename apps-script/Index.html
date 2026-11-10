@@ -1956,6 +1956,13 @@ tbody tr:last-child td { border-bottom: none; }
       <div id="dvChMsg"></div>
       <div id="dvChKq"></div>
     </div>
+    <div class="card hide" id="maCard">
+      <h2>Khôi phục số 0 đầu của Mã HRM</h2>
+      <div class="muted">Sheets đã cắt số 0 đầu của nhiều Mã HRM (61887 thay vì 00061887). Công cụ đệm lại cho đủ <b>8 chữ số</b> (chỉ mã toàn chữ số), ghi dạng văn bản. Luôn <b>Xem trước</b> rồi mới <b>Áp dụng</b>; có sao lưu (tab SaoLuuXoa) và nhật ký. Sau khi áp dụng, người đang đăng nhập phải đăng nhập lại; dữ liệu báo cáo cũ vẫn khớp người (hệ thống so mã bỏ số 0 đầu).</div>
+      <p style="margin-top:12px;"><button class="pri" id="maXem">Xem trước</button></p>
+      <div id="maMsg"></div>
+      <div id="maKq"></div>
+    </div>
     <div class="card hide" id="imCard">
       <h2>Import nhân sự từ Excel</h2>
       <div class="muted">Cột: <b>Mã HRM, Họ tên, Chức vụ, Đơn vị, Vai trò</b>. Đơn vị phải có trong danh mục; Vai trò: Tổ viên / Tổ trưởng / Tổ phó / Lãnh đạo (Ban chỉ đạo, chỉ xem; để trống = Tổ viên; không tạo Quản trị). Mã HRM đã có thì bỏ qua, không ghi đè. Còn dòng lỗi thì không ghi gì. Giữ cột Mã HRM dạng <b>Văn bản</b> (không mất số 0 đầu). PIN tạm chỉ hiện <b>một lần</b> sau khi ghi, in/giao tận tay.</div>
@@ -2901,6 +2908,7 @@ function initNS() {
   loadDV();      // B1: danh sách chọn Đơn vị (cả ADMIN và TT/TP)
   $('dvCard').classList.toggle('hide', !sup); $('dvLuu').onclick = saveDV;      // B1
   $('dvChCard').classList.toggle('hide', !sup); $('dvChXem').onclick = function () { dvChCall(false); };      // B2
+  $('maCard').classList.toggle('hide', !sup); $('maXem').onclick = function () { maCall(false); };      // F-NS-11
   $('imCard').classList.toggle('hide', !sup); $('imXem').onclick = imXem; $('imMau').onclick = imTaiMau;      // B3
 }
 function clearNS() {
@@ -3127,6 +3135,25 @@ function imGhi() {
     if ($('imXoaPin')) $('imXoaPin').onclick = function () { $('imKq').innerHTML = ''; msg('imMsg', ''); };
     loadNS(); loadDV();
   }).catch(function (e) { msg('imMsg', e); if ($('imGhi')) $('imGhi').disabled = false; });
+}
+
+/* ---------- F-NS-11: Khôi phục số 0 đầu Mã HRM (ADMIN: xem trước → áp dụng) ---------- */
+function maCall(apDung) {
+  var p = { apDung: apDung };
+  if (apDung) { var t = prompt('Đổi Mã HRM các tài khoản trong bảng xem trước (có sao lưu). Người đang đăng nhập phải đăng nhập lại. Gõ MAHRM để xác nhận:'); if (!t) return; p.xacNhan = t; }
+  $('maXem').disabled = true; msg('maMsg', apDung ? 'Đang áp dụng…' : 'Đang quét…', 'warn');
+  call('chuanHoaMaHRM', p).then(function (r) {
+    if (apDung) { msg('maMsg', 'Đã đổi ' + r.daSua + ' Mã HRM' + (r.saoLuu ? ' (sao lưu: ' + r.saoLuu + ')' : '') + '. Còn ' + r.xungDot.length + ' xung đột.', 'ok'); $('maKq').innerHTML = ''; loadNS(); }
+    else { msg('maMsg', ''); veMaXem(r); }
+  }).catch(function (e) { msg('maMsg', e); }).then(function () { $('maXem').disabled = false; });
+}
+function veMaXem(r) {
+  var h = '<div class="muted" style="margin-top:12px;">Độ dài chuẩn ' + r.doDai + ' chữ số · ' + r.daDungDoDai + ' mã đã đủ độ dài · ' + r.doi.length + ' mã cần đệm số 0 · ' + r.xungDot.length + ' xung đột</div>';
+  if (r.doi.length) h += '<div class="scroll"><table><tr><th>Họ và tên</th><th>Mã hiện tại</th><th>Mã mới</th><th>Đơn vị</th></tr>' + r.doi.map(function (x) { return '<tr><td><b>' + esc(x.ten) + '</b></td><td><code>' + esc(x.ma) + '</code></td><td><code><b>' + esc(x.moi) + '</b></code></td><td>' + esc(x.donVi) + '</td></tr>'; }).join('') + '</table></div>';
+  if (r.xungDot.length) h += '<h3 style="margin:14px 0 6px;">Xung đột – không tự đổi (' + r.xungDot.length + ')</h3>' + r.xungDot.map(function (x) { return '<div class="msg warn"><span><b>' + esc(x.ten) + '</b> <code>' + esc(x.ma) + '</code> → <code>' + esc(x.moi) + '</code>: ' + esc(x.ly) + '</span></div>'; }).join('');
+  h += r.doi.length ? '<p style="margin-top:14px;"><button class="pri bad" id="maApDung">Áp dụng (' + r.doi.length + ' mã)</button></p>' : '<div class="msg ok"><span>Không có mã nào cần đệm số 0.</span></div>';
+  $('maKq').innerHTML = h;
+  if ($('maApDung')) $('maApDung').onclick = function () { maCall(true); };
 }
 
 /* ---------- Tab Dữ liệu (Quản trị) ---------- */

@@ -1146,5 +1146,45 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows = sh('NhatKy').rows.filter(x => !/^DX\d$/.test(x[0])); sh('PhanCa').rows = sh('PhanCa').rows.filter(x => !/^DEL/.test(x[2])); sh('PhanNhom').rows = sh('PhanNhom').rows.filter(x => x[5] !== 'DEL4'); sh('ChotCa').rows = sh('ChotCa').rows.filter(x => x[3] !== 'DEL5'); ctx.memoClear_();
 }
 
+// ===== F-NS-11: khôi phục số 0 đầu Mã HRM =====
+{
+  const nsRow = ma => sh('NhanSu').rows.find(x => x[0] === ma || String(x[0]) === ma);
+  const nsRows0 = sh('NhanSu').rows.length;
+  // dữ liệu hỏng giống Sheet thật: mã là SỐ hoặc chuỗi ngắn; một cặp xung đột; mã có chữ; mã đủ dài
+  sh('NhanSu').rows.push([61887, 'Hỏng Một', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', 'HASHA', 'SALTA', '', false, 0, false, true],
+    ['76603', 'Hỏng Hai', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', '', '', '654321', true, 0, false, true],
+    [9001, 'Xung đột A', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true],
+    ['00009001', 'Xung đột B (đã đúng)', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true],
+    [123456789, 'Dài', 'Tổ viên', 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true]);
+  sh('PhanCa').rows.push(['2026-11-09', 'Sáng', 61887, 'Hỏng Một', '', '']);       // dữ liệu cũ ở tab khác cũng bị cắt số 0
+  ctx.memoClear_();
+  const snap = () => JSON.stringify([sh('NhanSu').rows, sh('LogHeThong').rows.length]);
+  const truoc = snap();
+  ok(!api(tTT, 'chuanHoaMaHRM', {}).ok && !api(tA, 'chuanHoaMaHRM', {}).ok && !api(tLD, 'chuanHoaMaHRM', {}).ok, 'F-NS-11: chỉ ADMIN gọi được chuanHoaMaHRM');
+  const pv = api(tAdmin, 'chuanHoaMaHRM', {}), D = pv.data || {};
+  ok(pv.ok && D.apDung === false && D.doDai === 8 && snap() === truoc, 'F-NS-11: xem trước KHÔNG ghi gì', pv.err);
+  const cap = D.doi.map(x => x.ma + '>' + x.moi).sort().join();
+  ok(cap === '61887>00061887', 'F-NS-11: đệm số 0 đầu cho mã số ngắn (61887 → 00061887)', cap);
+  ok(D.xungDot.map(x => x.ma + '>' + x.moi).sort().join() === '76603>00076603,9001>00009001', 'F-NS-11: 76603 và 9001 đệm ra mã đã tồn tại (00076603, 00009001) → xung đột, không đổi', D.xungDot);
+  ok(!D.doi.some(x => x.ma === 'ADMIN' || /^TN-/.test(x.ma) || x.ma === '123456789'), 'F-NS-11: bỏ qua mã có chữ, TN-xx, mã đã đủ/dài hơn');
+  ok(!api(tAdmin, 'chuanHoaMaHRM', { apDung: true }).ok && snap() === truoc, 'F-NS-11: áp dụng thiếu chữ MAHRM bị từ chối, không ghi gì');
+  const sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length, lg0 = sh('LogHeThong').rows.length;
+  sh('NhanSu').simulaSo0 = true;
+  const ap = api(tAdmin, 'chuanHoaMaHRM', { apDung: true, xacNhan: 'MAHRM' });
+  ok(ap.ok && ap.data.daSua === D.doi.length && ap.data.saoLuu === 'SaoLuuXoa', 'F-NS-11: áp dụng đổi đúng số dòng, có sao lưu', ap);
+  ok(nsRow('00061887') && typeof nsRow('00061887')[0] === 'string' && nsRow('00061887')[1] === 'Hỏng Một' && nsRow('00061887')[6] === 'HASHA' && !sh('NhanSu').rows.some(x => x[0] === 61887 || x[0] === '61887'), 'F-NS-11: mã mới là chuỗi có số 0 đầu; các cột khác (tên, băm PIN) không đổi');
+  ok(nsRow('9001') && nsRow('76603') && nsRow('00009001') && nsRow('ADMIN') && nsRow('123456789'), 'F-NS-11: dòng xung đột / mã chữ / mã dài không bị đụng');
+  const sl = sh('SaoLuuXoa').rows.slice(sl0);
+  ok(sl.length === D.doi.length && sl.every(x => x[1] === 'NhanSu(MaHRM)') && !/HASHA|SALTA|654321|PinTam|PinHash/.test(JSON.stringify(sl)), 'F-NS-11: sao lưu [mã cũ, tên, mã mới] không có PIN/băm', sl.map(x => x[3]));
+  const lg = sh('LogHeThong').rows.slice(lg0).filter(x => x[4] === 'CHUAN_HOA_MA_HRM');
+  ok(lg.length === 1 && /61887→00061887/.test(lg[0][6]) && !/HASHA|654321/.test(lg[0][6]), 'F-NS-11: log CHUAN_HOA_MA_HRM, không PIN', lg.map(x => x[6]));
+  ok(ctx.read_('PhanCa').some(x => x.MaHRM === '00061887'), 'F-NS-11: dữ liệu tab khác (PhanCa còn "61887") vẫn khớp người qua read_');
+  ok(ctx.dsLogin().nhanSu.some(x => x.ma === '00061887'), 'F-NS-11: màn hình đăng nhập hiện mã mới');
+  const ap2 = api(tAdmin, 'chuanHoaMaHRM', { apDung: true, xacNhan: 'MAHRM' });
+  ok(ap2.ok && ap2.data.daSua === 0 && ap2.data.doi.length === 0, 'F-NS-11: chạy lại không còn gì để đổi (idempotent)', ap2.data);
+  sh('NhanSu').simulaSo0 = false;
+  sh('NhanSu').rows.length = nsRows0; sh('PhanCa').rows = sh('PhanCa').rows.filter(x => String(x[2]) !== '61887'); ctx.memoClear_();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);
