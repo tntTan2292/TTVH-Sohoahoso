@@ -27,7 +27,7 @@ Tab trong giao diện: `pBao`, `pQL`, `pNS`, `pDL`, `pLG`, `pDash` (hàm `showTa
 
 | Mã | Chức năng | Backend | Giao diện |
 |---|---|---|---|
-| F-DN-01 | Danh sách tên đăng nhập công khai (chỉ mã, tên, đơn vị; sắp theo THỨ TỰ DANH MỤC đơn vị rồi `ThuTu` người rồi họ tên — B5e; bỏ người nghỉ; không trả vai trò, không trả `thuTu`) | `dsLogin` | `renderLoginSelect`, `#lgSearch`, `#lgUser` |
+| F-DN-01 | **Đăng nhập 3 bước (B4):** Bước 1 chọn Đơn vị `#lgDv` (thứ tự danh mục, kèm số người), Bước 2 chạm thẻ tên `#lgNguoi` (ô ẩn `#lgUser` giữ Mã HRM đã chọn), Bước 3 PIN; gõ `#lgSearch` thì tìm trong mọi đơn vị; nhớ người lần trước bằng `localStorage` (`sohoa_lg_ma`, chỉ Mã HRM, không PIN) và chọn sẵn đơn vị + tên. Danh sách tên đăng nhập công khai (chỉ mã, tên, đơn vị; sắp theo THỨ TỰ DANH MỤC đơn vị rồi `ThuTu` người rồi họ tên — B5e; bỏ người nghỉ; không trả vai trò, không trả `thuTu`) | `dsLogin` | `renderLoginSelect`, `lgChon`, `lgNho`, `lgKhoiPhuc`, `#lgSearch`, `#lgDv`, `#lgNguoi`, `#lgUser` |
 | F-DN-02 | Đăng nhập tên + PIN, trả token | `login` → `login_` | `#lgPin`, `#lgBtn`, `#lgMsg` |
 | F-DN-03 | Sai 5 lần → tạm khóa 15 phút (không đặt cột `Khoa`) | `login_`, `KHOA_PIN_GIAY` | thông báo lỗi |
 | F-DN-04 | Sai cộng dồn 20 lần → khóa hẳn (`Khoa = TRUE`) | `login_`, `MAX_SAI_PIN_TICH_LUY` | thông báo lỗi |

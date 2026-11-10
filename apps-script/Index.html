@@ -1787,6 +1787,10 @@ tbody tr:last-child td { border-bottom: none; }
   .chartbox { height: 200px; }
 }
 
+.lg-nguoi-box { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-bottom: 12px; }
+.lg-nguoi { display: block; text-align: left; justify-content: flex-start; width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: var(--card-sub); color: inherit; border-radius: var(--radius-sm); cursor: pointer; font: inherit; }
+.lg-nguoi.on { border-color: var(--col-scan); background: var(--col-scan); color: #fff; }
+.lg-nguoi small { opacity: .75; }
 </style>
 </head>
 <body>
@@ -1806,10 +1810,14 @@ tbody tr:last-child td { border-bottom: none; }
   <label>Tìm kiếm tên hoặc mã HRM</label>
   <input id="lgSearch" type="text" placeholder="🔍 Gõ tìm tên, mã hoặc đơn vị…" autocomplete="off">
 
-  <label>Người thực hiện (gom theo đơn vị)</label>
-  <select id="lgUser">
+  <label>Bước 1 – Chọn đơn vị</label>
+  <select id="lgDv">
     <option value="">— Đang tải danh sách… —</option>
   </select>
+
+  <label>Bước 2 – Chạm vào tên của bạn</label>
+  <input type="hidden" id="lgUser" value="">
+  <div id="lgNguoi" class="lg-nguoi-box"></div>
 
   <label>Mã PIN cá nhân</label>
   <input id="lgPin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="4–6 chữ số">
@@ -2111,7 +2119,7 @@ function toLogin() {
   if ($('npin2')) $('npin2').value = '';
   if ($('lgMsg')) msg('lgMsg', '');
   if ($('pinMsg')) msg('pinMsg', '');
-  if (ALL_NS && ALL_NS.length) renderLoginSelect('');
+  if (ALL_NS && ALL_NS.length) { renderLoginSelect(''); lgKhoiPhuc(); }
 }
 
 function call(action, p) {
@@ -2144,38 +2152,52 @@ function msg(el, text, cls) {
 }
 
 /* ---------- Đăng nhập ---------- */
-function renderLoginSelect(q) {
-  q = (q || '').toLowerCase().trim();
-  var filtered = ALL_NS.filter(function (x) {
-    if (!q) return true;
-    return (x.ten && x.ten.toLowerCase().indexOf(q) >= 0) ||
-           (x.ma && x.ma.toLowerCase().indexOf(q) >= 0) ||
-           (x.donVi && x.donVi.toLowerCase().indexOf(q) >= 0);
-  });
-  var groups = {}, order = [];      // B5e: giữ NGUYÊN thứ tự máy chủ trả về (đơn vị theo danh mục, người theo ThuTu) — không sắp lại ABC
-  filtered.forEach(function (x) {
-    var dv = x.donVi || 'Khác';
-    if (!groups.hasOwnProperty(dv)) { groups[dv] = []; order.push(dv); }
-    groups[dv].push(x);
-  });
-  var h = '<option value="">— Chọn tên của bạn (' + filtered.length + ' người) —</option>';
-  order.forEach(function (dv) {
-    h += '<optgroup label="🏢 ' + esc(dv) + '">';
-    groups[dv].forEach(function (x) {
-      h += '<option value="' + esc(x.ma) + '">' + esc(x.ten) + ' (' + esc(x.ma) + ')</option>';
-    });
-    h += '</optgroup>';
-  });
-  if (!filtered.length) {
-    h = '<option value="" disabled>Không tìm thấy nhân sự phù hợp</option>';
-  }
-  $('lgUser').innerHTML = h;
+function lgNho(ma) {      // B4: nhớ người đăng nhập lần trước (chỉ Mã HRM, không PIN) trên thiết bị này
+  try { if (ma === undefined) return localStorage.getItem('sohoa_lg_ma') || ''; localStorage.setItem('sohoa_lg_ma', ma); } catch (e) { }
+  return '';
 }
+function lgChon(ma) {      // chọn một người (đồng bộ ô ẩn lgUser, tô sáng thẻ)
+  $('lgUser').value = ma || '';
+  Array.prototype.forEach.call($('lgNguoi').querySelectorAll('[data-ma]'), function (b) { b.classList.toggle('on', b.getAttribute('data-ma') === ma); });
+}
+function renderLoginSelect(q) {      // B4: Bước 1 chọn đơn vị (theo thứ tự máy chủ = danh mục), Bước 2 chạm tên. Gõ tìm thì tìm trong mọi đơn vị.
+  q = (q || '').toLowerCase().trim();
+  var dvs = [], dem = {};      // giữ NGUYÊN thứ tự máy chủ trả về (đơn vị theo danh mục, người theo ThuTu)
+  ALL_NS.forEach(function (x) { var dv = x.donVi || 'Khác'; if (!dem.hasOwnProperty(dv)) { dem[dv] = 0; dvs.push(dv); } dem[dv]++; });
+  var cur = $('lgDv').value, ops = '<option value="">— Chọn đơn vị (' + ALL_NS.length + ' người) —</option>';
+  dvs.forEach(function (dv) { ops += '<option value="' + esc(dv) + '">' + esc(dv) + ' (' + dem[dv] + ')</option>'; });
+  if ($('lgDv').innerHTML !== ops) { $('lgDv').innerHTML = ops; $('lgDv').value = cur; if ($('lgDv').value !== cur) $('lgDv').value = ''; cur = $('lgDv').value; }
+  var list = ALL_NS.filter(function (x) {
+    if (q) return (x.ten && x.ten.toLowerCase().indexOf(q) >= 0) || (x.ma && x.ma.toLowerCase().indexOf(q) >= 0) || (x.donVi && x.donVi.toLowerCase().indexOf(q) >= 0);
+    return !!cur && (x.donVi || 'Khác') === cur;
+  });
+  var h = '';
+  if (!ALL_NS.length) h = '<div class="muted">Chưa có nhân sự nào.</div>';
+  else if (!q && !cur) h = '<div class="muted">Chọn đơn vị ở trên để hiện danh sách tên (hoặc gõ tìm ở ô phía trên).</div>';
+  else if (!list.length) h = '<div class="muted">Không tìm thấy nhân sự phù hợp.</div>';
+  else list.forEach(function (x) {
+    h += '<button type="button" class="lg-nguoi" data-ma="' + esc(x.ma) + '"><b>' + esc(x.ten) + '</b> <small>(' + esc(x.ma) + ')' + (q && x.donVi ? ' · ' + esc(x.donVi) : '') + '</small></button>';
+  });
+  var sel = $('lgUser').value;
+  $('lgNguoi').innerHTML = h;
+  lgChon(list.some(function (x) { return x.ma === sel; }) ? sel : '');
+}
+function lgKhoiPhuc() {      // B4: chọn sẵn đơn vị + tên của người đăng nhập lần trước (nếu còn trong danh sách)
+  var ma = lgNho(), x = ALL_NS.filter(function (n) { return n.ma === ma; })[0];
+  if (!x) return;
+  if ($('lgSearch')) $('lgSearch').value = '';
+  renderLoginSelect(''); $('lgDv').value = x.donVi || 'Khác'; renderLoginSelect(''); lgChon(ma);
+}
+$('lgDv').onchange = function () { $('lgUser').value = ''; renderLoginSelect($('lgSearch') ? $('lgSearch').value : ''); };
+$('lgNguoi').onclick = function (e) {
+  var b = e.target; while (b && b !== this && !(b.getAttribute && b.getAttribute('data-ma'))) b = b.parentNode;
+  if (b && b !== this) { lgChon(b.getAttribute('data-ma')); $('lgPin').focus(); }
+};
 
 google.script.run.withSuccessHandler(function (r) {
   $('loginInfo').textContent = 'Hôm nay ' + r.ngay + ' – ' + r.hm;
   ALL_NS = r.nhanSu || [];
-  renderLoginSelect('');
+  renderLoginSelect(''); lgKhoiPhuc();
   if ($('lgSearch')) {
     $('lgSearch').oninput = function () { renderLoginSelect($('lgSearch').value); };
   }
@@ -2185,12 +2207,12 @@ google.script.run.withSuccessHandler(function (r) {
 
 $('lgBtn').onclick = function () {
   var ma = $('lgUser').value, pin = $('lgPin').value;
-  if (!ma || !pin) return msg('lgMsg', 'Vui lòng chọn tên và nhập mã PIN');
+  if (!ma || !pin) return msg('lgMsg', 'Vui lòng chọn đơn vị, chạm vào tên của bạn và nhập mã PIN');
   $('lgBtn').disabled = true; msg('lgMsg', '');
   google.script.run.withSuccessHandler(function (r) {
     $('lgBtn').disabled = false;
     if (!r.ok) return msg('lgMsg', r.err);
-    TOKEN = r.token; $('lgPin').value = '';
+    TOKEN = r.token; $('lgPin').value = ''; lgNho(ma);      // B4: nhớ người vừa đăng nhập
     if (r.mustChange) { $('vLogin').classList.add('hide'); $('vPin').classList.remove('hide'); } else start();
   }).withFailureHandler(function (e) { $('lgBtn').disabled = false; msg('lgMsg', e.message || String(e)); }).login(ma, pin);
 };
