@@ -15,7 +15,7 @@
 5. (T2) Mọi action nhận thêm `do:true` (chỉ có tác dụng với ADMIN) → kết quả có thêm trường `do:{action, tong, phan}` (ms từng phần; xem `docs/DO_TOC_DO.md`). Không đổi `data`.
 
 
-`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','dsDonVi','nhatKyHT','lichSu','thongKeNhanSu','doiSoatHop','chiTietCa']`
+`READ_ACTIONS = ['me','hopGoiY','nhatKy','dashboard','dsCa','dsNhanSu','dsDonVi','nhatKyHT','lichSu','thongKeNhanSu','doiSoatHop','chiTietCa','caChuaChot']`
 
 ## Danh sách action
 
@@ -33,6 +33,7 @@
 | `dashboard` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{ngay, gomThu, soNgay?}` (`gomThu` chỉ có tác dụng với ADMIN; `soNgay` = số ngày của `series`, mặc định 10, kẹp tối đa 30 — C1) | xem dưới |
 | `doiSoatHop` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{tu?, den?, trangThai?, tim?, gomThu?}` (`den` không quá hôm nay, trạng thái tính tới hết `den`; `trangThai` ∈ DU, NHAN_CHUA_LAM, DANG_LAM, XONG_CHUA_TRA, THIEU_NHAN, TRA_SOM; tối đa 5000 dòng, `catBot`) | `{tu, den, dem:{tong, <trạng thái>…}, hop:[{ma, khoa, tt, ttText, nhan:{ngay,ca,nguoi}\|null, nhanNhom:{ngay,ca,nhom}\|null, scan/tach/ocr:{to,xong}, tra:{ngay,ca}\|null, ngayMoc, ghiChu}], soDong, catBot, capNhat}` — chỉ đọc |
 | `chiTietCa` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{ngay, ca, loai: tonDau\|nhan\|chuaScan\|chuaTach\|chuaOcr, gomThu?}` | `{ngay, ca, loai, ten, soDong, hop:[như doiSoatHop]}` — `soDong` = số trên ô tương ứng của `dashboard.cas[]` (tonDau, nhanHop, chuaScan, chuaTach, chuaOcr); chỉ đọc |
+| `caChuaChot` | TT/TP, ADMIN (**không** TOVIEN, **không** LANHDAO) | `{}` | `{tong, ds:[{ngay, ca, trangThai: 'chua'\|'quaHan'}]}` — các ca CẦN CHỐT mà chưa chốt, từ mốc `CHOT_AP_DUNG_TU` (2026-11-10) tới hôm nay, sắp theo ngày rồi ca. Chỉ đọc (không ghi `ChotCa`, không log). Giao diện gọi MỘT lần khi mở tab Quản lý ca |
 | `thongKeNhanSu` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{tu, den, gomThu}` (`den` không quá hôm nay; tối đa 366 ngày; `gomThu` chỉ có tác dụng với ADMIN) | `{ tu, den, soNgay, dauKyDen, nguoi: [{ ma, ten, soCa, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop, scanHs, tachHs, gio, dvGio }], tong: { soNguoi, soCa, gio, dvGio, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop, scanHs, tachHs } }` — cùng quy tắc `canhan` của `dash_` (dv = tờ nếu > 0 ngược lại trang; chia công theo `ThanhVien`; `gio` = Σ `CA[ca].gio` các ca đã làm; `dvGio` = tờ/giờ). Không gồm số đầu kỳ `DauKy` (không có chi tiết từng người; `dauKyDen` để giao diện ghi chú). **DK1:** cộng thêm tab `DauKyNguoi` trong khoảng ngày (chia đều theo ô; giờ từ cột `Gio`; mỗi người mỗi (ngày, ca) một lần; ca Ngày 8 giờ = 2 ca); khi khoảng ngày có dữ liệu này trả thêm `coDauKyNguoi:true` và `chuaRo:{scanDV,tachDV,ocrDV}` (dòng "Chưa rõ người", không vào `nguoi`/`tong`); khoảng ngày không có thì kết quả như cũ (không có hai trường này) |
 | `dsCa` | TT/TP/ADMIN | `{ngay, ca}` | nhân sự ca, nhóm, `soDaVao`, trạng thái chốt |
 | `luuNhom` | TT/TP/ADMIN | `{ngay, ca, gan:[{ma,nhom}], chiDoi}` | — |
@@ -62,6 +63,7 @@
 | `ngay`, `capNhat` | tiêu đề, dòng "cập nhật lúc" |
 | `tienDo`, `luyKe` (`luyKe.dauKyDen`) | widget tiến độ (`widgetHtml`) |
 | `cas[]`: `nhanNhom` (`{nhóm: số hộp nhận khác nhau}`, ví dụ `{'1':2}`), `ca, bd, kt, nguoiPhan, tonDau, chuaScan, chuaTach, chuaOcr, scanDV, tachDV, ocrDV, nhanHop, traHop, nguoiBaoCao, nhomDaBC, tongNhom`, trạng thái chốt | khu ĐẦU CA, CUỐI CA |
+| `cas[].trangThaiChot`, `soCaChuaChot` (CC1) | `trangThaiChot`: `da` (ngày trước 2026-11-10 hoặc dòng `ChotCa` mới nhất là CHOT) · `chua` (cần chốt, cùng ngày hôm nay, hết giờ ca) · `quaHan` (cần chốt, ngày < hôm nay) · `''` (ca đang làm, tương lai, hoặc không có dữ liệu thật). `soCaChuaChot` = số ca `chua` + `quaHan` của ngày đang xem. Trường `chot` cũ giữ nguyên. Chỉ để hiển thị |
 | `caGop` `{scanDV, tachDV, ocrDV}` | thẻ "Ca ngày (gộp)" giai đoạn 02–08/11 |
 | `day`: `nhanHop, traHop, tonCuoi, scanDV, tachDV, ocrDV, scanHop, tachHop, ocrHop` | KẾT THÚC NGÀY |
 | `khoangNgay { tu, den, soNgay }`: ngày đầu/cuối có dữ liệu (không tính THỬ NGHIỆM khi không `gomThu`, không tính bản đã hủy, gồm DauKy có `Ngay`, `den` ≤ hôm nay; rỗng thì `tu=den=''`, `soNgay=0`) | dòng "Có dữ liệu" `#dNgayCo`, `#dNgay.min` |

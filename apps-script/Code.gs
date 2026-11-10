@@ -286,6 +286,43 @@ function caState_(ngay, ca, t) {
   w.canInput = (w.open || unlocked) && !locked;
   return w;
 }
+// CC1 – "chốt ca = đã kiểm tra": CHỈ là cách hiển thị, không đổi caState_/chot_/cách tính số, không ghi ChotCa.
+// Ca trước mốc CHOT_AP_DUNG_TU coi là đã chốt (chủ dự án chốt 10/11/2026, tính từ ngày triển khai chính thức).
+const CHOT_AP_DUNG_TU = '2026-11-10';
+// Ca có dữ liệu thật (từ mốc trở đi): có dòng PhanCa không phải TN-, hoặc dòng NhatKy còn hiệu lực không phải THỬ NGHIỆM (rows = nhatKyRows_, đã bỏ bản hủy).
+function caCoDuLieu_(rows) {
+  const co = {};
+  read_('PhanCa').forEach(function (r) {
+    const n = d_(r.Ngay), c = s_(r.Ca);
+    if (n >= CHOT_AP_DUNG_TU && CA[c] && s_(r.MaHRM).indexOf('TN-') !== 0) co[n + '|' + c] = 1;
+  });
+  rows.forEach(function (r) { if (r.ngay >= CHOT_AP_DUNG_TU && r.loai !== 'THỬ NGHIỆM') co[r.ngay + '|' + r.ca] = 1; });
+  return co;
+}
+function chotMap_() {      // dòng ChotCa mới nhất của từng ngày|ca (cùng quy tắc chotInfo_)
+  const m = {};
+  read_('ChotCa').forEach(function (r) { m[d_(r.Ngay) + '|' + s_(r.Ca)] = s_(r.TrangThai); });
+  return m;
+}
+// MỘT hàm chung cho mọi nơi: 'da' | 'chua' | 'quaHan' | ''
+function trangThaiChot_(ngay, ca, t, coDuLieu, chotSt) {
+  if (ngay < CHOT_AP_DUNG_TU || chotSt === 'CHOT') return 'da';
+  const hetGio = ngay < t.ngay || (ngay === t.ngay && t.min > min_(CA[ca].kt));
+  if (!hetGio || !coDuLieu) return '';
+  return ngay < t.ngay ? 'quaHan' : 'chua';
+}
+// Action đọc caChuaChot (TT/TP/ADMIN): các ca cần chốt mà chưa chốt, từ mốc tới hôm nay. Không nhét vào dsCa (NhatKy không có đệm, dsCa gọi thường xuyên).
+function caChuaChot_() {
+  const t = now_(), co = caCoDuLieu_(nhatKyRows_(false)), cm = chotMap_(), ds = [];
+  Object.keys(co).forEach(function (k) {
+    const i = k.indexOf('|'), ngay = k.slice(0, i), ca = k.slice(i + 1);
+    if (ngay > t.ngay) return;
+    const tt = trangThaiChot_(ngay, ca, t, true, cm[k] || '');
+    if (tt === 'chua' || tt === 'quaHan') ds.push({ ngay: ngay, ca: ca, trangThai: tt });
+  });
+  ds.sort(function (a, b) { return a.ngay.localeCompare(b.ngay) || CA[a.ca].o - CA[b.ca].o; });
+  return { tong: ds.length, ds: ds };
+}
 function nhomOf_(ngay, ca, ma) {
   const r = read_('PhanNhom').filter(function (x) { return d_(x.Ngay) === ngay && s_(x.Ca) === ca && s_(x.MaHRM) === ma; })[0];
   return r ? s_(r.Nhom) : '';
@@ -356,7 +393,7 @@ function auth_(token) {
 }
 
 /* ====================== API ====================== */
-const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
+const READ_ACTIONS = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa', 'caChuaChot'];
 const LANHDAO_ACTIONS = ['me', 'dashboard', 'thongKeNhanSu', 'doiPin', 'lichSu', 'doiSoatHop', 'chiTietCa'];
 function api(token, action, p) {
   const tA = Date.now();
@@ -433,6 +470,7 @@ function route_(u, action, p) {
     case 'luuNhom': need_(u); return luuNhom_(u, p);
     case 'suaCa': need_(u); return suaCa_(u, p);
     case 'chot': need_(u); return chot_(u, p);
+    case 'caChuaChot': need_(u); return caChuaChot_();      // CC1
     case 'resetPin': need_(u); return resetPin_(u, p);
     case 'moKhoaTK': need_(u); return moKhoaTK_(u, p);
     default: throw 'Hành động không hợp lệ';
@@ -1794,10 +1832,12 @@ function dash_(ngayIn, gomThu, soNgayIn) {
     if (ngay > t.ngay) return 'chua';
     return t.min < min_(CA[ca].bd) ? 'chua' : (t.min <= min_(CA[ca].kt) ? 'dang' : 'xong');
   };
+  const coDL = caCoDuLieu_(rows);      // CC1: chỉ để gắn trangThaiChot (hiển thị), không ảnh hưởng số
   const cas = CA_LIST.map(function (ca) {
-    const k = ngay + '|' + CA[ca].o;
-    return Object.assign({ ca: ca, bd: CA[ca].bd, kt: CA[ca].kt, tt: ttCa(ca), nguoiPhan: nPhan[ca] || 0, nhomDaBC: Object.keys(daBCCa[ca] || {}).length, tongNhom: Object.keys(tongNhomCa[ca] || {}).length, chot: chotStatus_(ngay, ca) === 'CHOT' }, trangThaiTruoc(k), agg(k));
+    const k = ngay + '|' + CA[ca].o, stChot = chotStatus_(ngay, ca);
+    return Object.assign({ ca: ca, bd: CA[ca].bd, kt: CA[ca].kt, tt: ttCa(ca), nguoiPhan: nPhan[ca] || 0, nhomDaBC: Object.keys(daBCCa[ca] || {}).length, tongNhom: Object.keys(tongNhomCa[ca] || {}).length, chot: stChot === 'CHOT', trangThaiChot: trangThaiChot_(ngay, ca, t, !!coDL[ngay + '|' + ca], stChot) }, trangThaiTruoc(k), agg(k));
   });
+  const soCaChuaChot = cas.filter(function (c) { return c.trangThaiChot === 'chua' || c.trangThaiChot === 'quaHan'; }).length;
   cas.forEach(function (c) { ['SCAN', 'TACH', 'OCR'].forEach(function (b) { c[b.toLowerCase() + 'DV'] += dkSum(b, { ngay: ngay, ca: c.ca }); }); });   // ca Tối (và Sáng/Chiều nếu có) của giai đoạn DauKy
   const caGop = { scanDV: dkSum('SCAN', { ngay: ngay, ca: 'Ngày' }), tachDV: dkSum('TACH', { ngay: ngay, ca: 'Ngày' }), ocrDV: dkSum('OCR', { ngay: ngay, ca: 'Ngày' }) };   // "ca ngày" cũ (sáng+chiều gộp)
   const day = agg(ngay + '|');
@@ -1927,7 +1967,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
   const dmAll = {}; rows.forEach(function (r) { if (r.ngay) dmAll[r.ngay] = 1; }); dkNgay.forEach(function (x) { dmAll[x.ngay] = 1; });
   const dsAll = Object.keys(dmAll).filter(function (x) { return x <= t.ngay; }).sort();
   const khoangNgay = { tu: dsAll[0] || '', den: dsAll.length ? dsAll[dsAll.length - 1] : '', soNgay: dsAll.length };
-  return { ngay: ngay, capNhat: t.ts, khoangNgay: khoangNgay, cas: cas, caGop: caGop, day: day, series: series, nhom: nhomOut, canhan: canhanOut, caNguoi: caNguoi, nguoiNhap: nguoiNhap, chiTiet: chiTiet, luyKe: all, tienDo: tienDo };
+  return { ngay: ngay, capNhat: t.ts, khoangNgay: khoangNgay, cas: cas, soCaChuaChot: soCaChuaChot, caGop: caGop, day: day, series: series, nhom: nhomOut, canhan: canhanOut, caNguoi: caNguoi, nguoiNhap: nguoiNhap, chiTiet: chiTiet, luyKe: all, tienDo: tienDo };
 }
 
 // Thống kê theo NHÂN SỰ trong một khoảng ngày [tu, den] (tối đa 366 ngày). Cùng quy tắc với dash_.canhan: dv = tờ nếu > 0 ngược lại trang,

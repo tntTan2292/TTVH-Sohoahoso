@@ -92,13 +92,14 @@ Các khâu theo vai trò (`stepsFor()` trong Index.html — **đừng đổi n�
 | F-QL-02 | Tự ghép cặp, chỉnh tay, Lưu phân nhóm | `luuNhom_` | `#qlGhep`, `#qlLuu` |
 | F-QL-03 | Đổi nhóm từng ô lưu ngay (`chiDoi: true`, chỉ sửa người được gửi) | `luuNhom_` | `loadQL` (onchange) |
 | F-QL-04 | Thêm / bỏ người khỏi ca; bỏ khỏi ca thì bỏ luôn khỏi nhóm (log `BO_KHOI_NHOM`) | `suaCa_` | `#qlAddSel`, `#qlAdd`, nút `data-rm` |
-| F-QL-05 | Xác nhận & chốt ca (không chốt ngày tương lai) | `chot_` | `#qlChot` |
+| F-QL-05 | Xác nhận & chốt ca = **xác nhận đã kiểm tra số liệu ca** (không chốt ngày tương lai; chốt vẫn khóa nhập; lời nút/hộp xác nhận theo ý này, CC1) | `chot_` | `#qlChot` |
 | F-QL-06 | Mở khóa ca, hiệu lực 60 phút | `chot_` (`mo: true`), `moConHieuLuc_` | `#qlMo` |
 | F-QL-07 | Cấp lại PIN / mở khóa tài khoản | xem F-DN-08, F-DN-09 | `#qlNs`, `#qlRs`, `#qlUk`, `#qlMsg3` |
 | F-QL-08 | Nhập số liệu hộ thành viên (ngày hôm nay hoặc quá khứ; nhóm tùy chọn, "Cá nhân" thì bắt buộc chọn người) | `ghi_` (`boSung`, `nguoiHo`) | `renderHo`, `#hoCard`, `#hoSteps`, `#hoNhom`, `#hoNg`, `#hoSend` |
 | F-QL-09 | Áp nhóm đang chọn sang khung nhập hộ | — | `apNhomQL` |
 | F-QL-10 | Nhập hộ khâu Scan: tick "Đồng thời ghi Tách file PDF bằng đúng số Scan" (gửi thêm bản ghi `TACH` nhập hộ, bỏ trang lỗi; Tách lỗi vẫn giữ Scan) | `ghi_` (2 lần gọi, `boSung`) | `renderHo` → `#hoKemTach`, `#hoSend` |
 | F-QL-11 | Nhập hộ bằng **cùng bảng nhiều hộp** với F-BC-18 (khâu Scan/Tách/OCR; tham số `boSung`, `nguoiHo`, `nhom`, `ngay`, `ca` truyền qua `ghiLo`). Form nhập hộ cũ giữ nguyên (nút "Một hộp (form cũ)"), nên F-QL-10 vẫn còn | `ghiLo_`, `ghi_` (`boSung`) | `renderHo` → `#hoLoBox`, `#hoLoRes`, `#hoSend`, `loGui` |
+| F-QL-12 | **Chốt ca = đã kiểm tra, hiện rõ ca chưa chốt (CC1, mục 30)**: mốc `CHOT_AP_DUNG_TU = 2026-11-10`, ca trước mốc coi là đã chốt (chỉ hiển thị, không ghi `ChotCa`). `dash_` thêm `cas[].trangThaiChot` ('da'/'chua'/'quaHan'/'') và `soCaChuaChot`; action đọc `caChuaChot` (TT/TP/ADMIN). Giao diện: chip "Đã chốt" (xanh) / "Chưa chốt ca" / "Quá hạn chốt" (đỏ) theo `trangThaiChot` (không theo `c.chot`); số Scan/Tách/OCR của ca chưa chốt màu chữ phụ (không opacity); "Tổng ngày gồm N ca chưa chốt"; Quản lý ca có huy hiệu "Có N ca chưa chốt" + danh sách. Không đổi cách tính số, `chot_`, `caState_` | `trangThaiChot_`, `caCoDuLieu_`, `chotMap_`, `caChuaChot_`, `CHOT_AP_DUNG_TU` | `ccTrangThai`, `ccLop`, `ccNhan`, `ccGhiChu`, `ttChip`, `ccQuanLy`, `#ccQl`, `#ccQlBtn`, `#ccQlDs` |
 
 ## 6. Nhân sự – chỉ ADMIN (F-NS)
 

@@ -96,6 +96,8 @@ let pass = 0, fail = 0;
 const ok = (c, name, extra) => { if (c) { pass++; console.log('PASS', name); } else { fail++; console.log('FAIL', name, extra !== undefined ? JSON.stringify(extra) : ''); } };
 const tok = (ma, pin) => ctx.login(ma, pin).token;
 const api = (t, a, p) => ctx.api(t, a, p || {});
+// CC1: dash_ có thêm 2 trường mới (cas[].trangThaiChot, soCaChuaChot); so với bản CŨ thì bỏ hai trường này rồi so chuỗi
+const bo2CC1 = d => { const o = JSON.parse(JSON.stringify(d)); delete o.soCaChuaChot; o.cas.forEach(c => { delete c.trangThaiChot; }); return JSON.stringify(o); };
 
 // ===== 1. dsLogin =====
 const dl = ctx.dsLogin();
@@ -1365,7 +1367,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(raws.length === new Set(raws.map(K)).size && ngays.length >= 2, 'H1: (điều kiện) dữ liệu mock hiện có KHÔNG có biến thể mã hộp', [raws.length, ngays.length]);
   // 1) không có biến thể → dash_ / hopGoiY_ / thongKeNhanSu_ giống hệt trước/sau
   let giong = true, sai = '';
-  ngays.forEach(n => [true, false].forEach(g => { memo2(); const a = JSON.stringify(ctx.dash_(n, g)), b = JSON.stringify(ctx2.dash_(n, g)); if (a !== b) { giong = false; sai += ' dash ' + n + g; } }));
+  ngays.forEach(n => [true, false].forEach(g => { memo2(); const a = bo2CC1(ctx.dash_(n, g)), b = JSON.stringify(ctx2.dash_(n, g)); if (a !== b) { giong = false; sai += ' dash ' + n + g; } }));
   ['SCAN', 'TACH', 'OCR', 'NHAN_NHOM', 'TRA'].forEach(b => { memo2(); const a = JSON.stringify(ctx.hopGoiY_({}, { buoc: b })), c = JSON.stringify(ctx2.hopGoiY_({}, { buoc: b })); if (a !== c) { giong = false; sai += ' goiY ' + b; } });
   memo2(); const tk = { tu: ngays[0], den: ngays[ngays.length - 1] };
   if (JSON.stringify(ctx.thongKeNhanSu_(tk, true)) !== JSON.stringify(ctx2.thongKeNhanSu_(tk, true))) { giong = false; sai += ' thongKe'; }
@@ -1435,7 +1437,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
   // 1) dash_ GIỐNG HỆT trước/sau trên mọi ngày
   let giong = true, sai = '';
-  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (JSON.stringify(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
+  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (bo2CC1(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
   ok(giong && ngays.length >= 3, 'H2/C0: dash_ (mọi ngày, có/không gomThu) GIỐNG HỆT trước/sau khi tách hàm dùng chung', [sai, ngays.length]);
   // 2) mọi ngày × ca × loại: số dòng danh sách chiTietCa = số trên ô
   const CAS = ['Sáng', 'Chiều', 'Tối'], MAP = { tonDau: 'tonDau', nhan: 'nhanHop', chuaScan: 'chuaScan', chuaTach: 'chuaTach', chuaOcr: 'chuaOcr' };
@@ -1539,7 +1541,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   memo2();
   const den = ngayTu(34), dj = (c, ...a) => JSON.stringify(c.dash_(...a));
   // 1) không truyền soNgay → giống hệt bản trước (10 ngày); soNgay = 10 cũng giống hệt
-  ok(dj(ctx, den, false) === dj(ctx2, den, false) && dj(ctx, den, false, 10) === dj(ctx2, den, false), 'C1: không truyền / truyền 10 → dash_ GIỐNG HỆT bản trước C1 (series 10 ngày)');
+  ok(bo2CC1(ctx.dash_(den, false)) === dj(ctx2, den, false) && bo2CC1(ctx.dash_(den, false, 10)) === dj(ctx2, den, false), 'C1: không truyền / truyền 10 → dash_ GIỐNG HỆT bản trước C1 (series 10 ngày)');
   const a10 = ctx.dash_(den, false), a30 = ctx.dash_(den, false, 30);
   ok(a10.series.length === 10 && a30.series.length === 30, 'C1: mặc định 10 ngày, soNgay=30 → 30 ngày', [a10.series.length, a30.series.length]);
   ok(JSON.stringify(a30.series.slice(-10)) === JSON.stringify(a10.series) && a30.series[0].ngay === ngayTu(5) && a30.series[29].ngay === den, 'C1: 10 ngày cuối của series 30 ngày = series 10 ngày; liên tiếp tới ngày đang xem');
@@ -1703,6 +1705,74 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   // --- dọn ---
   sh('DauKy').rows = dkLuu; sh('NhanSu').rows.length = nsN; sh('LogHeThong').rows.length = lg0;
   ss.sheets = ss.sheets.filter(s => !/^(DauKyNguoi|SaoLuuXoa|SL_DauKyNguoi_.*|copy)$/.test(s.name)); memoB();
+}
+
+// ===== CC1 (mục 30): chốt ca = "đã kiểm tra" — trangThaiChot / soCaChuaChot / caChuaChot; số liệu KHÔNG đổi =====
+{
+  const { execSync } = require('child_process');
+  let cu = ''; try { cu = execSync('git show 848b751:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && !/trangThaiChot_/.test(cu), 'CC1: đọc được Code.gs bản 848b751 (trước CC1) để so sánh');
+  const ctx2 = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctx2[k] = ctx[k]; });
+  vm.createContext(ctx2); vm.runInContext(cu, ctx2); ctx2.now_ = (...a) => ctx.now_(...a);
+  const memo2 = () => { ctx2.memoClear_(); ctx.memoClear_(); };
+  const nk0 = sh('NhatKy').rows.length, pc0 = sh('PhanCa').rows.length, ck0 = sh('ChotCa').rows.length, lg0 = sh('LogHeThong').rows.length;
+  let n = 0;
+  const ap = (ngay, ca, extra) => { n++; ctx.append_('NhatKy', Object.assign({ ID: 'CC1T' + n, ThoiGian: ngay + ' 0' + (n % 10) + ':00:00', Ngay: ngay, Ca: ca, Nhom: '', Buoc: 'SCAN', MaHop: 'CC1-' + n, SoHoSo: 1, SoTrang: 4, SoTo: 2, TrangLoi: 0, HetHop: false, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' }, extra || {})); };
+  const D9 = '2026-11-09', D10 = '2026-11-10', D11 = '2026-11-11', D12 = '2026-11-12';
+  // D9 (trước mốc): có dữ liệu, KHÔNG có dòng ChotCa → vẫn coi là đã chốt
+  ap(D9, 'Sáng');
+  // D10: Sáng có dữ liệu, chưa chốt; Chiều có dữ liệu + CHOT; Tối chỉ có dòng THỬ NGHIỆM + bản hủy + người TN-
+  ap(D10, 'Sáng'); ap(D10, 'Chiều'); ap(D10, 'Tối', { Loai: 'THỬ NGHIỆM' }); ap(D10, 'Tối', { Huy: true });
+  sh('PhanCa').rows.push([D10, 'Tối', 'TN-01', 'Người thử', '', '']);
+  sh('ChotCa').rows.push([D10, 'Chiều', 'CHOT', 'TT1', D10 + ' 17:30:00', '']);
+  // D11: Sáng CHOT rồi MO (→ chưa chốt); Chiều MO rồi CHOT (→ đã); Tối chỉ có PhanCa người thật
+  ap(D11, 'Sáng'); ap(D11, 'Chiều');
+  sh('ChotCa').rows.push([D11, 'Sáng', 'CHOT', 'TT1', D11 + ' 11:40:00', ''], [D11, 'Sáng', 'MO', 'TT1', D11 + ' 12:00:00', ''], [D11, 'Chiều', 'MO', 'TT1', D11 + ' 17:10:00', ''], [D11, 'Chiều', 'CHOT', 'TT1', D11 + ' 17:20:00', '']);
+  sh('PhanCa').rows.push([D11, 'Tối', 'A1', 'Nhân viên A', '', '']);
+  // D12: Sáng có dữ liệu; Chiều có dữ liệu; Tối trống
+  ap(D12, 'Sáng'); ap(D12, 'Chiều');
+  memo2();
+  const ST = (ngay, now) => { setNow(now); memo2(); return ctx.dash_(ngay, false).cas.map(c => c.trangThaiChot).join('|'); };
+  const dd = (ngay, now) => { setNow(now); memo2(); return ctx.dash_(ngay, false); };
+  const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).concat(sh('PhanCa').rows.slice(1).map(x => ctx.d_(x[0]))).concat([D10, D11, D12]).filter(Boolean))).sort();
+  // 1) dash_ GIỐNG HỆT 848b751 sau khi bỏ hai trường mới — mọi ngày, có/không gomThu, ở nhiều thời điểm
+  let giong = true; const sai = [];
+  ['2026-11-10 09:00:00', '2026-11-10 22:00:00', '2026-11-12 12:00:00', '2026-11-12 18:30:00'].forEach(now => { setNow(now); ngays.forEach(d => [true, false].forEach(g => { memo2(); if (bo2CC1(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai.push(now + ' ' + d + g); } })); });
+  ok(giong && ngays.length >= 6, 'CC1: dash_ (mọi ngày, có/không gomThu, 4 thời điểm) GIỐNG HỆT 848b751 sau khi bỏ hai trường mới', [sai.slice(0, 4), ngays.length]);
+  const cl = dd(D10, '2026-11-12 12:00:00'); ok(cl.cas.find(c => c.ca === 'Chiều').chot === true && cl.cas.find(c => c.ca === 'Sáng').chot === false, 'CC1: trường chot cũ giữ nguyên (CHOT → true)');
+  // 2) trạng thái từng tình huống
+  const dung = (ngay, now, mong, ten) => { const g = ST(ngay, now); ok(g === mong, 'CC1: ' + ten, [g, mong]); };
+  dung(D9, '2026-11-12 12:00:00', 'da|da|da', 'ngày trước mốc (09/11) → cả 3 ca "da" kể cả ca không có dữ liệu');
+  dung('2026-11-02', '2026-11-12 12:00:00', 'da|da|da', 'ngày 02/11 (đầu kỳ) → "da"');
+  dung(D10, '2026-11-12 12:00:00', 'quaHan|da|', '10/11 xem lúc 12/11: Sáng quá hạn; Chiều CHOT = da; Tối chỉ THỬ NGHIỆM/hủy/TN- → rỗng');
+  dung(D11, '2026-11-12 12:00:00', 'quaHan|da|quaHan', '11/11: CHOT rồi MO → quá hạn; MO rồi CHOT → da; Tối chỉ có PhanCa người thật → quá hạn');
+  dung(D12, '2026-11-12 12:00:00', 'chua||', 'hôm nay hết giờ Sáng, có dữ liệu → "chua"; Chiều chưa tới giờ, Tối trống → rỗng');
+  dung(D12, '2026-11-12 09:00:00', '||', 'ca đang làm (09:00, ca Sáng) → rỗng, chưa tính chưa chốt');
+  dung(D12, '2026-11-12 18:30:00', 'chua|chua|', 'hết giờ Chiều → Chiều "chua"');
+  dung(D10, '2026-11-10 22:00:00', 'chua|da|', 'ca ngày 10/11 cùng ngày, hết giờ, chưa chốt → "chua"');
+  dung(D10, '2026-11-11 08:00:00', 'quaHan|da|', 'ca ngày 10/11 sang 11/11 → "quaHan"');
+  dung(D10, '2026-11-10 09:00:00', '|da|', 'ca đang làm ngày 10/11 (Sáng 09:00) → rỗng');
+  dung('2026-11-13', '2026-11-12 12:00:00', '||', 'ngày tương lai → rỗng');
+  // 3) soCaChuaChot
+  ok(dd(D11, '2026-11-12 12:00:00').soCaChuaChot === 2 && dd(D12, '2026-11-12 18:30:00').soCaChuaChot === 2 && dd(D9, '2026-11-12 12:00:00').soCaChuaChot === 0 && dd(D10, '2026-11-12 12:00:00').soCaChuaChot === 1, 'CC1: soCaChuaChot đếm chua + quaHan của ngày đang xem');
+  // 4) action caChuaChot
+  setNow('2026-11-12 12:00:00'); memo2();
+  const cck = api(tTT, 'caChuaChot', {});
+  const mong = [[D10, 'Sáng', 'quaHan'], [D11, 'Sáng', 'quaHan'], [D11, 'Tối', 'quaHan'], [D12, 'Sáng', 'chua']];
+  ok(cck.ok && cck.data.tong === cck.data.ds.length && JSON.stringify(cck.data.ds.map(x => [x.ngay, x.ca, x.trangThai])) === JSON.stringify(mong), 'CC1: caChuaChot trả đúng danh sách (ngày, ca, trạng thái), sắp theo ngày rồi ca', cck.data || cck.err);
+  ok(cck.ok && cck.data.ds.every(x => x.ngay >= '2026-11-10'), 'CC1: caChuaChot chỉ từ mốc 10/11 trở đi');
+  ok(api(tAdmin, 'caChuaChot', {}).ok && !api(tA, 'caChuaChot', {}).ok && !api(tLD, 'caChuaChot', {}).ok, 'CC1: quyền caChuaChot: TT/ADMIN được; tổ viên và Lãnh đạo bị từ chối');
+  // 5) không ghi gì: ChotCa, log, NhatKy
+  ok(sh('ChotCa').rows.length === ck0 + 5 && sh('LogHeThong').rows.length === lg0 && sh('NhatKy').rows.length === nk0 + n, 'CC1: chỉ đọc — ChotCa không thêm dòng nào (5 dòng là do bài kiểm tra tự nạp), không log', [sh('ChotCa').rows.length - ck0]);
+  // 6) khóa nhập (caState_) không đổi
+  setNow('2026-11-10 12:00:00'); memo2();
+  ok(ctx.caState_(D10, 'Chiều', ctx.now_()).locked === true && ctx.caState_(D9, 'Sáng', ctx.now_()).locked === false, 'CC1: caState_ không đổi (ca CHOT vẫn khóa; ca trước mốc không CHOT không bị khóa thêm)');
+  // 7) chot_ thật vẫn chạy: chốt ca 12/11 Sáng → thành "da"
+  setNow('2026-11-12 12:00:00'); memo2();
+  const rc = api(tTT, 'chot', { ngay: D12, ca: 'Sáng' });
+  ok(rc.ok && ST(D12, '2026-11-12 12:00:00') === 'da||' && api(tTT, 'caChuaChot', {}).data.tong === 3, 'CC1: sau khi chốt ca 12/11 Sáng → "da", danh sách chưa chốt còn 3', rc.err);
+  // dọn
+  sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; sh('ChotCa').rows.length = ck0; sh('LogHeThong').rows.length = lg0; setNow('2026-11-09 15:30:00'); memo2();
 }
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');

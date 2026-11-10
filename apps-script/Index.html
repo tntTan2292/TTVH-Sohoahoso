@@ -329,6 +329,11 @@ button.btn-large {
   color: var(--bad);
   border-color: var(--bad-line);
 }
+/* CC1: số của ca chưa chốt: màu chữ phụ (không opacity, in và màn hình điện thoại vẫn rõ) + nhãn chữ trong chip */
+.cc-chua .ng-so b, .cc-chua .ca-sum b, .cc-chua .mt-val { color: var(--mut) !important; }
+.cc-note { margin-top: 8px; font-size: 13px; color: var(--warn); }
+.cc-ql { margin-bottom: 12px; }
+.cc-ql ul { margin: 6px 0 0; padding-left: 20px; }
 .chip-mut {
   background: var(--card-sub);
   color: var(--mut);
@@ -2360,6 +2365,7 @@ button.sm.bad:hover, button.bad:hover {
         <div style="align-self:end"><button id="qlLoad" class="pri" style="width:100%;">Tải dữ liệu ca</button></div>
       </div>
     </div>
+    <div id="ccQl"></div>
     <div id="qlBody"></div>
   </section>
 
@@ -2620,7 +2626,7 @@ function toLogin() {
 
 /* T1: call() dùng chung. Lệnh GHI: lớp chờ toàn màn hình + thanh tiến trình ước lượng, chặn bấm, mỗi lúc chỉ một lệnh ghi; gửi kèm idGui (ghi, vaoCa) để gửi lại không ghi trùng.
    Lệnh ĐỌC: thanh mảnh trên đầu trang, không chặn. Mọi đường kết thúc (thành công / lỗi / hết phiên) đều gọi xong() để tắt lớp chờ. */
-var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa'];
+var READ_ACT = ['me', 'hopGoiY', 'nhatKy', 'dashboard', 'dsCa', 'dsNhanSu', 'dsDonVi', 'nhatKyHT', 'lichSu', 'thongKeNhanSu', 'doiSoatHop', 'chiTietCa', 'caChuaChot'];
 var GUI_ACT = ['ghi', 'vaoCa'];
 var WRITE_BUSY = false, READ_N = 0, BUSY_T0 = 0, BUSY_IV = null, GUI_ID = {};
 var DO_ON = false, DO_LOG = [];      // T2: chế độ đo (chỉ ADMIN)
@@ -3323,7 +3329,18 @@ setInterval(function () {
     if (cu !== moi) msg('qlMsg', 'Danh sách người trong ca vừa được quản lý khác thay đổi – bấm Xem để cập nhật', 'warn');
   }).catch(function () {});
 }, 20000);
+// CC1: huy hiệu "Có N ca chưa chốt" + danh sách ngày/ca. Gọi MỘT lần khi mở tab Quản lý ca (action caChuaChot, không nhét vào dsCa).
+function ccQuanLy() {
+  $('ccQl').innerHTML = '';
+  call('caChuaChot', {}).then(function (r) {
+    if (!r || !r.tong || !$('ccQl')) return;
+    var ds = r.ds.map(function (x) { return '<li>' + esc(x.ngay.split('-').reverse().join('/')) + ' – ca ' + esc(x.ca) + ': <b>' + (x.trangThai === 'quaHan' ? 'quá hạn chốt' : 'chưa chốt') + '</b></li>'; }).join('');
+    $('ccQl').innerHTML = '<div class="card cc-ql"><button type="button" class="chip warn" id="ccQlBtn">Có ' + r.tong + ' ca chưa chốt ▾</button><div id="ccQlDs" class="hide"><ul>' + ds + '</ul></div></div>';
+    $('ccQlBtn').onclick = function () { $('ccQlDs').classList.toggle('hide'); };
+  }).catch(function () { });
+}
 function initQL() {
+  ccQuanLy();
   if (!$('qlNgay').value) $('qlNgay').value = ME.ngay;
   if (!$('qlCa').innerHTML) { $('qlCa').innerHTML = CA_NAME.map(function (c) { return '<option>' + c + '</option>'; }).join(''); if (ME.cas.length) $('qlCa').value = ME.cas[ME.cas.length - 1].ca; }
   $('qlLoad').onclick = loadQL; loadQL();
@@ -3345,7 +3362,7 @@ function loadQL() {
       '<div style="align-self:end"><button id="qlAdd" class="sm" style="width:100%;">Thêm vào ca</button></div></div><div id="qlMsg"></div></div>';
     var bg = Object.keys(d.soBanGhi).map(function (k) { return 'Nhóm ' + k + ': ' + d.soBanGhi[k] + ' bản ghi'; }).join(' · ') || 'Chưa có bản ghi nào';
     h += '<div class="card"><h2>Kiểm tra &amp; Chốt ca</h2><div class="muted" style="margin-bottom:12px;">' + esc(bg) + '</div><p>' +
-      (d.locked ? '<button id="qlMo">Mở khóa ca</button>' : '<button class="pri" id="qlChot">Xác nhận &amp; chốt ca</button>') + '</p><div id="qlMsg2"></div></div>';
+      (d.locked ? '<button id="qlMo">Mở khóa ca</button>' : '<button class="pri" id="qlChot">Xác nhận &amp; chốt ca</button>') + '</p><div class="muted" style="margin-top:8px;">Chốt ca = xác nhận đã kiểm tra số liệu ca này. Sau khi chốt tổ viên không nhập được nữa.</div><div id="qlMsg2"></div></div>';
     h += '<div class="card"><h2>Quản lý tài khoản ca</h2><div class="row"><div><select id="qlNs"><option value="">— Chọn nhân sự —</option>' +
       d.nhanSu.map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + (x.khoa ? ' (đang khóa)' : '') + '</option>'; }).join('') + '</select></div>' +
       '<div style="display:flex;gap:8px;"><button id="qlRs" class="sm">Cấp lại PIN tạm</button> <button id="qlUk" class="sm">Mở khóa TK</button></div></div><div id="qlMsg3"></div></div>';
@@ -3375,13 +3392,13 @@ function loadQL() {
     });
     $('qlAdd').onclick = function () { var mm = $('qlAddSel').value; if (mm) call('suaCa', { ngay: d.ngay, ca: d.ca, ma: mm, them: true }).then(loadQL).catch(alert); };
     if ($('qlChot')) $('qlChot').onclick = function () {
-      if (!confirm('Chốt ca ' + d.ca + '? Sau khi chốt tổ viên không nhập được nữa.')) return;
+      if (!confirm('Xác nhận đã kiểm tra số liệu ca ' + d.ca + ' ngày ' + d.ngay + '. Sau khi chốt tổ viên không nhập được nữa. Chốt ca?')) return;
       call('chot', { ngay: d.ngay, ca: d.ca }).then(function (r) {
         msg('qlMsg2', 'Đã chốt ca.' + (r.nhomChuaBaoCao.length ? ' Nhóm chưa có báo cáo: ' + r.nhomChuaBaoCao.join(', ') : ''), r.nhomChuaBaoCao.length ? 'warn' : 'ok');
-        setTimeout(loadQL, 1500);
+        setTimeout(function () { loadQL(); ccQuanLy(); }, 1500);
       }).catch(function (e) { msg('qlMsg2', e); });
     };
-    if ($('qlMo')) $('qlMo').onclick = function () { call('chot', { ngay: d.ngay, ca: d.ca, mo: true }).then(loadQL).catch(alert); };
+    if ($('qlMo')) $('qlMo').onclick = function () { call('chot', { ngay: d.ngay, ca: d.ca, mo: true }).then(function () { loadQL(); ccQuanLy(); }).catch(alert); };
     $('qlRs').onclick = function () { var mm = $('qlNs').value; if (mm) call('resetPin', { ma: mm }).then(function (r) { msg('qlMsg3', 'PIN tạm của ' + r.ten + ': ' + r.pin + ' (đưa trực tiếp cho người đó)', 'ok'); }).catch(function (e) { msg('qlMsg3', e); }); };
     $('qlUk').onclick = function () { var mm = $('qlNs').value; if (mm) call('moKhoaTK', { ma: mm }).then(function (r) { msg('qlMsg3', r, 'ok'); }).catch(function (e) { msg('qlMsg3', e); }); };
   }).catch(function (e) { $('qlBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
@@ -3951,7 +3968,7 @@ function widgetHtml(d) {
       '<div class="wg-pill">📦 ' + (laHomNay ? 'Hộp tồn trong kho' : 'Hộp tồn cuối ngày ' + ngayVN) + ': <b>' + nf(L.ton) + '</b></div>' +
       '<div class="wg-pill">📥 Đã nhận từ TTLT: <b>' + nf(L.nhanHop) + '</b></div>' +
       '<div class="wg-pill">📤 Đã trả TTLT: <b>' + nf(L.traHop) + '</b></div>' +
-      '<div class="wg-pill wg-pill-today">⚡ ' + labelNgay + ': Scan <b style="color:' + COL.scan + '">' + nf(D.scanDV) + '</b> · Tách <b style="color:' + COL.tach + '">' + nf(D.tachDV) + '</b> · OCR <b style="color:' + COL.ocr + '">' + nf(D.ocrDV) + '</b> tờ</div>' +
+      '<div class="wg-pill wg-pill-today">⚡ ' + labelNgay + ': Scan <b style="color:' + COL.scan + '">' + nf(D.scanDV) + '</b> · Tách <b style="color:' + COL.tach + '">' + nf(D.tachDV) + '</b> · OCR <b style="color:' + COL.ocr + '">' + nf(D.ocrDV) + '</b> tờ' + (d.soCaChuaChot > 0 ? ' <span class="muted">(gồm ' + d.soCaChuaChot + ' ca chưa chốt)</span>' : '') + '</div>' +
     '</div>' +
   '</div>';
   return h;
@@ -3971,9 +3988,9 @@ function tungCaHtml(d) {
   h += '<div class="ca-legend"><span><i style="background:var(--col-scan)"></i>Scan</span><span><i style="background:var(--col-tach)"></i>Tách file</span><span><i style="background:var(--col-ocr)"></i>OCR</span></div><div class="ca-grid">';
   d.cas.forEach(function (c) {
     var ps = d.caNguoi.filter(function (x) { return x.ca === c.ca; });
-    var tt = c.chot ? ['Đã chốt', 'bad'] : (TT[c.tt] || ['', '']);
+    var cs = ccTrangThai(c), tt = cs === 'da' ? ['Đã chốt', 'ok'] : (cs === 'quaHan' ? ['Quá hạn chốt', 'bad'] : (cs === 'chua' ? ['Chưa chốt ca', 'warn'] : (c.tt === 'xong' ? ['Hết ca', 'chip-mut'] : (TT[c.tt] || ['', '']))));
     var chuaBC = ps.filter(function (x) { return !x.soBC; }).length;
-    h += '<div class="card ca-card"><div class="ca-head"><div><b>Ca ' + esc(c.ca) + '</b> <span class="muted">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div>' + (tt[0] ? '<span class="chip ' + tt[1] + '">' + tt[0] + '</span>' : '') + '</div>' +
+    h += '<div class="card ca-card' + ccLop(c) + '"><div class="ca-head"><div><b>Ca ' + esc(c.ca) + '</b> <span class="muted">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div>' + (tt[0] ? '<span class="chip ' + tt[1] + '">' + tt[0] + '</span>' : '') + '</div>' +
       '<div class="ca-sum">' + ps.length + ' người' + (chuaBC ? ' · <span style="color:var(--warn)">' + chuaBC + ' chưa báo cáo</span>' : '') + ' · Scan <b>' + nfi(c.scanDV) + '</b> · Tách <b>' + nfi(c.tachDV) + '</b> · OCR <b>' + nfi(c.ocrDV) + '</b></div>';
     if (!ps.length) { h += '<div class="muted" style="padding:10px 0;">Chưa có ai trong ca này.</div></div>'; return; }
     var nhoms = [];
@@ -4003,10 +4020,18 @@ function zone(cls, tag, title, sub) {
     '</div>' +
   '</div>';
 }
+// CC1: chốt ca = "đã kiểm tra". trangThaiChot từ máy chủ: 'da' | 'chua' | 'quaHan' | ''. Chỉ là hiển thị; số liệu luôn tính đủ.
+function ccTrangThai(c) { return c.trangThaiChot === undefined ? (c.chot ? 'da' : '') : c.trangThaiChot; }      // máy chủ cũ chưa có trường: dùng c.chot
+function ccChua(c) { var s = ccTrangThai(c); return s === 'chua' || s === 'quaHan'; }
+function ccLop(c) { return ccChua(c) ? ' cc-chua' : ''; }      // số Scan/Tách/OCR của ca chưa chốt hiện màu chữ phụ (kèm nhãn chữ, không dùng opacity)
+function ccNhan(c) { var s = ccTrangThai(c); return s === 'quaHan' ? '<span class="chip bad cc-nhan">Quá hạn chốt</span>' : (s === 'chua' ? '<span class="chip warn cc-nhan">Chưa chốt ca</span>' : ''); }
+function ccGhiChu(d) { return d.soCaChuaChot > 0 ? '<div class="cc-note">Tổng ngày gồm <b>' + d.soCaChuaChot + '</b> ca chưa chốt (số của các ca đó hiện màu nhạt ở từng ca).</div>' : ''; }
 function ttChip(c) {
-  if (c.chot) return '<span class="chip ok">✔ Đã chốt</span>';
+  var s = ccTrangThai(c);
+  if (s === 'da') return '<span class="chip ok">✔ Đã chốt</span>';
+  if (s === 'quaHan' || s === 'chua') return ccNhan(c);
   if (c.tt === 'dang') return '<span class="chip warn">● Đang làm</span>';
-  if (c.tt === 'xong') return '<span class="chip bad">Hết ca – chưa chốt</span>';
+  if (c.tt === 'xong') return '<span class="chip chip-mut">Hết ca</span>';
   return '<span class="chip chip-mut">Chưa bắt đầu</span>';
 }
 function m(label, v, unit) { return '<div class="mt"><span class="mt-label">' + label + '</span><b class="mt-val">' + (typeof v === 'number' ? nf(v) : esc(v)) + (unit ? ' <small>' + unit + '</small>' : '') + '</b></div>'; }
@@ -4066,7 +4091,7 @@ function dashTabTongQuan(d) {
       '<div class="kpi"><span class="kpi-tag">Tồn</span><b>' + nf(D.tonCuoi) + '</b><span>Hộp tồn cuối ngày</span></div>' +
       '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
       '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>';
+      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
   h += '<div class="card" style="margin-top:14px;"><div class="ns-card-head"><h3 id="c1Tieu">Tiến độ hằng ngày (tờ / ngày)</h3><div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="sm" id="c1Truoc">◀ 30 ngày trước</button><button type="button" class="sm" id="c1Nay">Về hiện tại</button></div></div><div class="muted" style="font-size:12.5px;margin-bottom:6px;" id="c1Ghi"></div><div id="c1Msg"></div><div class="chartbox" style="height:320px;"><canvas id="c6"></canvas></div><div class="muted" style="font-size:12px;margin-top:6px;">Cột chồng: tờ Scan / Tách / OCR mỗi ngày có dữ liệu (gồm số đầu kỳ theo ngày). Đường: TB toàn dự án (tờ / ngày, cả 3 khâu) và TB 7 ngày. Bấm một cột để mở tab Theo ngày của ngày đó.</div></div>';
   h += '<div class="card" style="margin-top:14px;"><h3>Kết quả – cuối ngày (tờ / ngày, 10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>';
   return h;
@@ -4088,7 +4113,7 @@ function dashTabNgay(d) {
     h += zone('z2', 'CUỐI CA', 'Kết quả sau từng ca', 'Số tờ đã scan / tách / OCR và hộp nhận – trả trong ca; trạng thái chốt của Tổ trưởng/Tổ phó');
     h += '<div class="tiles">' + d.cas.map(function (c) {
       var bcText = (c.nhomDaBC !== undefined && c.tongNhom !== undefined) ? (c.nhomDaBC + '/' + c.tongNhom) : (c.nguoiBaoCao + '/' + c.nguoiPhan);
-      return '<div class="tile">' +
+      return '<div class="tile' + ccLop(c) + '">' +
         '<div class="th"><div class="th-left"><b>Ca ' + esc(c.ca) + '</b> <span class="muted th-time">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div> ' + ttChip(c) + '</div>' +
         '<div class="mts">' + m('Scan', c.scanDV, 'tờ') + m('Tách file', c.tachDV, 'tờ') + m('OCR', c.ocrDV, 'tờ') + m('Hộp nhận', c.nhanHop, 'hộp') + m('Hộp trả', c.traHop, 'hộp') + m('Nhóm đã báo cáo', bcText, 'nhóm') + '</div></div>';
     }).join('') + '</div>';
@@ -4102,7 +4127,7 @@ function dashTabNgay(d) {
       '<div class="kpi"><span class="kpi-tag">Tồn</span><b>' + nf(D.tonCuoi) + '</b><span>Hộp tồn cuối ngày</span></div>' +
       '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
       '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>';
+      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
     h += '<div class="grid2" style="margin-top:14px;"><div class="card"><h3>Nhận hồ sơ – cuối ngày (10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c2"></canvas></div></div>' +
       '<div class="card"><h3>Kết quả – cuối ngày (tờ / ngày)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div></div>';
 
