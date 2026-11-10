@@ -399,7 +399,7 @@ function route_(u, action, p) {
     case 'huy': return huy_(u, p);
     case 'dashboard': {
       if (u.vaiTro === 'TOVIEN') throw 'Dashboard chỉ dành cho Lãnh đạo và Quản lý';     // tổ viên không xem Dashboard
-      return dash_(p.ngay, !!p.gomThu && u.vaiTro === 'ADMIN');
+      return dash_(p.ngay, !!p.gomThu && u.vaiTro === 'ADMIN', p.soNgay);
     }
     case 'doiSoatHop': {      // H2: cùng quyền Dashboard (tổ viên không xem)
       if (u.vaiTro === 'TOVIEN') throw 'Đối soát hộp chỉ dành cho Lãnh đạo và Quản lý';
@@ -1629,8 +1629,10 @@ function chiTietCa_(u, p, gomThu) {
   return { ngay: ngay, ca: ca, loai: loai, ten: CHI_TIET_LOAI_[loai], soDong: hop.length, hop: hop };
 }
 
-function dash_(ngayIn, gomThu) {
+const SERIES_MAC_DINH_ = 10, SERIES_TOI_DA_ = 30;      // C1: số ngày của dash_.series (mặc định 10 cho widget tab Báo cáo; biểu đồ tiến độ xin tới 30)
+function dash_(ngayIn, gomThu, soNgayIn) {
   const t = now_(), ngay = d_(ngayIn) || t.ngay;
+  const soNgayIn0 = Math.floor(n_(soNgayIn)), soNgayChuoi = soNgayIn0 >= 1 ? Math.min(SERIES_TOI_DA_, soNgayIn0) : SERIES_MAC_DINH_;      // <1 / không phải số → mặc định; > 30 → 30
   const rows = nhatKyRows_(gomThu);
   const ns = {}; read_('NhanSu').forEach(function (r) { ns[s_(r.MaHRM)] = s_(r.HoTen); });
   const pn = read_('PhanNhom');
@@ -1688,9 +1690,9 @@ function dash_(ngayIn, gomThu) {
   const dauNgay = trangThaiTruoc(ngay + '|0');
   day.tonDauNgay = dauNgay.tonDau;
 
-  // chuỗi theo ngày (10 ngày gần nhất có dữ liệu, tính đến ngày đang xem)
+  // chuỗi theo ngày (soNgayChuoi ngày gần nhất có dữ liệu, mặc định 10, tính đến ngày đang xem)
   const dm = {}; rows.forEach(function (r) { if (r.ngay <= ngay) dm[r.ngay] = 1; }); dkNgay.forEach(function (x) { if (x.ngay <= ngay) dm[x.ngay] = 1; }); dm[ngay] = 1;
-  const days = Object.keys(dm).sort().slice(-10);
+  const days = Object.keys(dm).sort().slice(-soNgayChuoi);
   const series = days.map(function (d) {
     const a = agg(d + '|'), c = trangThaiTruoc(d + '|9');
     return { ngay: d, nhanHop: a.nhanHop, traHop: a.traHop, scanHop: a.scanHop, tachHop: a.tachHop, scanTrang: a.scanTrang, tachTrang: a.tachTrang, ocrHop: a.ocrHop, ocrDV: a.ocrDV + dkSum('OCR', { ngay: d }), scanDV: a.scanDV + dkSum('SCAN', { ngay: d }), tachDV: a.tachDV + dkSum('TACH', { ngay: d }),

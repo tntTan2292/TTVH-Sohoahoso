@@ -1524,5 +1524,39 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   delete cacheMap['lo_ADMIN_LO-T2-BANG-0001']; ctx.memoClear_();
 }
 
+// ===== C1: dash_.series nhận số ngày (mặc định 10, tối đa 30) =====
+{
+  const { execSync } = require('child_process');
+  let cu = ''; try { cu = execSync('git show 9ffc2d6:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && !/SERIES_TOI_DA_/.test(cu), 'C1: đọc được Code.gs bản trước C1 (commit 9ffc2d6) để so sánh');
+  const ctx2 = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctx2[k] = ctx[k]; });
+  vm.createContext(ctx2); vm.runInContext(cu, ctx2); ctx2.now_ = (...a) => ctx.now_(...a);
+  const memo2 = () => { ctx2.memoClear_(); ctx.memoClear_(); };
+  const nk0 = sh('NhatKy').rows.length;
+  // 35 ngày liên tiếp có dữ liệu, mỗi ngày một dòng Scan/Tách/OCR xong
+  const ngayTu = i => { const d = new Date(Date.UTC(2026, 8, 1 + i)); return d.toISOString().slice(0, 10); };
+  for (let i = 0; i < 35; i++) ['SCAN', 'TACH', 'OCR'].forEach((b, j) => ctx.append_('NhatKy', { ID: 'C1D' + i + b, ThoiGian: ngayTu(i) + ' 09:0' + j + ':00', Ngay: ngayTu(i), Ca: 'Sáng', Nhom: '', Buoc: b, MaHop: 'C1-' + i, SoHoSo: 1, SoTrang: 10, SoTo: 5 + i, TrangLoi: 0, HetHop: true, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' }));
+  memo2();
+  const den = ngayTu(34), dj = (c, ...a) => JSON.stringify(c.dash_(...a));
+  // 1) không truyền soNgay → giống hệt bản trước (10 ngày); soNgay = 10 cũng giống hệt
+  ok(dj(ctx, den, false) === dj(ctx2, den, false) && dj(ctx, den, false, 10) === dj(ctx2, den, false), 'C1: không truyền / truyền 10 → dash_ GIỐNG HỆT bản trước C1 (series 10 ngày)');
+  const a10 = ctx.dash_(den, false), a30 = ctx.dash_(den, false, 30);
+  ok(a10.series.length === 10 && a30.series.length === 30, 'C1: mặc định 10 ngày, soNgay=30 → 30 ngày', [a10.series.length, a30.series.length]);
+  ok(JSON.stringify(a30.series.slice(-10)) === JSON.stringify(a10.series) && a30.series[0].ngay === ngayTu(5) && a30.series[29].ngay === den, 'C1: 10 ngày cuối của series 30 ngày = series 10 ngày; liên tiếp tới ngày đang xem');
+  const strip = d => { const o = Object.assign({}, d); delete o.series; return JSON.stringify(o); };
+  ok(strip(a10) === strip(a30), 'C1: ngoài series, mọi phần khác của dash_ không đổi khi xin 30 ngày');
+  // 2) kẹp giá trị
+  const L = v => ctx.dash_(den, false, v).series.length;
+  ok(L(99) === 30 && L(31) === 30 && L(0) === 10 && L(-5) === 10 && L('abc') === 10 && L(undefined) === 10 && L(null) === 10 && L(7.9) === 7 && L('15') === 15 && L(1) === 1, 'C1: soNgay được kẹp: >30 → 30; 0/âm/chữ/trống → 10; số lẻ → làm tròn xuống', [L(99), L(0), L(-5), L('abc'), L(7.9), L('15'), L(1)]);
+  // 3) cửa sổ lùi: ngày kết thúc sớm hơn → series kết thúc ở đó, có số liệu đầu kỳ theo ngày
+  const sau = ctx.dash_(ngayTu(4), false, 30);
+  ok(sau.series.length === 5 && sau.series[4].ngay === ngayTu(4) && sau.series[0].scanDV === 5, 'C1: xem lùi (ngày kết thúc sớm hơn) → chuỗi ngắn lại tới ngày đó, scanDV đúng (5 tờ ngày đầu)', sau.series.map(s => s.ngay + ':' + s.scanDV));
+  // 4) qua api(): Lãnh đạo/TT/ADMIN xin 30 ngày được, tổ viên không
+  const r = api(tTT, 'dashboard', { ngay: den, soNgay: 30 }), r2 = api(tLD, 'dashboard', { ngay: den, soNgay: 30 });
+  ok(r.ok && r.data.series.length === 30 && r2.ok && r2.data.series.length === 30 && !api(tA, 'dashboard', { ngay: den, soNgay: 30 }).ok, 'C1: api dashboard nhận soNgay (TT, Lãnh đạo xem được; tổ viên vẫn bị chặn)');
+  ok(api(tTT, 'dashboard', { ngay: den }).data.series.length === 10, 'C1: widget (không soNgay) vẫn 10 ngày');
+  sh('NhatKy').rows.length = nk0; memo2();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

@@ -3567,6 +3567,7 @@ function dashTabTongQuan(d) {
       '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
       '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
       '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>';
+  h += '<div class="card" style="margin-top:14px;"><div class="ns-card-head"><h3 id="c1Tieu">Tiến độ hằng ngày (tờ / ngày)</h3><div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="sm" id="c1Truoc">◀ 30 ngày trước</button><button type="button" class="sm" id="c1Nay">Về hiện tại</button></div></div><div class="muted" style="font-size:12.5px;margin-bottom:6px;" id="c1Ghi"></div><div id="c1Msg"></div><div class="chartbox" style="height:320px;"><canvas id="c6"></canvas></div><div class="muted" style="font-size:12px;margin-top:6px;">Cột chồng: tờ Scan / Tách / OCR mỗi ngày có dữ liệu (gồm số đầu kỳ theo ngày). Đường: TB toàn dự án (tờ / ngày, cả 3 khâu) và TB 7 ngày. Bấm một cột để mở tab Theo ngày của ngày đó.</div></div>';
   h += '<div class="card" style="margin-top:14px;"><h3>Kết quả – cuối ngày (tờ / ngày, 10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>';
   return h;
 }
@@ -3641,19 +3642,69 @@ function dashTabNhatKy(d) {
   }
   return h;
 }
+/* ---------- C1: biểu đồ tiến độ hằng ngày (tối đa 30 ngày, lùi từng 30 ngày) ---------- */
+var C1 = { d: null };      // d = kết quả dashboard của cửa sổ đang xem (null = dùng DASH.d)
+function c1Ngay() { return C1.d || DASH.d; }
+function c1Tb7(arr) {      // TB 7 ngày: trung bình tổng tờ của tối đa 7 ngày có dữ liệu liền trước (kể cả ngày đó) trong cửa sổ
+  return arr.map(function (_, i) { var a = arr.slice(Math.max(0, i - 6), i + 1); return Math.round(a.reduce(function (x, y) { return x + y; }, 0) / a.length); });
+}
+function c1Ve() {
+  var d = c1Ngay(); if (!d || !$('c6')) return;
+  var ser = d.series || [];
+  var tong = ser.map(function (s) { return (s.scanDV || 0) + (s.tachDV || 0) + (s.ocrDV || 0); });
+  var tbDA = (d.tienDo && d.tienDo.buoc) ? d.tienDo.buoc.reduce(function (a, b) { return a + (b.tbNgay || 0); }, 0) : 0;
+  var tb7 = c1Tb7(tong), labels = ser.map(function (s) { return s.ngay.slice(8, 10) + '/' + s.ngay.slice(5, 7); });
+  $('c1Ghi').textContent = ser.length ? ('Từ ' + ser[0].ngay.split('-').reverse().join('/') + ' đến ' + ser[ser.length - 1].ngay.split('-').reverse().join('/') + ' · ' + ser.length + ' ngày có dữ liệu · TB toàn dự án ' + nfi(tbDA) + ' tờ/ngày') : 'Chưa có dữ liệu trong khoảng này.';
+  $('c1Nay').disabled = !C1.d;
+  var tu0 = DASH.d && DASH.d.khoangNgay ? DASH.d.khoangNgay.tu : '';
+  $('c1Truoc').disabled = !ser.length || (!!tu0 && ser[0].ngay <= tu0);      // đã tới ngày đầu tiên có dữ liệu của dự án
+  mk('c6', { type: 'bar', data: { labels: labels, datasets: [
+    { label: 'Scan', data: ser.map(function (s) { return s.scanDV; }), backgroundColor: COL.scan, stack: 'a', borderRadius: 3 },
+    { label: 'Tách file', data: ser.map(function (s) { return s.tachDV; }), backgroundColor: COL.tach, stack: 'a', borderRadius: 3 },
+    { label: 'OCR', data: ser.map(function (s) { return s.ocrDV; }), backgroundColor: COL.ocr, stack: 'a', borderRadius: 3 },
+    { type: 'line', label: 'TB toàn dự án', stack: 'tbDuAn', data: ser.map(function () { return tbDA; }), borderColor: '#e11d48', backgroundColor: '#e11d48', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, order: 0 },
+    { type: 'line', label: 'TB 7 ngày', stack: 'tb7Ngay', data: tb7, borderColor: '#d97706', backgroundColor: '#d97706', tension: 0.25, borderWidth: 2.5, pointRadius: 3, order: 0 }
+  ] }, options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, padding: 12 } } },
+    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+    onClick: function (ev, els, chart) {
+      var e = chart.getElementsAtEventForMode(ev, 'index', { intersect: false }, true);
+      if (e && e.length && ser[e[0].index]) c1MoNgay(ser[e[0].index].ngay);
+    }
+  } });
+  if ($('c1Truoc')) {
+    $('c1Truoc').onclick = c1Truoc; $('c1Nay').onclick = function () { C1.d = null; c1Ve(); };
+  }
+}
+function c1MoNgay(ngay) {      // bấm một ngày → tab Theo ngày của ngày đó
+  $('dNgay').value = ngay; DASH.tab = 'ngay'; dashTabNho('ngay'); dashVeTab(); loadDash();
+}
+function c1Truoc() {
+  var d = c1Ngay(), ser = d && d.series || []; if (!ser.length) return;
+  var dt = new Date(ser[0].ngay + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() - 1);
+  var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
+  $('c1Msg').innerHTML = '<div class="muted">Đang tải 30 ngày trước…</div>';
+  call('dashboard', { ngay: dt.toISOString().slice(0, 10), gomThu: gomThu, soNgay: 30 }).then(function (r) {
+    $('c1Msg').innerHTML = '';
+    if (!r.series || !r.series.length) { $('c1Msg').innerHTML = '<div class="msg warn">⚠️ Không còn dữ liệu trước ngày này.</div>'; return; }
+    C1.d = r; c1Ve();
+  }).catch(function (e) { $('c1Msg').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
+}
 function dashVeBieuDo(d, t) {
   // Biểu đồ chỉ vẽ khi tab của nó đang hiện; bọc try-catch: lỗi chart thì số liệu vẫn hiển thị
   try {
-    var cl = d.cas.map(function (c) { return 'Ca ' + c.ca; }), sl = d.series.map(function (s) { return s.ngay.slice(5); });
+    var cl = d.cas.map(function (c) { return 'Ca ' + c.ca; }), ser = d.series.slice(-10), sl = ser.map(function (s) { return s.ngay.slice(5); });      // C1: series nay có tới 30 ngày; biểu đồ cũ vẫn 10 ngày gần nhất
     var bar = function (label, data, color) { return { label: label, data: data, backgroundColor: color, borderRadius: 5 }; };
     if (t === 'ngay') {
       mk('c1', { type: 'bar', data: { labels: cl, datasets: [bar('Hộp tồn đầu ca', d.cas.map(function (c) { return c.tonDau; }), COL.scan), bar('Nhận trong ca', d.cas.map(function (c) { return c.nhanHop; }), COL.nhan), bar('Nhóm nhận từ TT/TP', d.cas.map(function (c) { return c.nhanNhomHop; }), COL.tach)] } });
       mk('c3', { type: 'bar', data: { labels: cl, datasets: [bar('Chưa scan', d.cas.map(function (c) { return c.chuaScan; }), COL.scan), bar('Chờ tách file', d.cas.map(function (c) { return c.chuaTach; }), COL.tach), bar('Chờ OCR', d.cas.map(function (c) { return c.chuaOcr; }), COL.ocr)] } });
       mk('c5', { type: 'bar', data: { labels: cl, datasets: [bar('Scan', d.cas.map(function (c) { return c.scanDV; }), COL.scan), bar('Tách file', d.cas.map(function (c) { return c.tachDV; }), COL.tach), bar('OCR', d.cas.map(function (c) { return c.ocrDV; }), COL.ocr)] } });
-      mk('c2', { type: 'bar', data: { labels: sl, datasets: [bar('Nhận', d.series.map(function (s) { return s.nhanHop; }), COL.nhan), bar('Trả', d.series.map(function (s) { return s.traHop; }), COL.tra), { type: 'line', label: 'Tồn cuối ngày', data: d.series.map(function (s) { return s.tonCuoi; }), borderColor: COL.scan, backgroundColor: COL.scan, tension: 0.25, borderWidth: 2.5, pointRadius: 3 }] } });
+      mk('c2', { type: 'bar', data: { labels: sl, datasets: [bar('Nhận', ser.map(function (s) { return s.nhanHop; }), COL.nhan), bar('Trả', ser.map(function (s) { return s.traHop; }), COL.tra), { type: 'line', label: 'Tồn cuối ngày', data: ser.map(function (s) { return s.tonCuoi; }), borderColor: COL.scan, backgroundColor: COL.scan, tension: 0.25, borderWidth: 2.5, pointRadius: 3 }] } });
     }
+    if (t === 'tq') c1Ve();
     if (t === 'ngay' || t === 'tq') {
-      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan', d.series.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file', d.series.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR', d.series.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
+      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan', ser.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file', ser.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR', ser.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
     }
   } catch (errChart) {
     console.warn('Lỗi hiển thị biểu đồ:', errChart);
@@ -3838,7 +3889,8 @@ function loadDash() {
   var gomThu = ($('dGomThu') && ME && ME.user && ME.user.vaiTro === 'ADMIN') ? $('dGomThu').checked : false;
   veNgayNav();
   DASH.ns.data = null; DASH.ds.data = null;
-  call('dashboard', { ngay: $('dNgay').value, gomThu: gomThu }).then(function (d) {
+  C1.d = null;
+  call('dashboard', { ngay: $('dNgay').value, gomThu: gomThu, soNgay: 30 }).then(function (d) {
     veNgayNav(d);
     DASH.d = d;
     dashHienTab();

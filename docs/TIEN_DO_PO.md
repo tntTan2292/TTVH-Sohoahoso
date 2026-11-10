@@ -27,5 +27,5 @@
 | 19 | Tab Đối soát hộp | H2 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 20 | Bấm ô số liệu ra danh sách chi tiết | C0 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 21 | Tự đổi mã về dạng chuẩn, sửa mã cũ | H3 | ⬜ Chưa làm |
-| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | ⬜ Chưa làm |
+| 22 | Biểu đồ tiến độ hằng ngày 30 ngày | C1 | 🟡 Xong trong mã, chờ Opus review và triển khai |
 | 23 | Giao diện điện thoại | C2 | ⬜ Chưa làm |
