@@ -72,7 +72,7 @@ const ctx = {
 };
 ctx.__active = '';
 vm.createContext(ctx); vm.runInContext(code, ctx);
-{ const mc = ctx.memoClear_; ctx.__memoOnly = () => mc(); ctx.memoClear_ = function (n) { mc(n); if (!n) Object.keys(cacheMap).forEach(k => { if (/^(tab|ver)_/.test(k)) delete cacheMap[k]; }); }; }   // test sửa thẳng Sheet: bỏ luôn cache tab
+{ const mc = ctx.memoClear_; ctx.__memoOnly = () => mc(); ctx.memoClear_ = function (n) { mc(n); if (!n && !ctx.__memoThat) Object.keys(cacheMap).forEach(k => { if (/^(tab|ver)_/.test(k)) delete cacheMap[k]; }); }; }   // test sửa thẳng Sheet: bỏ luôn cache tab
 let NOW = '2026-11-09 15:30:00';
 const setNow = (ts) => { NOW = ts; ctx.now_ = () => { const hm = NOW.slice(11, 16), p = hm.split(':'); return { ngay: NOW.slice(0, 10), hm, min: +p[0] * 60 + +p[1], ts: NOW }; }; ctx.memoClear_(); };
 setNow(NOW);
@@ -1212,6 +1212,42 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const r3 = api(tAdmin, 'xoaNhanSu', { ma: 'E1C', xacNhan: 'E1C' });
   ok(r3.ok && idx('E1C') < 0, 'E1: đệm đúng → xóa bình thường', r3);
   ctx.memoClear_();
+}
+
+// ===== E2: chuanHoaMaHRM_ / chuanHoaDonVi_ không dùng đệm cũ =====
+// ctx.__memoThat = true: memoClear_() không tên KHÔNG xóa đệm tab (đúng như Apps Script thật), để thấy lỗi đệm cũ.
+{
+  const idx = ma => sh('NhanSu').rows.findIndex(x => String(x[0]) === ma);
+  const uA = { ma: 'ADMIN', vaiTro: 'ADMIN' };
+  const naDem = () => { ctx.memoClear_(); ctx.read_('NhanSu'); ctx.memoClear_(); };      // nạp đệm 300 giây, rồi bỏ bộ nhớ trong lượt (như lượt gọi mới)
+  const chen = (truocMa, hang) => sh('NhanSu').rows.splice(idx(truocMa), 0, hang);      // ai đó chèn dòng trực tiếp trên Sheet, đệm không biết
+  const hang = (ma, ten, dv) => [ma, ten, 'Tổ viên', dv || 'Đơn vị B', '', 'TOVIEN', '', '', '', false, 0, false, true];
+  const n0 = sh('NhanSu').rows.length;
+  ctx.__memoThat = true;
+  // --- chuanHoaMaHRM_ ---
+  sh('NhanSu').rows.push(hang('5551', 'E2 Một'), hang('E2Z', 'E2 Z'));
+  naDem();
+  chen('5551', hang('E2X', 'E2 Người chèn vào'));      // E2 Một bị đẩy xuống 1 dòng, đệm còn nhớ dòng cũ
+  ctx.chuanHoaMaHRM_(uA, { apDung: true, xacNhan: 'MAHRM' });
+  ok(idx('E2X') > 0 && idx('00005551') > 0 && idx('5551') < 0 && sh('NhanSu').rows[idx('00005551')][1] === 'E2 Một', 'E2: chuanHoaMaHRM_ đệm lệch dòng → đổi đúng dòng của người cần đổi, KHÔNG ghi đè Mã HRM của người chèn vào', sh('NhanSu').rows.slice(-4).map(x => x[0] + '/' + x[1]));
+  // sau khi áp dụng: dsLogin (đọc đệm) phải ra mã mới ngay, không chờ hết 300 giây
+  sh('NhanSu').rows.push(hang('6662', 'E2 Hai'));
+  naDem(); ctx.dsLogin();      // đệm có mã cũ
+  ctx.chuanHoaMaHRM_(uA, { apDung: true, xacNhan: 'MAHRM' });
+  ctx.memoClear_();            // lượt gọi mới
+  const dl2 = ctx.dsLogin().nhanSu.map(x => x.ma);
+  ok(dl2.indexOf('00006662') >= 0 && dl2.indexOf('6662') < 0, 'E2: áp dụng xong dsLogin ra mã mới NGAY (đệm được đổi phiên bản)', dl2.filter(x => /6662/.test(x)));
+  // --- chuanHoaDonVi_ ---
+  sh('NhanSu').rows.push(hang('E2D', 'E2 Đơn vị', 'trung tâm  vận hành'), hang('E2Y', 'E2 Y', 'Đơn vị B'));
+  naDem();
+  chen('E2D', hang('E2W', 'E2 Chen DV', 'Phòng Tài chính kế hoạch'));
+  const r = ctx.chuanHoaDonVi_(uA, { apDung: true, xacNhan: 'DONVI' });
+  const dvCua = ma => sh('NhanSu').rows[idx(ma)][3];
+  ok(r.daSua.nguoi === 1 && dvCua('E2D') === 'Trung tâm vận hành' && dvCua('E2W') === 'Phòng Tài chính kế hoạch' && dvCua('E2Y') === 'Đơn vị B', 'E2: chuanHoaDonVi_ đệm lệch dòng → đổi đúng người, không ghi đè đơn vị của người chèn vào', [r.daSua, dvCua('E2D'), dvCua('E2W')]);
+  ctx.memoClear_();
+  ok(ctx.dsLogin().nhanSu.find(x => x.ma === 'E2D').donVi === 'Trung tâm vận hành', 'E2: sau chuẩn hóa đơn vị dsLogin ra tên mới ngay');
+  ctx.__memoThat = false;
+  sh('NhanSu').rows.length = n0; ctx.memoClear_();
 }
 
 // ===== H1: khóa mã hộp (maHopKhoa_ / maHopChuan_) =====

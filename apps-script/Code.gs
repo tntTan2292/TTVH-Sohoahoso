@@ -868,6 +868,7 @@ function luuDonVi_(u, p) {   // thêm / sửa thứ tự / ẩn–hiện / đổ
 function chuanHoaDonVi_(u, p) {
   const apDung = p.apDung === true, anhXa = (p.anhXa && typeof p.anhXa === 'object') ? p.anhXa : {};
   if (apDung && s_(p.xacNhan) !== 'DONVI') throw 'Gõ đúng chữ DONVI để xác nhận áp dụng chuẩn hóa đơn vị';
+  memoClear_('NhanSu');      // E2: đọc thẳng Sheet, không dùng _row từ đệm cũ (cùng rủi ro ghi nhầm dòng)
   const dm = donViList_(), dmTheoKhoa = {};
   dm.forEach(function (x) { dmTheoKhoa[khoaTen_(x.ten)] = x; });
   const nhom = {};      // khóa → { cacTen: { tenGoc: [người] } }
@@ -1064,6 +1065,7 @@ const MA_HRM_DO_DAI_ = 8;
 function chuanHoaMaHRM_(u, p) {
   const apDung = p.apDung === true, dai = Math.max(2, Math.min(12, Math.floor(n_(p.doDai)) || MA_HRM_DO_DAI_));
   if (apDung && s_(p.xacNhan) !== 'MAHRM') throw 'Gõ đúng chữ MAHRM để xác nhận đổi Mã HRM';
+  memoClear_('NhanSu');      // E2: đổi phiên bản đệm → đọc thẳng Sheet; _row từ đệm cũ có thể lệch dòng (ai đó sửa/chèn/xóa tay) → ghi nhầm người khác
   const ns = read_('NhanSu'), co = {};
   ns.forEach(function (x) { co[s_(x.MaHRM)] = 1; });
   const doi = [], xungDot = [], dich = {};
@@ -1084,7 +1086,7 @@ function chuanHoaMaHRM_(u, p) {
   const sh = ss_().getSheetByName('NhanSu'), c = TAB.NhanSu.indexOf('MaHRM') + 1;
   sh.getRange(1, c, sh.getMaxRows(), 1).setNumberFormat('@');
   doi.forEach(function (x) { ghiVanBan_(sh, x._row, c, x.moi); });
-  memoClear_();
+  memoClear_('NhanSu'); memoClear_();      // E2: đổi phiên bản đệm NhanSu để dsLogin/Xem trước ra mã mới ngay (memoClear_() không tên không đổi phiên bản)
   log_(u.ma, 'CHUAN_HOA_MA_HRM', 'đệm số 0 đầu cho ' + doi.length + ' mã (độ dài ' + dai + '), xung đột bỏ qua ' + xungDot.length + ' | ' + doi.slice(0, 40).map(function (x) { return x.ma + '→' + x.moi; }).join(', ') + (doi.length > 40 ? ' …' : '') + ' | sao lưu ' + saoLuu);
   kq.daSua = doi.length; kq.saoLuu = saoLuu;
   return kq;
