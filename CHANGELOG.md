@@ -2,6 +2,9 @@
 
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
+## 2026-11-11
+- F-QL-12, F-HT-10, F-DB-15 · Giao diện Antigravity cho CC1 + XN1 + LOC1 (chỉ CSS, Opus kiểm bằng công cụ ĐẠT) · `7b9621f` · chủ dự án tự đẩy tay lên link chính 11/11, chưa báo số phiên bản.
+
 ## 2026-11-10
 - **Triển khai phiên bản 29** (commit `8c80278`: CC1 + XN1 + LOC1, Opus review ĐẠT/GO) lên link chính, thay phiên bản 28 (`848b751`). Trước khi đẩy: `Code.gs`, `Index.html` trên Apps Script khớp `848b751`. Sau khi lưu và tải lại: khớp `main` (`Code.gs` 37b552db0a0d, `Index.html` f9f75d674abc). `/exec` mở được màn đăng nhập. Quay lui: phiên bản 28.
 - F-DB-15 · **LOC1** (mục 31) Tab Nhân sự: hai ô Từ ngày – Đến ngày luôn hiện, các lựa chọn nhanh tính đến ngày đang xem, sửa tay tự chuyển Tùy chọn, chống kết quả cũ về muộn. Commit `85bf4be`. Giao diện 664/0.

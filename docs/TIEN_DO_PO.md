@@ -33,7 +33,7 @@
 | 25 | Làm lại diện mạo: đăng nhập, bỏ ô tìm kiếm thừa, font, màu đậm hơn, có hiệu ứng | C3 | ⏸ Có phiếu, chủ dự án tạm hoãn (10/11) |
 | 26 | Gán kết quả 02–08/11 cho từng người theo tên trên bảng cũ (ô 2 tên là nhóm) | DK1 | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), Xem trước đạt (61 dòng, 0 lỗi, 0 lệch); chủ dự án báo đã Áp dụng (10/11); chờ phiếu xác nhận người làm về để nạp lại lần cuối |
 | 27 | Tổ trưởng/Tổ phó thêm được tổ viên mới (làm xong mới đẩy code một lần) | F-NS-12b | 🟢 Opus review ĐẠT, đã lên link chính (phiên bản 28, 10/11/2026 22:03), chờ chủ dự án thử |
-| 28 | Hộp xác nhận tự vẽ, thay popup trình duyệt có dòng đường link lạ | XN1 | 🟡 Đã lên link chính (phiên bản 29), chờ chủ dự án thử |
+| 28 | Hộp xác nhận tự vẽ, thay popup trình duyệt có dòng đường link lạ | XN1 | 🟡 Đã lên link chính (bản giao diện đẹp, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
-| 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (phiên bản 29), chờ chủ dự án thử |
-| 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (phiên bản 29), chờ chủ dự án thử |
+| 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (bản giao diện đẹp, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
+| 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (bản giao diện đẹp, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
