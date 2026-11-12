@@ -2,6 +2,9 @@
 
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
+## 2026-11-12
+- F-BC-21 · Sửa gốc: phân nhóm sau khi đã nhận hộp cá nhân thì tự chuyển NHAN_NHOM cá nhân sang nhóm (`gomNhanNhomCaNhan_` gọi từ `luuNhom_`); nguyên nhân: Âu Thái Tuấn 11/11 Tối nhận hộp 02.01.122 lúc 18:23 trước khi vào Nhóm 1 lúc 18:46 nên dashboard theo ca chỉ đếm 1 hộp nhóm. Mock 581/0 (+10), chờ Opus review.
+
 ## 2026-11-11
 - F-QL-12, F-HT-10, F-DB-15 · Giao diện Antigravity cho CC1 + XN1 + LOC1 (chỉ CSS, Opus kiểm bằng công cụ ĐẠT) · `7b9621f` · chủ dự án tự đẩy tay lên link chính 11/11 = **phiên bản 30**.
 

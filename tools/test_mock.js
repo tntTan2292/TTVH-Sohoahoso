@@ -1775,5 +1775,43 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; sh('ChotCa').rows.length = ck0; sh('LogHeThong').rows.length = lg0; setNow('2026-11-09 15:30:00'); memo2();
 }
 
+// ===== F-BC-21: phân nhóm sau khi đã nhận hộp cá nhân → tự chuyển NHAN_NHOM sang nhóm =====
+{
+  const NG = '2026-11-07', CAX = 'Sáng';
+  const nk0 = sh('NhatKy').rows.length, pn0 = sh('PhanNhom').rows.length, pc0 = sh('PhanCa').rows.length, lg0 = sh('LogHeThong').rows.length, sl0 = (sh('SaoLuuXoa') || { rows: [] }).rows.length;
+  ['A1', 'B1', 'TT1', 'C1'].forEach(m => sh('PhanCa').rows.push([NG, CAX, m, m, '', '']));
+  ctx.memoClear_();
+  const mk = (id, o) => ctx.append_('NhatKy', Object.assign({ ID: id, ThoiGian: NG + ' 08:' + id.slice(2, 4) + ':00', Ngay: NG, Ca: CAX, Nhom: '', Buoc: 'NHAN_NHOM', MaHop: 'GN-1', SoHoSo: 0, SoTrang: 0, SoTo: 0, TrangLoi: 0, HetHop: false, NguoiNhap: 'A1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'A1' }, o));
+  mk('GN10', { MaHop: 'GN-1' });                                   // A1 nhận cá nhân trước khi có nhóm → phải chuyển
+  mk('GN11', { MaHop: 'GN-2', NguoiNhap: 'C1', ThanhVien: 'C1' }); // C1 chưa được phân nhóm → giữ cá nhân
+  mk('GN12', { MaHop: 'GN-3', Loai: 'THỬ NGHIỆM' });               // THỬ NGHIỆM → không đụng
+  mk('GN13', { MaHop: 'GN-4', Huy: true });                        // đã hủy → không đụng
+  mk('GN14', { MaHop: 'GN-5', Buoc: 'SCAN', SoHoSo: 2, SoTrang: 50, HetHop: true }); // Scan cá nhân → không đụng
+  mk('GN15', { MaHop: 'GN-6', Nhom: '9', ThanhVien: 'B1' });      // đã có nhóm → không đụng
+  mk('GN16', { MaHop: 'GN-7', NguoiNhap: 'B1', ThanhVien: 'B1' }); // nhóm 1 đã có dòng nhận GN-7 (GN17) → giữ để tránh trùng
+  mk('GN17', { MaHop: 'GN-7', Nhom: '1', NguoiNhap: 'A1', ThanhVien: 'A1,B1' });
+  ctx.memoClear_();
+  const row = id => sh('NhatKy').rows.find(x => x[0] === id);
+  const nhomCua = id => ctx.s_(row(id)[4]), tvCua = id => ctx.s_(row(id)[18]);
+  const r1 = api(tTT, 'luuNhom', { ngay: NG, ca: CAX, gan: [{ ma: 'A1', nhom: '1' }, { ma: 'B1', nhom: '1' }, { ma: 'TT1', nhom: '2' }] });
+  ok(r1.ok && nhomCua('GN10') === '1' && tvCua('GN10') === 'A1,B1', 'F-BC-21: nhận cá nhân của A1 được chuyển sang Nhóm 1, thành viên = nhóm', [r1.err, nhomCua('GN10'), tvCua('GN10')]);
+  ok(nhomCua('GN11') === '' && tvCua('GN11') === 'C1', 'F-BC-21: người chưa được phân nhóm → giữ cá nhân');
+  ok(nhomCua('GN12') === '' && nhomCua('GN13') === '' && nhomCua('GN14') === '' && nhomCua('GN15') === '9', 'F-BC-21: THỬ NGHIỆM, đã hủy, Scan cá nhân, dòng đã có nhóm → không đụng');
+  ok(nhomCua('GN16') === '', 'F-BC-21: nhóm đã có dòng nhận cùng hộp → không chuyển (tránh trùng)');
+  ok(row('GN10')[6] === 'GN-1' && ctx.s_(row('GN10')[1]).indexOf(NG) === 0 && ctx.s_(row('GN10')[14]) === 'A1', 'F-BC-21: chỉ đổi Nhom và ThanhVien, các cột khác giữ nguyên');
+  const lg = sh('LogHeThong').rows.slice(lg0).filter(x => String(x.join('|')).indexOf('GOM_NHAN_NHOM') >= 0);
+  ok(lg.length === 1 && String(lg[0].join('|')).indexOf('GN10') >= 0, 'F-BC-21: ghi đúng 1 dòng log GOM_NHAN_NHOM cho dòng đã chuyển', lg.length);
+  ok(sh('SaoLuuXoa').rows.filter(x => x[1] === 'NhatKy' && /"GN\d+"/.test(String(x[3]))).length === 1 && sh('SaoLuuXoa').rows.some(x => x[1] === 'NhatKy' && /"GN10"/.test(String(x[3]))), 'F-BC-21: sao lưu đúng 1 dòng cũ (GN10) vào SaoLuuXoa');
+  const c = api(tAdmin, 'dashboard', { ngay: NG }).data.cas.find(x => x.ca === CAX);
+  ok(c && c.nhanNhom && c.nhanNhom['1'] === 2, 'F-BC-21: dashboard theo ca: Nhóm 1 có 2 hộp nhận (GN-1 chuyển + GN-7)', c && c.nhanNhom);
+  const snap = JSON.stringify(sh('NhatKy').rows), lgN = sh('LogHeThong').rows.length;
+  api(tTT, 'luuNhom', { ngay: NG, ca: CAX, gan: [{ ma: 'A1', nhom: '1' }, { ma: 'B1', nhom: '1' }, { ma: 'TT1', nhom: '2' }] });
+  ok(JSON.stringify(sh('NhatKy').rows) === snap && sh('LogHeThong').rows.slice(lgN).every(x => String(x.join('|')).indexOf('GOM_NHAN_NHOM') < 0), 'F-BC-21: lưu lại cùng phân nhóm không chuyển thêm dòng nào');
+  mk('GN20', { MaHop: 'GN-8', NguoiNhap: 'C1', ThanhVien: 'C1' }); ctx.memoClear_();
+  const r2 = api(tTT, 'luuNhom', { ngay: NG, ca: CAX, chiDoi: true, gan: [{ ma: 'C1', nhom: '2' }] });
+  ok(r2.ok && nhomCua('GN20') === '2' && tvCua('GN20') === 'TT1,C1' && nhomCua('GN11') === '2', 'F-BC-21: nhánh chiDoi cũng chuyển nhận cá nhân của người vừa được phân', [r2.err, nhomCua('GN20'), tvCua('GN20')]);
+  sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; sh('LogHeThong').rows.length = lg0; if (sh('SaoLuuXoa')) sh('SaoLuuXoa').rows.length = sl0; ctx.memoClear_();
+}
+
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
 process.exit(fail ? 1 : 0);

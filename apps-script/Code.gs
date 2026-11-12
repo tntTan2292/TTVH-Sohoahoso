@@ -1581,6 +1581,50 @@ function dsCa_(p) {
   const nsAll = read_('NhanSu').map(function (r) { return { ma: s_(r.MaHRM), ten: s_(r.HoTen), vaiTro: s_(r.VaiTro), khoa: b_(r.Khoa) }; });
   return { ngay: ngay, ca: ca, nguoi: nguoi, themDuoc: tatCa, locked: st.locked, canInput: st.canInput, den: st.den, soBanGhi: daNhap, soDaVao: nguoi.length, nhanSu: nsAll };
 }
+// F-BC-21: nhận hộp đầu ca (chưa có nhóm → Nhom rỗng) rồi Tổ trưởng/Tổ phó mới phân nhóm → tự chuyển dòng NHAN_NHOM cá nhân đó sang nhóm vừa phân,
+// để số "hộp nhận theo nhóm" của dashboard khớp báo cáo. CHỈ khâu NHAN_NHOM (Scan/Tách/OCR cá nhân giữ nguyên: số liệu đã gắn người làm).
+// Bỏ qua dòng THỬ NGHIỆM/đã hủy; người chưa thuộc nhóm hoặc dòng thuộc nhiều nhóm → giữ nguyên; nhóm đã có dòng nhận cùng hộp → giữ nguyên (tránh trùng).
+// Sao lưu dòng cũ (SaoLuuXoa) + log từng dòng. Trả số dòng đã chuyển. Chạy trong withLock_ (gọi từ luuNhom_).
+function gomNhanNhomCaNhan_(u, ngay, ca) {
+  const nhomCua = {}, thanhVien = {};
+  read_('PhanNhom').forEach(function (r) {
+    if (d_(r.Ngay) !== ngay || s_(r.Ca) !== ca || !s_(r.Nhom)) return;
+    nhomCua[s_(r.MaHRM)] = s_(r.Nhom);
+    (thanhVien[s_(r.Nhom)] = thanhVien[s_(r.Nhom)] || []).push(s_(r.MaHRM));
+  });
+  if (!Object.keys(nhomCua).length) return 0;
+  const rows = read_('NhatKy').filter(function (r) {
+    return !b_(r.Huy) && d_(r.Ngay) === ngay && s_(r.Ca) === ca && s_(r.Loai) !== 'THỬ NGHIỆM' && s_(r.Buoc) === 'NHAN_NHOM';
+  });
+  const daCo = {};      // nhóm|khóa hộp đã có dòng nhận THEO NHÓM
+  rows.forEach(function (r) { if (s_(r.Nhom)) daCo[s_(r.Nhom) + '|' + maHopKhoa_(r.MaHop)] = 1; });
+  const ds = [];
+  rows.forEach(function (r) {
+    if (s_(r.Nhom)) return;
+    const tvs = s_(r.ThanhVien).split(',').map(s_).filter(Boolean), ng = tvs.length ? tvs : (s_(r.NguoiNhap) ? [s_(r.NguoiNhap)] : []), set = {};
+    ng.forEach(function (m) { if (nhomCua[m]) set[nhomCua[m]] = 1; });
+    const ks = Object.keys(set);
+    if (ks.length !== 1) return;
+    const key = ks[0] + '|' + maHopKhoa_(r.MaHop);
+    if (daCo[key]) return;
+    daCo[key] = 1; ds.push({ r: r, nhom: ks[0] });
+  });
+  if (!ds.length) return 0;
+  const dongThat = function (r) { return TAB.NhatKy.map(function (k) { return r[k]; }); };
+  const saoLuu = saoLuuDong_('NhatKy', ds.map(function (x) { return dongThat(x.r); }), u.ma);
+  const sh = ss_().getSheetByName('NhatKy'), cNhom = TAB.NhatKy.indexOf('Nhom') + 1, cTV = TAB.NhatKy.indexOf('ThanhVien') + 1;
+  ds.forEach(function (x) {
+    ghiVanBan_(sh, x.r._row, cNhom, x.nhom);
+    ghiVanBan_(sh, x.r._row, cTV, thanhVien[x.nhom].join(','));
+    log_(u.ma, 'GOM_NHAN_NHOM', 'ID ' + s_(x.r.ID) + ' | ' + ngay + ' ca ' + ca + ' | hộp ' + s_(x.r.MaHop) + ' | cũ: nhận cá nhân (' + (s_(x.r.ThanhVien) || s_(x.r.NguoiNhap)) + ') | mới: Nhóm ' + x.nhom + ' (' + thanhVien[x.nhom].join(',') + ') | sao lưu ' + saoLuu);
+  });
+  memoClear_('NhatKy');
+  return ds.length;
+}
+function gomNhanNhomAnToan_(u, ngay, ca) {      // việc phụ: lỗi ở đây KHÔNG được làm hỏng việc lưu phân nhóm đã xong
+  try { return gomNhanNhomCaNhan_(u, ngay, ca); }
+  catch (e) { try { log_(u.ma, 'GOM_NHAN_NHOM_LOI', ngay + ' ca ' + ca + ' | ' + String(e)); } catch (e2) {} return 0; }
+}
 function luuNhom_(u, p) {
   const ngay = d_(p.ngay), ca = s_(p.ca), t = now_();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || !CA[ca]) throw 'Ngày/ca không hợp lệ';
@@ -1600,8 +1644,9 @@ function luuNhom_(u, p) {
     });
     memoClear_('PhanNhom');
     log_(u.ma, 'PHAN_NHOM', ngay + ' ' + ca + ' | cũ: ' + (cuNhom || '(chưa có)') + ' | đổi: ' + (gan.map(function (g) { return (names[s_(g.ma)] || s_(g.ma)) + '→' + (s_(g.nhom) ? 'N' + s_(g.nhom) : 'bỏ nhóm'); }).join('; ') || '(không có)'));
+    const daGom = gan.length ? gomNhanNhomAnToan_(u, ngay, ca) : 0;
     const nhom = {}; read_('PhanNhom').forEach(function (r) { if (d_(r.Ngay) === ngay && s_(r.Ca) === ca) nhom[s_(r.MaHRM)] = s_(r.Nhom); });
-    return { msg: gan.length ? 'Đã lưu phân nhóm' : 'Không có thay đổi', nhom: nhom };
+    return { msg: gan.length ? 'Đã lưu phân nhóm' + (daGom ? ' (đã chuyển ' + daGom + ' hộp nhận cá nhân sang nhóm)' : '') : 'Không có thay đổi', nhom: nhom };
   }
   read_('PhanNhom').filter(function (r) { return d_(r.Ngay) === ngay && s_(r.Ca) === ca; })
     .map(function (r) { return r._row; }).sort(function (a, b) { return b - a; }).forEach(function (row) { sh.deleteRow(row); });
@@ -1610,7 +1655,8 @@ function luuNhom_(u, p) {
   });
   memoClear_('PhanNhom');
   log_(u.ma, 'PHAN_NHOM', ngay + ' ' + ca + ' | cũ: ' + (cuNhom || '(chưa có)') + ' | mới: ' + (p.gan || []).filter(function (g) { return s_(g.nhom); }).map(function (g) { return (names[s_(g.ma)] || s_(g.ma)) + '→N' + s_(g.nhom); }).join('; '));
-  return 'Đã lưu phân nhóm';
+  const daGom2 = gomNhanNhomAnToan_(u, ngay, ca);
+  return 'Đã lưu phân nhóm' + (daGom2 ? ' (đã chuyển ' + daGom2 + ' hộp nhận cá nhân sang nhóm)' : '');
 }
 function suaCa_(u, p) {
   const ngay = d_(p.ngay), ca = s_(p.ca), ma = s_(p.ma);

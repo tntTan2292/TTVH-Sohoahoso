@@ -37,3 +37,4 @@
 | 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
 | 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
+| 32 | Phân nhóm sau khi đã nhận hộp thì hộp nhận tự vào nhóm (hết phải chuẩn hóa tay hằng ngày) | F-BC-21 | 🟠 Sonnet xong trong mã (mock 581/0), CHỜ Opus review rồi mới đẩy lên link chính |
