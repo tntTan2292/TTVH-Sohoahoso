@@ -1616,11 +1616,11 @@ button.btn-large {
 .nh-block { padding: 8px 0; border-bottom: 1px dashed var(--line); }
 .nh-block:last-child { border-bottom: 0; }
 .nh-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.ng-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) 1fr auto; align-items: center; gap: 10px; padding: 4px 0; font-size: 13.5px; }
+.ng-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) minmax(40px, 1fr) 118px; align-items: center; gap: 10px; padding: 4px 0; font-size: 13.5px; }
 .ng-row.ng-idle { grid-template-columns: minmax(110px, 1.2fr) auto; justify-content: space-between; }
 .ng-ten { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ng-idle .ng-ten { color: var(--mut); font-weight: 500; }
-.ng-so { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; }
+.ng-so { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; text-align: right; }
 .bar3 { display: flex; height: 8px; border-radius: 4px; background: var(--ring-track); overflow: hidden; min-width: 60px; }
 .bar3 span { display: block; height: 100%; }
 @media (max-width: 480px) { .ca-grid { grid-template-columns: 1fr; } .ng-row { grid-template-columns: 1fr auto; } .ng-row .bar3 { grid-column: 1 / -1; order: 3; } }
@@ -4153,7 +4153,7 @@ function tungCaHtml(d) {
       h += '<div class="nh-block"><div class="nh-title"><span class="team-badge">' + (k ? 'Nhóm ' + esc(k) : 'Cá nhân (không nhóm)') + '</span>' + (k ? so(g) : '') + '</div>';
       ms.forEach(function (x) {
         h += '<div class="ng-row' + (x.soBC ? '' : ' ng-idle') + '"><span class="ng-ten">' + esc(x.ten) + '</span>' +
-          (x.soBC ? bar(x) + so(x) : '<span class="chip warn">Chưa báo cáo</span>') + '</div>';
+          (x.soBC ? bar(x) + so(k ? { scanDV: x.scanDV, tachDV: x.tachDV, ocrDV: x.ocrDV } : x) : '<span class="chip warn">Chưa báo cáo</span>') + '</div>';   // thành viên nhóm: không lặp "nhận N hộp" (đã ở tiêu đề nhóm) để các hàng thẳng cột
       });
       h += '</div>';
     });
