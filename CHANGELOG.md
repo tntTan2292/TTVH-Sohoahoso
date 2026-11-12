@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-12
+- **Phiên bản 32** (commit `8b0880f`, F-DB-06 sửa bảng theo ca): chủ dự án tự đẩy tay chỉ `Index.html` lên link chính, thay phiên bản 31.
 - **Triển khai phiên bản 31** (commit `f33373f`, Opus review ĐẠT/GO `de64011`) lên link chính, thay phiên bản 30 (`7b9621f`). Trước khi đẩy: Code.gs, Index.html trên Apps Script khớp `7b9621f`; sau khi lưu và tải lại khớp `f33373f`. Link `/exec` mở được.
 - F-BC-21 · Sửa gốc: phân nhóm sau khi đã nhận hộp cá nhân thì tự chuyển NHAN_NHOM cá nhân sang nhóm (`gomNhanNhomCaNhan_` gọi từ `luuNhom_`); nguyên nhân: Âu Thái Tuấn 11/11 Tối nhận hộp 02.01.122 lúc 18:23 trước khi vào Nhóm 1 lúc 18:46 nên dashboard theo ca chỉ đếm 1 hộp nhóm. Mock 581/0 (+10), chờ Opus review.
 
