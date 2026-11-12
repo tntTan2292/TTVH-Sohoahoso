@@ -20,6 +20,7 @@
 > - Việc kế: triển khai theo phiếu `PROMPT_SONNET_CC1_XN1.md` mục cuối (bản đang chạy phải khớp `848b751`, phiên bản 28), rồi chủ dự án thử mục 28, 30, 31.
 
 ## 1. Trạng thái hệ thống
+> **12/11/2026 (Opus): F-DB-06b (`bcdae03`) review KHÔNG ĐẠT, CẦN SỬA, CHƯA đẩy.** Mock 581/0, giao diện 667/0, `node --check` đạt; chỉ đổi CSS, class chỉ dùng trong `tungCaHtml`, `Code.gs` không đổi. Đo trên trình duyệt bằng thẻ mẫu dựng từ đúng CSS + `tungCaHtml` (2 nhóm + cá nhân + chưa báo cáo; thẻ 380/316/250px): (1) thanh màu mỗi nhóm rộng khác nhau (380px: Nhóm 1 rộng 111px, Nhóm 2 rộng 76px, cá nhân 24px) nên **so sánh giữa các nhóm bị sai tỉ lệ** dù `bar()` không đổi; (2) hàng Cá nhân có "nhận N hộp" vẫn **cắt tên ngay ở thẻ 380px**, thanh còn 24px; (3) 316px cắt cả tên chưa báo cáo. Gom cột chung cả thẻ (subgrid) thì thẳng cột nhưng thanh còn 24px cho mọi người: không dùng. **Opus chốt:** mọi khổ dùng bố cục hiện có của điện thoại: tên + số một hàng, thanh màu một hàng riêng toàn chiều rộng (mọi người cùng thước đo), "nhận N hộp" xuống dưới số. Đo: 380 và 316px không cắt tên nào, thanh 342/292px cho mọi người; 250px chỉ cắt tên rất dài. Thẻ cao thêm khoảng 15%. Bỏ `display: contents`. Giao Sonnet delta, chủ dự án xem trên link.
 > **12/11/2026 (Sonnet): F-DB-06b chờ Opus review** — bảng "Tình hình từng ca" sửa triệt để (lưới tự co giãn, bỏ số cố định), phiếu `docs/prompts/PROMPT_OPUS_REVIEW_FDB06B.md`. Chỉ `Index.html`; chủ dự án tự đẩy tay sau khi ĐẠT. Bản đang chạy vẫn là phiên bản 32.
 
 | Mục | Giá trị |
