@@ -1613,17 +1613,18 @@ button.btn-large {
 .ca-card { margin: 0; }
 .ca-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 16px; }
 .ca-sum { font-size: 13px; color: var(--tx-sec); margin: 6px 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.nh-block { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.nh-block { padding: 8px 0; border-bottom: 1px dashed var(--line); display: grid; grid-template-columns: minmax(0, max-content) minmax(24px, 1fr) max-content; column-gap: 10px; row-gap: 8px; align-items: center; }   /* cột tên tự rộng bằng tên dài nhất trong nhóm, không đặt số cố định */
 .nh-block:last-child { border-bottom: 0; }
-.nh-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.ng-row { display: grid; grid-template-columns: 140px minmax(40px, 1fr) 112px; align-items: center; gap: 10px; padding: 4px 0; font-size: 13.5px; }
-.ng-row.ng-idle { grid-template-columns: 140px auto; justify-content: space-between; }
-.ng-ten { font-weight: 600; white-space: nowrap; }      /* tên một dòng, cột đủ rộng nên không cắt */
+.nh-title { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.ng-row { display: contents; font-size: 13.5px; }      /* các ô của hàng nằm thẳng trong lưới .nh-block */
+.ng-row.ng-idle .chip { grid-column: 2 / -1; justify-self: end; }
+.ng-ten { font-weight: 600; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13.5px; }      /* chỉ cắt "…" khi thẻ hẹp hơn chính tên */
 .ng-idle .ng-ten { color: var(--mut); font-weight: 500; }
 .ng-so { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; text-align: right; }
 .bar3 { display: flex; height: 8px; border-radius: 4px; background: var(--ring-track); overflow: hidden; min-width: 60px; }
 .bar3 span { display: block; height: 100%; }
-@media (max-width: 480px) { .ca-grid { grid-template-columns: 1fr; } .ng-row { grid-template-columns: 1fr auto; } .ng-row .bar3 { grid-column: 1 / -1; order: 3; } }
+.nh-block .bar3 { min-width: 0; }
+@media (max-width: 480px) { .ca-grid { grid-template-columns: 1fr; } .nh-block { display: block; } .ng-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 4px 0; } .ng-row .bar3 { grid-column: 1 / -1; order: 3; } .ng-row.ng-idle .chip { grid-column: auto; } }
 
 @media (prefers-color-scheme: dark) {
   .z1 { --zc: #3b82f6; --zb: rgba(59,130,246,0.14); }
