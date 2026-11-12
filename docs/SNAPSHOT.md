@@ -20,6 +20,8 @@
 > - Việc kế: triển khai theo phiếu `PROMPT_SONNET_CC1_XN1.md` mục cuối (bản đang chạy phải khớp `848b751`, phiên bản 28), rồi chủ dự án thử mục 28, 30, 31.
 
 ## 1. Trạng thái hệ thống
+> **12/11/2026 (Sonnet): F-DB-06b chờ Opus review** — bảng "Tình hình từng ca" sửa triệt để (lưới tự co giãn, bỏ số cố định), phiếu `docs/prompts/PROMPT_OPUS_REVIEW_FDB06B.md`. Chỉ `Index.html`; chủ dự án tự đẩy tay sau khi ĐẠT. Bản đang chạy vẫn là phiên bản 32.
+
 | Mục | Giá trị |
 |---|---|
 | Cập nhật lúc | 11/11/2026 — Opus: kiểm giao diện Antigravity `7b9621f` bằng công cụ: ĐẠT (chỉ CSS). Trước đó: 11/11/2026 14:05 — Antigravity (Gemini): **XONG LÀM ĐẸP GIAO DIỆN CC1 + XN1 + LOC1** (F-QL-12, F-HT-10, F-DB-15) trong `apps-script/Index.html`. Giữ nguyên 100% id, hàm JS, call('...'), trường dữ liệu; mock **571/0**, giao diện **664/0**. Trước đó: 10/11/2026 23:30 — Sonnet: **ĐÃ TRIỂN KHAI phiên bản 29** (`8c80278`, Opus ĐẠT/GO) lên `…MlRA`; `/exec` mở được màn đăng nhập (không đăng nhập ứng dụng, không đụng Sheet, setup, `…NIQ`). Chưa xác minh bằng người: mục 28, 30, 31 trên giao diện thật (chủ dự án thử). |
