@@ -794,12 +794,15 @@ function hopGoiY_(u, p) {
   const rep = repMaHop_(rows);      // H1: gom theo khóa, trả mã đại diện để hiển thị
   const set = function (b, het) { const m = {}; rows.forEach(function (r) { if (s_(r.Buoc) === b && (!het || b_(r.HetHop))) m[maHopKhoa_(r.MaHop)] = 1; }); return m; };
   const nhan = set('NHAN'), nhanNhom = set('NHAN_NHOM'), scanDone = set('SCAN', true), tachDone = set('TACH', true), ocrDone = set('OCR', true), tra = set('TRA');
+  const setTT = function (b, het) { const m = {}; rows.forEach(function (r) { if (s_(r.Buoc) === b && (!het || b_(r.HetHop)) && s_(r.Loai) !== 'THỬ NGHIỆM') m[maHopKhoa_(r.MaHop)] = 1; }); return m; };   // như set nhưng bỏ THỬ NGHIỆM
+  const rowsKhoa = {}; rows.forEach(function (r) { if (s_(r.MaHop) && s_(r.Loai) !== 'THỬ NGHIỆM') rowsKhoa[maHopKhoa_(r.MaHop)] = 1; });
   let out = [];
   if (buoc === 'SCAN') out = Object.keys(nhanNhom).filter(function (h) { return !scanDone[h] && !tra[h]; });
   else if (buoc === 'TACH') out = Object.keys(scanDone).filter(function (h) { return !tachDone[h] && !tra[h]; });
   else if (buoc === 'OCR') out = Object.keys(tachDone).filter(function (h) { return !ocrDone[h]; });
   else if (buoc === 'NHAN_NHOM') out = Object.keys(nhan).filter(function (h) { return !nhanNhom[h] && !tra[h]; });
-  else if (buoc === 'TRA') out = Object.keys(nhan).filter(function (h) { return !tra[h]; });
+  else if (buoc === 'TRA') out = Object.keys(setTT('TACH', true)).filter(function (h) { return !tra[h]; });      // F-TH-02: hộp Tách xong, chưa Trả (không đòi có bản ghi Nhận)
+  else if (buoc === 'NHAN') out = Object.keys(rowsKhoa).filter(function (h) { return !nhan[h]; });      // F-TH-02: hộp có bản ghi còn hiệu lực, chưa có Nhận từ TTLT
   return out.map(rep).sort();
 }
 
@@ -1705,7 +1708,7 @@ function chot_(u, p) {
 function nhatKyRows_(gomThu) {
   return read_('NhatKy').filter(function (r) { return !b_(r.Huy); }).map(function (r) {
     return { ngay: d_(r.Ngay), ca: s_(r.Ca), nhom: s_(r.Nhom), buoc: s_(r.Buoc), ma: s_(r.MaHop), tg: ts_(r.ThoiGian), hop: maHopKhoa_(r.MaHop), hs: n_(r.SoHoSo), trang: n_(r.SoTrang),      // H1: hop = KHÓA mã hộp (dùng để đếm/gom, không hiển thị)
-      to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), nguoi: s_(r.NguoiNhap), loai: s_(r.Loai), tv: s_(r.ThanhVien) };
+      to: n_(r.SoTo), loi: n_(r.TrangLoi), het: b_(r.HetHop), nguoi: s_(r.NguoiNhap), loai: s_(r.Loai), tv: s_(r.ThanhVien), gc: s_(r.GhiChu) };      // gc: ghi chú (F-TH-01: hiện ở cột Nhận/Trả của Đối soát)
   }).filter(function (r) { return CA[r.ca] && (gomThu || r.loai !== 'THỬ NGHIỆM'); });
 }
 // Bộ đếm sản lượng (dùng cho nhóm và cá nhân)
@@ -1761,9 +1764,9 @@ function hopHoSo_(rows) {
       scan: { to: 0, hs: 0, xong: false }, tach: { to: 0, hs: 0, xong: false }, ocr: { to: 0, hs: 0, xong: false }, batDau: '' };
     if (r.ma && h.maGoc.indexOf(r.ma) < 0) h.maGoc.push(r.ma);
     if (!h.batDau || r.ngay < h.batDau) h.batDau = r.ngay;
-    if (r.buoc === 'NHAN') { if (som(h.nhan, r)) h.nhan = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi }; }
+    if (r.buoc === 'NHAN') { if (som(h.nhan, r)) h.nhan = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi, gc: r.gc }; }
     else if (r.buoc === 'NHAN_NHOM') { if (som(h.nhanNhom, r)) h.nhanNhom = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nhom: r.nhom, nguoi: r.nguoi }; }
-    else if (r.buoc === 'TRA') { if (som(h.tra, r)) h.tra = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi }; }
+    else if (r.buoc === 'TRA') { if (som(h.tra, r)) h.tra = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi, gc: r.gc }; }
     else if (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR') {
       const b = h[r.buoc.toLowerCase()];
       h.lam = true; b.to += r.dv; b.hs += r.hs; if (r.het) b.xong = true;
@@ -1771,13 +1774,15 @@ function hopHoSo_(rows) {
   });
   return ho;
 }
-const HOP_TT_ = { DU: 'Đủ', NHAN_CHUA_LAM: 'Đã nhận chưa làm', DANG_LAM: 'Đang làm dở', XONG_CHUA_TRA: 'Làm xong chưa trả', THIEU_NHAN: 'Thiếu nhận TTLT', TRA_SOM: 'Trả khi chưa Tách xong' };
-// Trạng thái đối soát (ưu tiên từ trên xuống): thiếu nhận TTLT → trả khi chưa Tách xong → đủ → làm xong chưa trả → đã nhận chưa làm → đang làm dở.
-// Hộp đã trả, Tách xong nhưng OCR chưa xong không thuộc nhóm nào khác → "Đang làm dở".
+const HOP_TT_ = { DU: 'Đủ', NHAN_CHUA_LAM: 'Đã nhận chưa làm', DANG_LAM: 'Đang làm dở', XONG_CHUA_TRA: 'Tách xong, chưa Trả cho TTLT', THIEU_NHAN: 'Thiếu Nhận từ TTLT', TRA_SOM: 'Trả khi chưa Tách xong', DA_TRA: 'Đã trả, thiếu Nhận từ TTLT' };
+// F-TH-01 – trạng thái đối soát, xét từ trên xuống (KHÔNG xét OCR: Tách xong là trả được cho TTLT; cột OCR chỉ để xem):
+// 1 có trả, Tách chưa xong → TRA_SOM · 2 có trả + có nhận → DU · 3 có trả, không có nhận → DA_TRA · 4 không có nhận → THIEU_NHAN
+// 5 Tách xong, chưa trả → XONG_CHUA_TRA · 6 có làm → DANG_LAM, không → NHAN_CHUA_LAM
 function hopTrangThai_(h) {
-  if (!h.nhan) return 'THIEU_NHAN';
   if (h.tra && !h.tach.xong) return 'TRA_SOM';
-  if (h.ocr.xong) return h.tra ? 'DU' : 'XONG_CHUA_TRA';
+  if (h.tra) return h.nhan ? 'DU' : 'DA_TRA';
+  if (!h.nhan) return 'THIEU_NHAN';
+  if (h.tach.xong) return 'XONG_CHUA_TRA';
   return h.lam ? 'DANG_LAM' : 'NHAN_CHUA_LAM';
 }
 function hopBanGhi_(h, ns) {      // một dòng cho giao diện (không lộ khóa nội bộ k/tg)
@@ -1787,10 +1792,10 @@ function hopBanGhi_(h, ns) {      // một dòng cho giao diện (không lộ kh
   if (h.maGoc.length > 1) ghiChu = 'Mã ghi ' + h.maGoc.length + ' kiểu: ' + h.maGoc.join(', ');
   if (tt === 'THIEU_NHAN' && h.nhanNhom) ghiChu = (ghiChu ? ghiChu + '; ' : '') + 'nhóm ' + h.nhanNhom.nhom + ' đã nhận ' + h.nhanNhom.ngay + ' ca ' + h.nhanNhom.ca;
   return { ma: maHopChuan_(rep), khoa: h.khoa, tt: tt, ttText: HOP_TT_[tt],
-    nhan: h.nhan ? { ngay: h.nhan.ngay, ca: h.nhan.ca, nguoi: ten(h.nhan.nguoi) } : null,
+    nhan: h.nhan ? { ngay: h.nhan.ngay, ca: h.nhan.ca, nguoi: ten(h.nhan.nguoi), ghiChu: h.nhan.gc || '' } : null,
     nhanNhom: h.nhanNhom ? { ngay: h.nhanNhom.ngay, ca: h.nhanNhom.ca, nhom: h.nhanNhom.nhom } : null,
     scan: { to: h.scan.to, xong: h.scan.xong }, tach: { to: h.tach.to, xong: h.tach.xong }, ocr: { to: h.ocr.to, xong: h.ocr.xong },
-    tra: h.tra ? { ngay: h.tra.ngay, ca: h.tra.ca } : null, ngayMoc: h.nhan ? h.nhan.ngay : h.batDau, ghiChu: ghiChu };
+    tra: h.tra ? { ngay: h.tra.ngay, ca: h.tra.ca, nguoi: ten(h.tra.nguoi), ghiChu: h.tra.gc || '' } : null, ngayMoc: h.nhan ? h.nhan.ngay : h.batDau, ghiChu: ghiChu };
 }
 function hopSapXep_(a, b) { return a.ngayMoc.localeCompare(b.ngayMoc) || a.ma.localeCompare(b.ma, 'vi', { numeric: true }); }
 const HOP_TOI_DA_ = 5000;

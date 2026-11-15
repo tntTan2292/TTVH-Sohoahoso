@@ -2103,6 +2103,8 @@ tbody tr:last-child td { border-bottom: none; }
   margin-left: auto;
 }
 #dsCsv:hover { filter: brightness(0.95); }
+/* F-TH-01: dòng đối soát thiếu Nhận/Trả — nền đỏ (một class, chỉnh màu ở đây) */
+.ds-do td { background: var(--bad-bg); }
 .ds-ghichu { display: block; font-size: 11px; color: var(--mut); margin-top: 2px; }
 
 /* C0: Modal chi tiết ô số liệu (#modalCT) */
@@ -4532,8 +4534,12 @@ $('ctDong').onclick = closeCT; $('ctTim').oninput = ctVe;
 $('modalCT').onclick = function (e) { if (e.target === this) closeCT(); };
 
 /* ---------- H2: tab Đối soát hộp ---------- */
-var DS_TT = [['', 'Tất cả'], ['DU', 'Đủ'], ['NHAN_CHUA_LAM', 'Đã nhận chưa làm'], ['DANG_LAM', 'Đang làm dở'], ['XONG_CHUA_TRA', 'Làm xong chưa trả'], ['THIEU_NHAN', 'Thiếu nhận TTLT'], ['TRA_SOM', 'Trả khi chưa Tách xong']];
-var DS_CHIP = { DU: 'ok', NHAN_CHUA_LAM: 'chip-mut', DANG_LAM: 'warn', XONG_CHUA_TRA: 'warn', THIEU_NHAN: 'bad', TRA_SOM: 'bad' };
+var DS_TT = [['', 'Tất cả'], ['DU', 'Đủ'], ['NHAN_CHUA_LAM', 'Đã nhận chưa làm'], ['DANG_LAM', 'Đang làm dở'], ['XONG_CHUA_TRA', 'Tách xong, chưa Trả cho TTLT'], ['THIEU_NHAN', 'Thiếu Nhận từ TTLT'], ['DA_TRA', 'Đã trả, thiếu Nhận từ TTLT'], ['TRA_SOM', 'Trả khi chưa Tách xong']];
+var DS_CHIP = { DU: 'ok', NHAN_CHUA_LAM: 'chip-mut', DANG_LAM: 'warn', XONG_CHUA_TRA: 'bad', THIEU_NHAN: 'bad', DA_TRA: 'bad', TRA_SOM: 'bad' };
+// F-TH-01: dòng thiếu Nhận/Trả (hoặc Trả sai) tô nền đỏ bằng MỘT class .ds-do (Antigravity chỉnh màu)
+var DS_DO = { TRA_SOM: 1, DA_TRA: 1, THIEU_NHAN: 1, XONG_CHUA_TRA: 1 };
+// Ô Nhận từ TTLT / Trả cho TTLT: ngày · ca, người, ghi chú (dòng nhỏ); chưa có = gạch ngang
+function dsNhanTra(o) { return o ? ngayNgan(o.ngay) + ' · ' + esc(o.ca) + (o.nguoi ? '<span class="ds-ghichu">' + esc(o.nguoi) + '</span>' : '') + (o.ghiChu ? '<span class="ds-ghichu">' + esc(o.ghiChu) + '</span>' : '') : '<span class="muted">–</span>'; }
 function dashTabDoiSoat() {
   var S = DASH.ds;
   if (!S.den) S.den = $('dNgay').value || ME.ngay;
@@ -4561,8 +4567,8 @@ function dashDsBang() {
     return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] ? r.dem[t[0]] : r.dem.tong) + ')</button>';
   }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
     '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
-    '<div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
-      return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận TTLT">' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) + '<span class="ds-ghichu">' + esc(x.nhan.nguoi) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả">' + (x.tra ? ngayNgan(x.tra.ngay) : '<span class="muted">–</span>') + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
+    '<div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận từ TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả cho TTLT</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
+      return '<tr' + (DS_DO[x.tt] ? ' class="ds-do"' : '') + '><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận từ TTLT">' + dsNhanTra(x.nhan) + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả cho TTLT">' + dsNhanTra(x.tra) + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
     }).join('') || '<tr><td colspan="8" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
   $('dsBody').innerHTML = h;
   Array.prototype.forEach.call($('dsBody').querySelectorAll('[data-dtt]'), function (b) { b.onclick = function () { S.tt = b.getAttribute('data-dtt'); dashDsBang(); }; });
@@ -4571,8 +4577,8 @@ function dashDsBang() {
 function csvO(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
 function dsCsv() {
   var ds = dsLoc(), r = DASH.ds.data;
-  var rows = [['Mã hộp', 'Ngày nhận TTLT', 'Ca nhận', 'Người nhận', 'Nhóm nhận', 'Scan (tờ)', 'Scan xong', 'Tách (tờ)', 'Tách xong', 'OCR (tờ)', 'OCR xong', 'Ngày trả', 'Trạng thái', 'Ghi chú']];
-  ds.forEach(function (x) { rows.push([x.ma, x.nhan ? x.nhan.ngay : '', x.nhan ? x.nhan.ca : '', x.nhan ? x.nhan.nguoi : '', x.nhanNhom ? x.nhanNhom.nhom : '', x.scan.to, x.scan.xong ? 'x' : '', x.tach.to, x.tach.xong ? 'x' : '', x.ocr.to, x.ocr.xong ? 'x' : '', x.tra ? x.tra.ngay : '', x.ttText, x.ghiChu]); });
+  var rows = [['Mã hộp', 'Ngày nhận TTLT', 'Ca nhận', 'Người nhận', 'Ghi chú nhận', 'Nhóm nhận', 'Scan (tờ)', 'Scan xong', 'Tách (tờ)', 'Tách xong', 'OCR (tờ)', 'OCR xong', 'Ngày trả TTLT', 'Ca trả', 'Người trả', 'Ghi chú trả', 'Trạng thái', 'Ghi chú']];
+  ds.forEach(function (x) { rows.push([x.ma, x.nhan ? x.nhan.ngay : '', x.nhan ? x.nhan.ca : '', x.nhan ? x.nhan.nguoi : '', x.nhan ? x.nhan.ghiChu : '', x.nhanNhom ? x.nhanNhom.nhom : '', x.scan.to, x.scan.xong ? 'x' : '', x.tach.to, x.tach.xong ? 'x' : '', x.ocr.to, x.ocr.xong ? 'x' : '', x.tra ? x.tra.ngay : '', x.tra ? x.tra.ca : '', x.tra ? x.tra.nguoi : '', x.tra ? x.tra.ghiChu : '', x.ttText, x.ghiChu]); });
   var txt = '\uFEFF' + rows.map(function (rw) { return rw.map(csvO).join(','); }).join('\r\n');
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));

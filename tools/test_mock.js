@@ -1368,10 +1368,10 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   // 1) không có biến thể → dash_ / hopGoiY_ / thongKeNhanSu_ giống hệt trước/sau
   let giong = true, sai = '';
   ngays.forEach(n => [true, false].forEach(g => { memo2(); const a = bo2CC1(ctx.dash_(n, g)), b = JSON.stringify(ctx2.dash_(n, g)); if (a !== b) { giong = false; sai += ' dash ' + n + g; } }));
-  ['SCAN', 'TACH', 'OCR', 'NHAN_NHOM', 'TRA'].forEach(b => { memo2(); const a = JSON.stringify(ctx.hopGoiY_({}, { buoc: b })), c = JSON.stringify(ctx2.hopGoiY_({}, { buoc: b })); if (a !== c) { giong = false; sai += ' goiY ' + b; } });
+  ['SCAN', 'TACH', 'OCR', 'NHAN_NHOM'].forEach(b => { memo2(); const a = JSON.stringify(ctx.hopGoiY_({}, { buoc: b })), c = JSON.stringify(ctx2.hopGoiY_({}, { buoc: b })); if (a !== c) { giong = false; sai += ' goiY ' + b; } });
   memo2(); const tk = { tu: ngays[0], den: ngays[ngays.length - 1] };
   if (JSON.stringify(ctx.thongKeNhanSu_(tk, true)) !== JSON.stringify(ctx2.thongKeNhanSu_(tk, true))) { giong = false; sai += ' thongKe'; }
-  ok(giong, 'H1: không có biến thể mã → dash_ (mọi ngày, có/không gomThu), hopGoiY_ (5 khâu), thongKeNhanSu_ GIỐNG HỆT trước/sau', sai);
+  ok(giong, 'H1: không có biến thể mã → dash_ (mọi ngày, có/không gomThu), hopGoiY_ (4 khâu; Trả đổi theo F-TH-02), thongKeNhanSu_ GIỐNG HỆT trước/sau', sai);
   // cảnh báo ghi_ giống hệt trước/sau (ghi thử rồi gỡ dòng vừa ghi)
   const hopCo = raws.find(h => sh('NhatKy').rows.some(x => x[6] === h && x[5] === 'NHAN' && x[16] !== true)) || raws[0];
   const thu = (C_, tk2, p) => { memo2(); const n0 = sh('NhatKy').rows.length, l0 = sh('LogHeThong').rows.length; const r = C_.api(tk2, 'ghi', p); sh('NhatKy').rows.length = n0; sh('LogHeThong').rows.length = l0; memo2(); return r; };
@@ -1455,8 +1455,8 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const gui = (tk, p) => api(tk, 'doiSoatHop', p || {});
   const r = gui(tAdmin, { den: D3 });
   const tt = {}; (r.data ? r.data.hop : []).forEach(h => { tt[h.ma] = h.tt; });
-  const mongDoi = { P1: 'DU', P2: 'DANG_LAM', P3: 'DANG_LAM', P4: 'TRA_SOM', '02.01.05': 'NHAN_CHUA_LAM', P6: 'NHAN_CHUA_LAM', P7: 'THIEU_NHAN', P8: 'THIEU_NHAN', P9: 'XONG_CHUA_TRA' };
-  ok(r.ok && JSON.stringify(Object.keys(mongDoi).map(k => tt[k])) === JSON.stringify(Object.values(mongDoi)), 'H2: trạng thái từng hộp đúng (Đủ / Đang làm dở / Trả khi chưa Tách xong / Đã nhận chưa làm / Thiếu nhận / Làm xong chưa trả)', tt);
+  const mongDoi = { P1: 'DU', P2: 'DANG_LAM', P3: 'DU', P4: 'TRA_SOM', '02.01.05': 'NHAN_CHUA_LAM', P6: 'NHAN_CHUA_LAM', P7: 'THIEU_NHAN', P8: 'THIEU_NHAN', P9: 'XONG_CHUA_TRA' };
+  ok(r.ok && JSON.stringify(Object.keys(mongDoi).map(k => tt[k])) === JSON.stringify(Object.values(mongDoi)), 'H2 + F-TH-01: trạng thái từng hộp đúng (P3 đã trả, Tách xong, OCR chưa xong = Đủ; Đang làm dở / Trả khi chưa Tách xong / Đã nhận chưa làm / Thiếu nhận / Tách xong chưa trả)', tt);
   const bg = k => r.data.hop.find(h => h.ma === k);
   ok(/nhóm 2 đã nhận/.test(bg('P7').ghiChu) && bg('P8').ghiChu === '' && /2 kiểu/.test(bg('02.01.05').ghiChu), 'H2: hộp thiếu nhận ghi rõ "nhóm đã nhận"; hộp ghi hai kiểu mã có ghi chú biến thể', [bg('P7').ghiChu, bg('02.01.05').ghiChu]);
   ok(bg('P1').nhan.ngay === D1 && bg('P1').scan.xong && bg('P1').tach.xong && bg('P1').ocr.xong && bg('P1').ocr.to === 10 && bg('P1').tra.ngay === D2 && bg('P2').scan.to === 3 && !bg('P2').scan.xong, 'H2: dòng hộp có ngày nhận, từng khâu (số tờ lũy kế, ✔ khi HetHop), ngày trả');
@@ -1484,6 +1484,76 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const r5 = gui(tAdmin, { den: D3 }), r6 = api(tAdmin, 'doiSoatHop', { den: D3, gomThu: true });
   ok(!r5.data.hop.some(h => h.ma === 'HUY-1' || h.ma === 'THU-1') && r6.data.hop.some(h => h.ma === 'THU-1') && !r6.data.hop.some(h => h.ma === 'HUY-1'), 'H2: bỏ bản ghi hủy; THỬ NGHIỆM chỉ hiện khi ADMIN gomThu');
   sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; memo2();
+}
+
+// ===== F-TH-01/02/03 (TH1): Nhận từ TTLT / Trả cho TTLT — trạng thái đối soát không xét OCR, 2 cột có người + ghi chú, gợi ý, ghi bổ sung =====
+{
+  const { execSync } = require('child_process');
+  let cu = ''; try { cu = execSync('git show 790a840:apps-script/Code.gs', { cwd: __dirname + '/..', maxBuffer: 1e8 }).toString('utf8'); } catch (e) { }
+  ok(cu.length > 1000 && /function hopTrangThai_/.test(cu), 'F-TH: đọc được Code.gs bản gốc 790a840 để so dash_');
+  const ctx2 = {}; ['console', 'Date', 'Math', 'JSON', 'Object', 'Number', 'String', 'Array', 'isFinite', 'isNaN', 'Intl', 'RegExp', 'Utilities', 'CacheService', 'LockService', 'PropertiesService', 'SpreadsheetApp', 'Session', 'HtmlService'].forEach(k => { ctx2[k] = ctx[k]; });
+  vm.createContext(ctx2); vm.runInContext(cu, ctx2); ctx2.now_ = (...a) => ctx.now_(...a);
+  const memo2 = () => { ctx2.memoClear_(); ctx.memoClear_(); };
+  const nk0 = sh('NhatKy').rows.length, lg0 = sh('LogHeThong').rows.length;
+  let n = 0;
+  const ap = (ngay, ca, buoc, hop, extra) => { n++; ctx.append_('NhatKy', Object.assign({ ID: 'TH1T' + n, ThoiGian: ngay + ' 0' + (n % 10) + ':00:00', Ngay: ngay, Ca: ca, Nhom: '', Buoc: buoc, MaHop: hop, SoHoSo: 0, SoTrang: 0, SoTo: 0, TrangLoi: 0, HetHop: false, NguoiNhap: 'TT1', Loai: 'THƯỜNG', Huy: false, ThanhVien: 'TT1' }, extra || {})); };
+  const xong = { HetHop: true, SoHoSo: 2, SoTrang: 20, SoTo: 10 };
+  const E1 = '2026-10-20', E2 = '2026-10-21';
+  // Q1: nhận + Tách xong + trả (OCR dở) = Đủ · Q2: Tách xong, trả, KHÔNG nhận = Đã trả thiếu nhận · Q3: nhận + Tách xong, chưa trả · Q4: Tách xong, không nhận, chưa trả
+  // Q5: nhận + trả khi chưa Tách · Q6: nhận, đang Scan · Q7: nhận, chưa làm · Q8: nhóm nhận + Tách xong, không có NHAN
+  ap(E1, 'Sáng', 'NHAN', 'Q1', { GhiChu: 'Biên bản 12' }); ap(E1, 'Sáng', 'TACH', 'Q1', xong); ap(E2, 'Chiều', 'TRA', 'Q1', { GhiChu: 'Ông Bình nhận TTLT', NguoiNhap: 'A1' });
+  ap(E1, 'Sáng', 'TACH', 'Q2', xong); ap(E2, 'Chiều', 'TRA', 'Q2');
+  ap(E1, 'Sáng', 'NHAN', 'Q3'); ap(E1, 'Sáng', 'TACH', 'Q3', xong);
+  ap(E1, 'Sáng', 'TACH', 'Q4', xong);
+  ap(E1, 'Sáng', 'NHAN', 'Q5'); ap(E2, 'Chiều', 'TRA', 'Q5');
+  ap(E1, 'Sáng', 'NHAN', 'Q6'); ap(E1, 'Sáng', 'SCAN', 'Q6', { SoHoSo: 1, SoTrang: 3 });
+  ap(E1, 'Sáng', 'NHAN', 'Q7');
+  ap(E1, 'Sáng', 'NHAN_NHOM', 'Q8', { Nhom: '1' }); ap(E1, 'Sáng', 'TACH', 'Q8', xong);
+  ap(E1, 'Sáng', 'NHAN', 'TN-1', { Loai: 'THỬ NGHIỆM' }); ap(E1, 'Sáng', 'TACH', 'TN-2', Object.assign({ Loai: 'THỬ NGHIỆM' }, xong));
+  memo2();
+  const gui = (tk, p) => api(tk, 'doiSoatHop', p || {});
+  const r = gui(tAdmin, { den: E2 }), tt = {}; (r.data ? r.data.hop : []).forEach(h => { tt[h.ma] = h.tt; });
+  const mong = { Q1: 'DU', Q2: 'DA_TRA', Q3: 'XONG_CHUA_TRA', Q4: 'THIEU_NHAN', Q5: 'TRA_SOM', Q6: 'DANG_LAM', Q7: 'NHAN_CHUA_LAM', Q8: 'THIEU_NHAN' };
+  ok(r.ok && JSON.stringify(Object.keys(mong).map(k => tt[k])) === JSON.stringify(Object.values(mong)), 'F-TH-01: 6 nhánh trạng thái đúng thứ tự (Đủ khi OCR chưa xong; Đã trả thiếu nhận; Tách xong chưa trả; Thiếu nhận; Trả sớm; đang làm; chưa làm)', tt);
+  const q = k => r.data.hop.find(h => h.ma === k);
+  ok(q('Q1').ocr.xong === false && q('Q1').ocr.to === 0, 'F-TH-01: cột OCR vẫn có (chỉ để xem), không tính vào trạng thái');
+  ok(q('Q1').nhan.ngay === E1 && q('Q1').nhan.ca === 'Sáng' && q('Q1').nhan.nguoi && q('Q1').nhan.ghiChu === 'Biên bản 12' && q('Q1').tra.ngay === E2 && q('Q1').tra.ca === 'Chiều' && q('Q1').tra.nguoi && q('Q1').tra.ghiChu === 'Ông Bình nhận TTLT', 'F-TH-01: nhan và tra cùng dạng {ngày, ca, người, ghi chú}', [q('Q1').nhan, q('Q1').tra]);
+  ok(q('Q1').nhan.nguoi !== 'TT1' && q('Q1').tra.nguoi !== 'A1' && q('Q2').tra.ghiChu === '', 'F-TH-01: người hiện bằng họ tên (không phải mã HRM); không có ghi chú = chuỗi rỗng');
+  ok(!JSON.stringify(r.data).match(/"(k|tg)":/), 'F-TH-01: không lộ khóa nội bộ k/tg');
+  ok(!r.data.hop.some(h => /^TN-/.test(h.ma)), 'F-TH-01: hộp THỬ NGHIỆM không vào đối soát');
+  ok(['DU', 'NHAN_CHUA_LAM', 'DANG_LAM', 'XONG_CHUA_TRA', 'THIEU_NHAN', 'TRA_SOM', 'DA_TRA'].every(k => r.data.dem[k] !== undefined) && Object.keys(r.data.dem).length === 8, 'F-TH-01: đủ 7 mã trạng thái (giữ mã cũ, thêm DA_TRA)');
+  const dem = r.data.dem; ok(dem.tong === r.data.hop.length && Object.keys(dem).filter(k => k !== 'tong').reduce((a, k) => a + dem[k], 0) === dem.tong, 'F-TH-01: bộ đếm theo trạng thái cộng lại = tổng', dem);
+  // dash_ không đổi dòng nào
+  let giong = true, sai = ''; const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
+  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (JSON.stringify(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
+  ok(giong && ngays.length >= 3, 'F-TH: dash_ (mọi ngày, có/không gomThu) GIỐNG HỆT bản gốc 790a840', [sai, ngays.length]);
+  // F-TH-02: gợi ý
+  const goiY = b => { memo2(); const x = api(tTT, 'hopGoiY', { buoc: b }); return x.ok ? x.data : x.err; };
+  const gTra = goiY('TRA'), gNhan = goiY('NHAN');
+  ok(['Q3', 'Q4', 'Q8'].every(x => gTra.indexOf(x) >= 0) && ['Q1', 'Q2', 'Q5', 'Q6', 'Q7'].every(x => gTra.indexOf(x) < 0) && !gTra.some(x => /^TN-/.test(x)), 'F-TH-02: gợi ý Trả = hộp Tách xong, chưa Trả (kể cả hộp chưa có Nhận), bỏ THỬ NGHIỆM', gTra);
+  ok(['Q2', 'Q4', 'Q8'].every(x => gNhan.indexOf(x) >= 0) && ['Q1', 'Q3', 'Q5', 'Q6', 'Q7'].every(x => gNhan.indexOf(x) < 0) && !gNhan.some(x => /^TN-/.test(x)), 'F-TH-02: gợi ý Nhận = hộp có bản ghi còn hiệu lực, chưa có Nhận từ TTLT, bỏ THỬ NGHIỆM', gNhan);
+  memo2();
+  ok(['SCAN', 'TACH', 'OCR', 'NHAN_NHOM'].every(b => JSON.stringify(ctx2.hopGoiY_({}, { buoc: b })) === JSON.stringify(ctx.hopGoiY_({}, { buoc: b }))), 'F-TH-02: gợi ý Scan, Tách, OCR, Nhận nhóm giữ nguyên như bản gốc');
+  // F-TH-03: ghi bổ sung Nhận / Trả theo ngày/ca (gọi ghi_ sẵn có)
+  const ghiBS = (tk, p) => { memo2(); return api(tk, 'ghi', Object.assign({ boSung: true }, p)); };
+  const nhom = ghiBS(tTT, { buoc: 'NHAN', ngay: E1, ca: 'Sáng', hop: 'Q4 Q8', ghiChu: 'Bổ sung từ Đối soát' });
+  ok(nhom.ok && nhom.data.added === 2, 'F-TH-03: Quản lý ghi Nhận bổ sung 2 hộp theo ngày/ca đã chọn', nhom);
+  memo2(); const r2 = gui(tAdmin, { den: E2 }); const q2 = k => r2.data.hop.find(h => h.ma === k);
+  ok(q2('Q4').nhan.ngay === E1 && q2('Q4').nhan.ca === 'Sáng' && q2('Q4').nhan.ghiChu === 'Bổ sung từ Đối soát' && q2('Q4').tt === 'XONG_CHUA_TRA' && q2('Q8').tt === 'XONG_CHUA_TRA', 'F-TH-03: sau khi ghi Nhận bổ sung, cột Nhận đúng ngày/ca/ghi chú và hộp chuyển sang "Tách xong, chưa Trả"');
+  const nk = sh('NhatKy').rows.slice(-2).map(x => [x[5], x[15], x[2], x[3]].join('|')); ok(nk.join() === 'NHAN|BỔ SUNG|' + E1 + '|Sáng,NHAN|BỔ SUNG|' + E1 + '|Sáng', 'F-TH-03: dòng ghi Buoc=NHAN, Loai=BỔ SUNG, đúng ngày/ca', nk);
+  const tra = ghiBS(tTT, { buoc: 'TRA', ngay: E2, ca: 'Chiều', hop: 'Q3 Q4', ghiChu: 'Biên bản 9' });
+  ok(tra.ok && tra.data.added === 2, 'F-TH-03: ghi Trả bổ sung 2 hộp (Tách xong, chưa Trả)', tra);
+  memo2(); const r3 = gui(tAdmin, { den: E2 }); ok(r3.data.hop.find(h => h.ma === 'Q3').tt === 'DU' && r3.data.hop.find(h => h.ma === 'Q4').tt === 'DU' && r3.data.hop.find(h => h.ma === 'Q3').tra.ghiChu === 'Biên bản 9', 'F-TH-03: sau khi ghi Trả, hai hộp lên "Đủ", cột Trả có ghi chú');
+  const lai = ghiBS(tTT, { buoc: 'TRA', ngay: E2, ca: 'Chiều', hop: 'Q3' });
+  ok(lai.ok && lai.data.added === 0 && /đã ghi nhận trước đó/.test(lai.data.warnings.join()), 'F-TH-03: Trả lần hai bị bỏ qua có cảnh báo (giữ như cũ)', lai);
+  const som = ghiBS(tTT, { buoc: 'TRA', ngay: E2, ca: 'Chiều', hop: 'Q6' });
+  ok(som.ok && som.data.added === 0 && /chưa Tách file xong/.test(som.data.warnings.join()), 'F-TH-03: Trả hộp chưa Tách xong bị bỏ qua có cảnh báo', som);
+  ok(!ghiBS(tLD, { buoc: 'NHAN', ngay: E1, ca: 'Sáng', hop: 'Q7' }).ok, 'F-TH-03: Lãnh đạo ghi bị chặn');
+  ok(!ghiBS(tA, { buoc: 'NHAN', ngay: E1, ca: 'Sáng', hop: 'Q7' }).ok && !ghiBS(tA, { buoc: 'TRA', ngay: E1, ca: 'Sáng', hop: 'Q7' }).ok, 'F-TH-03: tổ viên không ghi được Nhận/Trả (chỉ Quản lý)');
+  ok(!ghiBS(tTT, { buoc: 'NHAN', ngay: '2999-01-01', ca: 'Sáng', hop: 'Q7' }).ok, 'F-TH-03: ngày tương lai bị từ chối');
+  const ad = ghiBS(tAdmin, { buoc: 'NHAN', ngay: E2, ca: 'Tối', hop: 'Q7B' }); ok(ad.ok && ad.data.added === 1, 'F-TH-03: ADMIN cũng ghi được Nhận bổ sung');
+  const maxP = ghiBS(tTT, { buoc: 'NHAN', ngay: E1, ca: 'Sáng', hop: Array.from({ length: 201 }, (x, i) => 'ZZ' + i).join(' ') }); ok(!maxP.ok && /200/.test(maxP.err), 'F-TH-03: tối đa 200 mã mỗi lần', maxP.err);
+  sh('NhatKy').rows.length = nk0; sh('LogHeThong').rows.length = lg0; memo2();
 }
 
 // ===== T2: đo thời gian (chỉ ADMIN bật, trả kèm) + bảng số lần đọc/ghi từng action =====
