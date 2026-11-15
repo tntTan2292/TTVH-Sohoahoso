@@ -38,6 +38,6 @@
 | 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 32 | Phân nhóm sau khi đã nhận hộp thì hộp nhận tự vào nhóm (hết phải chuẩn hóa tay hằng ngày) | F-BC-21 | 🟡 Opus ĐẠT, đã lên link chính (phiên bản 31, 12/11/2026 13:49), chủ dự án đã tự chạy chuanHoaNhom cho dữ liệu cũ 10–11/11 (12/11), chờ chủ dự án thử ca mới |
-| 33 | Đối soát hộp có 2 cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu Nhận/Trả tô đỏ, "Đủ" không cần OCR | F-TH-01 | 🟡 Sonnet xong trong mã (15/11), chờ Antigravity làm đẹp + Opus review + chủ dự án đẩy tay |
-| 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), cảnh báo đỏ số hộp chưa Nhận/chưa Trả | F-TH-02 | 🟡 Sonnet xong trong mã (15/11), chờ Antigravity làm đẹp + Opus review + chủ dự án đẩy tay |
-| 35 | Quản lý tự ghi bổ sung Nhận/Trả cho hộp cũ ngay trong Đối soát (tick hộp, chọn ngày/ca) | F-TH-03 | 🟡 Sonnet xong trong mã (15/11), chờ Antigravity làm đẹp + Opus review + chủ dự án đẩy tay |
+| 33 | Đối soát hộp có 2 cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu Nhận/Trả tô đỏ, "Đủ" không cần OCR | F-TH-01 | 🟢 Opus review ĐẠT (15/11), chờ chủ dự án đẩy tay Code.gs + Index.html (206f0ea) và thử |
+| 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), cảnh báo đỏ số hộp chưa Nhận/chưa Trả | F-TH-02 | 🟢 Opus review ĐẠT (15/11), chờ chủ dự án đẩy tay Code.gs + Index.html (206f0ea) và thử |
+| 35 | Quản lý tự ghi bổ sung Nhận/Trả cho hộp cũ ngay trong Đối soát (tick hộp, chọn ngày/ca) | F-TH-03 | 🟢 Opus review ĐẠT (15/11), chờ chủ dự án đẩy tay Code.gs + Index.html (206f0ea) và thử |
