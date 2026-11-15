@@ -2105,6 +2105,9 @@ tbody tr:last-child td { border-bottom: none; }
 #dsCsv:hover { filter: brightness(0.95); }
 /* F-TH-01: dòng đối soát thiếu Nhận/Trả — nền đỏ (một class, chỉnh màu ở đây) */
 .ds-do td { background: var(--bad-bg); }
+/* F-TH-03: thanh nút ghi Nhận/Trả bổ sung ở Đối soát (Quản lý) */
+.th-bar { margin: 6px 0 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.th-canhbao { margin-bottom: 12px; }
 .ds-ghichu { display: block; font-size: 11px; color: var(--mut); margin-top: 2px; }
 
 /* C0: Modal chi tiết ô số liệu (#modalCT) */
@@ -2677,6 +2680,20 @@ button.sm.bad:hover, button.bad:hover {
   </div>
 </div>
 
+<div id="modalTH" class="modal-overlay hide" role="dialog" aria-modal="true" aria-labelledby="thdTieuDe">
+  <div class="modal-content xn-box">
+    <div class="modal-header"><h2 style="margin:0;" id="thdTieuDe">Ghi Nhận từ TTLT</h2></div>
+    <div class="modal-body">
+      <div id="thdNoiDung" class="xn-nd"></div>
+      <div class="row" style="margin-top:12px;"><div><label for="thdNgay">Ngày</label><input type="date" id="thdNgay"></div><div><label for="thdCa">Ca</label><select id="thdCa"></select></div></div>
+      <div id="thdNhomBox" class="hide" style="margin-top:10px;"><label class="check-label"><input type="checkbox" id="thdTheoNhom"> <span>Theo ngày/ca nhóm nhận của từng hộp (thiếu thì lấy ngày làm đầu tiên, ca đã chọn)</span></label></div>
+      <label for="thdGhiChu" style="margin-top:10px;">Ghi chú</label><input id="thdGhiChu" type="text" autocomplete="off">
+      <div id="thdLoi" class="msg err hide" style="margin-top:8px;"></div>
+      <div class="xn-nut"><button type="button" class="sm" id="thdHuy">Hủy</button> <button type="button" class="pri sm" id="thdDongY">Ghi</button></div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 var TOKEN = null, ME = null, STEP = null, CHARTS = {}, ALL_NS = [];
@@ -2700,6 +2717,7 @@ function tokenDoc() {
 }
 function toLogin() {
   if (XN_DANG) XN_DANG(null);      // XN1: đóng hộp xác nhận đang mở
+  if (TH_DANG) TH_DANG(null);      // F-TH-03: đóng hộp chọn ngày/ca đang mở
   TOKEN = null; ME = null; STEP = null; KP = false; tokenLuu(null);
   if ($('vApp')) $('vApp').classList.add('hide');
   if ($('vPin')) $('vPin').classList.add('hide');
@@ -4571,7 +4589,7 @@ function dashTabDoiSoat() {
   $('dBody').innerHTML = '<div class="card noprint"><h3>🧾 Đối soát hộp</h3><div class="muted" style="margin-bottom:10px;font-size:12.5px;">Mỗi hộp một dòng, trạng thái tính tới hết ngày chọn. Mã hộp hiện dạng chuẩn; hộp ghi nhiều kiểu mã được gộp thành một.</div>' +
     '<div class="row"><div><label>Nhận từ ngày</label><input type="date" id="dsTu" value="' + esc(S.tu) + '"></div><div><label>Đến hết ngày</label><input type="date" id="dsDen" value="' + esc(S.den) + '" max="' + ME.ngay + '"></div>' +
     '<div><label>Tìm mã hộp</label><input type="text" id="dsTim" value="' + esc(S.tim) + '" placeholder="VD: 2.1.87" autocomplete="off"></div>' +
-    '<div style="align-self:end"><button class="pri sm" type="button" id="dsXem" style="width:100%;">Xem</button></div></div></div><div id="dsBody"></div>';
+    '<div style="align-self:end"><button class="pri sm" type="button" id="dsXem" style="width:100%;">Xem</button></div></div></div><div id="dsMsg"></div><div id="dsBody"></div>';
   $('dsXem').onclick = function () { S.tu = $('dsTu').value; S.den = $('dsDen').value; S.tim = $('dsTim').value; S.data = null; dashDsTai(); };
   if (S.data) dashDsBang(); else dashDsTai();
 }
@@ -4587,17 +4605,106 @@ function dashDsTai() {
 function dsLoc() { var S = DASH.ds, r = S.data; return r ? r.hop.filter(function (x) { return !S.tt || x.tt === S.tt; }) : []; }
 function dashDsBang() {
   var S = DASH.ds, r = S.data; if (!r || !$('dsBody')) return;
-  var ds = dsLoc();
+  var ds = dsLoc(), qly = !!(ME && ME.isAdmin), cot = qly ? 9 : 8;
   var h = '<div class="card"><div class="ds-dem noprint">' + DS_TT.map(function (t) {
     return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] ? r.dem[t[0]] : r.dem.tong) + ')</button>';
   }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
     '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
-    '<div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận từ TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả cho TTLT</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
-      return '<tr' + (DS_DO[x.tt] ? ' class="ds-do"' : '') + '><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận từ TTLT">' + dsNhanTra(x.nhan) + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả cho TTLT">' + dsNhanTra(x.tra) + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
-    }).join('') || '<tr><td colspan="8" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
+    (qly ? '<div class="th-bar noprint" id="dsThBar"></div>' : '') +
+    '<div class="scroll"><table class="table-card-mobile"><tr>' + (qly ? '<th class="noprint"><input type="checkbox" id="dsChonHet" title="Chọn tất cả dòng cần ghi Nhận/Trả"></th>' : '') + '<th>Mã hộp</th><th>Nhận từ TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả cho TTLT</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
+      var can = thCan(x);
+      return '<tr' + (DS_DO[x.tt] ? ' class="ds-do"' : '') + '>' + (qly ? '<td class="noprint" data-label="Chọn">' + ((can.nhan || can.tra) ? '<input type="checkbox" data-thc="' + esc(x.khoa) + '"' + (TH_CHON[x.khoa] ? ' checked' : '') + '>' : '') + '</td>' : '') + '<td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận từ TTLT">' + dsNhanTra(x.nhan) + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả cho TTLT">' + dsNhanTra(x.tra) + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
+    }).join('') || '<tr><td colspan="' + cot + '" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
   $('dsBody').innerHTML = h;
   Array.prototype.forEach.call($('dsBody').querySelectorAll('[data-dtt]'), function (b) { b.onclick = function () { S.tt = b.getAttribute('data-dtt'); dashDsBang(); }; });
   $('dsCsv').onclick = dsCsv;
+  if (qly) thBang(ds);
+}
+/* ---------- F-TH-03: Quản lý ghi Nhận từ TTLT / Trả cho TTLT bổ sung ngay trong Đối soát ----------
+   Tick hộp (dòng cần Nhận: chưa có Nhận từ TTLT; dòng cần Trả: Tách xong, chưa Trả) → nút "Ghi Nhận từ TTLT" / "Ghi Trả cho TTLT" → hộp chọn ngày + ca.
+   Dùng action ghi sẵn có: ngày hôm nay + ca đang mở → báo thường; khác → bổ sung (boSung). Mỗi lần gọi ≤ 200 mã, gọi lần lượt (một lệnh ghi một lúc). */
+var TH_CHON = {};      // khóa mã hộp → true (hộp đang tick)
+var TH_DANG = null;    // hàm đóng hộp chọn ngày/ca đang mở
+function thCan(x) { return { nhan: !x.nhan, tra: !!x.tach.xong && !x.tra }; }
+function thChon(buoc) {      // các dòng đang tick phù hợp với việc buoc ('NHAN' | 'TRA')
+  return dsLoc().filter(function (x) { var c = thCan(x); return TH_CHON[x.khoa] && (buoc === 'NHAN' ? c.nhan : c.tra); });
+}
+function thBang(ds) {
+  var bar = $('dsThBar'); if (!bar) return;
+  var n = thChon('NHAN').length, m = thChon('TRA').length;
+  bar.innerHTML = '<span class="muted">Tick hộp ở cột đầu để ghi bổ sung:</span> <button type="button" class="sm" id="thGhiNhan"' + (n ? '' : ' disabled') + '>Ghi Nhận từ TTLT (' + n + ')</button> <button type="button" class="sm" id="thGhiTra"' + (m ? '' : ' disabled') + '>Ghi Trả cho TTLT (' + m + ')</button>';
+  $('thGhiNhan').onclick = function () { thGhi('NHAN'); };
+  $('thGhiTra').onclick = function () { thGhi('TRA'); };
+  var cs = Array.prototype.slice.call($('dsBody').querySelectorAll('[data-thc]'));
+  cs.forEach(function (c) { c.onchange = function () { if (c.checked) TH_CHON[c.getAttribute('data-thc')] = true; else delete TH_CHON[c.getAttribute('data-thc')]; thBang(ds); }; });
+  var het = $('dsChonHet');
+  if (het) {
+    het.checked = cs.length > 0 && cs.every(function (c) { return c.checked; });
+    het.onchange = function () { cs.forEach(function (c) { c.checked = het.checked; if (het.checked) TH_CHON[c.getAttribute('data-thc')] = true; else delete TH_CHON[c.getAttribute('data-thc')]; }); thBang(ds); };
+  }
+}
+// Hộp chọn ngày + ca. Trả Promise: { ngay, ca, theoNhom, ghiChu } hoặc null (Hủy/Esc).
+function thHoi(buoc, soHop) {
+  return new Promise(function (resolve) {
+    if (TH_DANG || XN_DANG) { resolve(null); return; }
+    var ov = $('modalTH'), xong = false;
+    var dong = function (kq) {
+      if (xong) return; xong = true; TH_DANG = null;
+      document.removeEventListener('keydown', phim, true);
+      ov.classList.add('hide'); $('thdDongY').onclick = null; $('thdHuy').onclick = null;
+      resolve(kq);
+    };
+    var dongY = function () {
+      var ng = $('thdNgay').value, ca = $('thdCa').value;
+      if (!ng || ng > ME.ngay) { $('thdLoi').textContent = 'Chọn ngày (không quá hôm nay)'; $('thdLoi').classList.remove('hide'); return; }
+      if (!ca) { $('thdLoi').textContent = 'Chọn ca'; $('thdLoi').classList.remove('hide'); return; }
+      dong({ ngay: ng, ca: ca, theoNhom: buoc === 'NHAN' && $('thdTheoNhom').checked, ghiChu: $('thdGhiChu').value });
+    };
+    var phim = function (e) { var k = e.key || ''; if (k === 'Escape' || e.keyCode === 27) { e.preventDefault(); dong(null); } };
+    TH_DANG = dong;
+    $('thdTieuDe').textContent = buoc === 'NHAN' ? 'Ghi Nhận từ TTLT' : 'Ghi Trả cho TTLT';
+    $('thdNoiDung').textContent = 'Ghi ' + soHop + ' hộp "' + (buoc === 'NHAN' ? 'Nhận từ TT Lưu trữ' : 'Trả hộp') + '". Chọn ngày và ca thực tế của việc ' + (buoc === 'NHAN' ? 'nhận' : 'trả') + ' (khác hôm nay/ca đang mở thì ghi là bổ sung).';
+    $('thdNgay').max = ME.ngay; $('thdNgay').value = ME.ngay;
+    $('thdCa').innerHTML = CA_NAME.map(function (c) { return '<option' + (c === CUR_CA ? ' selected' : '') + '>' + c + '</option>'; }).join('');
+    $('thdNhomBox').classList.toggle('hide', buoc !== 'NHAN'); $('thdTheoNhom').checked = false;
+    $('thdGhiChu').value = ''; $('thdGhiChu').placeholder = buoc === 'TRA' ? 'Số biên bản / người nhận bên TTLT' : 'Ghi chú (không bắt buộc)';
+    $('thdLoi').classList.add('hide');
+    $('thdDongY').onclick = dongY; $('thdHuy').onclick = function () { dong(null); };
+    document.addEventListener('keydown', phim, true);
+    ov.classList.remove('hide');
+    try { $('thdDongY').focus(); } catch (e) { }
+  });
+}
+function thGhi(buoc) {
+  var ds = thChon(buoc);
+  if (!ds.length) { msg('dsMsg', 'Chưa tick hộp nào phù hợp (Nhận: hộp thiếu Nhận từ TTLT · Trả: hộp Tách xong chưa Trả)', 'warn'); return; }
+  thHoi(buoc, ds.length).then(function (kq) {
+    if (!kq) return;
+    var nhom = {};      // 'ngày|ca' → danh sách mã
+    ds.forEach(function (x) {
+      var ng = kq.ngay, ca = kq.ca;
+      if (kq.theoNhom) { if (x.nhanNhom) { ng = x.nhanNhom.ngay; ca = x.nhanNhom.ca; } else if (x.ngayMoc && x.ngayMoc <= ME.ngay) ng = x.ngayMoc; }      // thiếu ngày/ca nhóm nhận → ngày làm đầu tiên, ca đã chọn
+      var k = ng + '|' + ca; (nhom[k] = nhom[k] || { ngay: ng, ca: ca, ma: [] }).ma.push(x.ma);
+    });
+    var viec = [];
+    Object.keys(nhom).sort().forEach(function (k) { var g = nhom[k]; for (var i = 0; i < g.ma.length; i += 200) viec.push({ ngay: g.ngay, ca: g.ca, ma: g.ma.slice(i, i + 200) }); });
+    var them = 0, bo = 0, canhBao = [], loi = [], p = Promise.resolve();
+    msg('dsMsg', 'Đang ghi ' + ds.length + ' hộp…', 'warn');
+    viec.forEach(function (v) {
+      p = p.then(function () {
+        var bs = !(v.ngay === ME.ngay && v.ca === CUR_CA && CUR_CA);
+        return call('ghi', { buoc: buoc, hop: v.ma.join('\n'), ca: v.ca, ngay: v.ngay, boSung: bs, ghiChu: kq.ghiChu }).then(function (r) {
+          them += r.added; bo += v.ma.length - r.added;
+          (r.warnings || []).forEach(function (w) { if (canhBao.indexOf(w) < 0) canhBao.push(w); });
+        }, function (e) { loi.push(String(e)); bo += v.ma.length; });
+      });
+    });
+    return p.then(function () {
+      TH_CHON = {}; DASH.ds.data = null; dashDsTai();
+      var t = 'Đã ghi ' + them + ' hộp ' + (buoc === 'NHAN' ? 'Nhận từ TTLT' : 'Trả cho TTLT') + (bo ? ', bỏ qua ' + bo : '') + (loi.length ? '. Lỗi: ' + loi.slice(0, 2).join('; ') : '') + (canhBao.length ? '. Lưu ý: ' + canhBao.slice(0, 4).join('; ') + (canhBao.length > 4 ? '…' : '') : '');
+      msg('dsMsg', t, (loi.length || bo) ? 'warn' : 'ok');
+    });
+  });
 }
 function csvO(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
 function dsCsv() {

@@ -2,6 +2,11 @@
 
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
+## 2026-11-15
+- F-TH-01 · Đối soát hộp: hai cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu tô đỏ (`.ds-do`), trạng thái đổi theo chủ dự án (Đủ không cần OCR, thêm `DA_TRA`), CSV đủ ngày/ca/người/ghi chú · `8eba04f`
+- F-TH-02 · `hopGoiY` thêm nhánh `NHAN`, `TRA` = hộp Tách xong chưa Trả; nút "Điền tất cả hộp gợi ý"; thanh cảnh báo đỏ ở Quản lý ca · `3db8ef3`
+- F-TH-03 · Quản lý ghi Nhận/Trả bổ sung ngay trong Đối soát (tick hộp, hộp chọn ngày/ca, gom theo ngày/ca nhóm nhận), gọi `ghi` sẵn có · (commit F-TH-03)
+
 ## 2026-11-12
 - F-DB-06b · (làm lại theo delta Opus sau review KHÔNG ĐẠT `3624e46`) Bảng theo ca: mọi khổ dùng bố cục một kiểu — tên + số một hàng, thanh màu một hàng riêng bên dưới, "nhận N hộp" của cá nhân xuống dưới số; thanh cùng điểm đầu và độ rộng trong một thẻ; tên một dòng, chỉ "…" khi thẻ hẹp hơn tên; media ≤480px chỉ còn `.ca-grid` 1 cột. Chỉ CSS `Index.html`, mock 581/0, giao diện 667/0, đo trên thẻ mẫu 380px và 316px (không cắt tên, không tràn). Bản lưới tự co giãn trước đó bị thay thế: bỏ số cố định; `.nh-block` thành lưới, cột tên tự rộng bằng tên dài nhất, thanh màu lấy phần còn lại, chỉ cắt "…" khi thẻ hẹp hơn chính tên (thay cho 140px của `8f77435`). Chỉ CSS/HTML `Index.html`, mock 581/0, giao diện 667/0, chụp thẻ mẫu trên trình duyệt. Phiếu `docs/prompts/PROMPT_OPUS_REVIEW_FDB06B.md`, chờ Opus review.
 - **Phiên bản 32** (commit `8b0880f`, F-DB-06 sửa bảng theo ca): chủ dự án tự đẩy tay chỉ `Index.html` lên link chính, thay phiên bản 31.
