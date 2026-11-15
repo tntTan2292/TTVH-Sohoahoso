@@ -1527,6 +1527,10 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   let giong = true, sai = ''; const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
   ngays.forEach(d => [true, false].forEach(g => { memo2(); if (JSON.stringify(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
   ok(giong && ngays.length >= 3, 'F-TH: dash_ (mọi ngày, có/không gomThu) GIỐNG HỆT bản gốc 790a840', [sai, ngays.length]);
+  // D1: tach.ngayXong = ngày Tách xong SỚM NHẤT; batDau = ngày bản ghi đầu tiên của hộp
+  ap('2026-10-19', 'Tối', 'TACH', 'Q9', { SoHoSo: 1, SoTrang: 2 }); ap('2026-10-21', 'Sáng', 'TACH', 'Q9', xong); ap('2026-10-20', 'Sáng', 'TACH', 'Q9', xong);
+  memo2(); const rD = gui(tAdmin, { den: E2 }), q9 = rD.data.hop.find(h => h.ma === 'Q9'), q1d = rD.data.hop.find(h => h.ma === 'Q1');
+  ok(q9.tach.ngayXong === E1 && q9.batDau === '2026-10-19' && q9.tach.xong && q1d.tach.ngayXong === E1 && q1d.batDau === E1 && rD.data.hop.find(h => h.ma === 'Q7').tach.ngayXong === '', 'F-TH D1: tach.ngayXong = ngày Tách xong sớm nhất (bỏ bản ghi chưa xong hộp), batDau = ngày bản ghi đầu tiên; hộp chưa Tách xong → rỗng', [q9.tach, q9.batDau]);
   // F-TH-02: gợi ý
   const goiY = b => { memo2(); const x = api(tTT, 'hopGoiY', { buoc: b }); return x.ok ? x.data : x.err; };
   const gTra = goiY('TRA'), gNhan = goiY('NHAN');

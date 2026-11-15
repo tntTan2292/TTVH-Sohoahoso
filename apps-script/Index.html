@@ -3510,9 +3510,8 @@ function thQuanLy() {
     var n = (kq[0] || []).length, m = (kq[1] || []).length;
     if (!$('thQl') || (!n && !m)) return;
     $('thQl').innerHTML = '<div class="msg err th-canhbao"><span>⚠️ ' + (n ? '<b>' + n + '</b> hộp chưa có Nhận từ TTLT' : '') + (n && m ? ' · ' : '') + (m ? '<b>' + m + '</b> hộp Tách xong chưa Trả cho TTLT' : '') + '. Nhận từ TTLT và Trả cho TTLT là bắt buộc.</span> ' +
-      (n ? '<button type="button" class="sm" id="thNhan">Xem hộp thiếu Nhận</button> ' : '') + (m ? '<button type="button" class="sm" id="thTra">Xem hộp chưa Trả</button>' : '') + '</div>';
-    if ($('thNhan')) $('thNhan').onclick = function () { thMoDoiSoat('THIEU_NHAN'); };
-    if ($('thTra')) $('thTra').onclick = function () { thMoDoiSoat('XONG_CHUA_TRA'); };
+      '<button type="button" class="sm" id="thNhan">Xem hộp cần xử lý</button></div>';
+    if ($('thNhan')) $('thNhan').onclick = function () { thMoDoiSoat('CAN_XU_LY'); };
   }).catch(function () { });
 }
 function initQL() {
@@ -4577,7 +4576,7 @@ $('ctDong').onclick = closeCT; $('ctTim').oninput = ctVe;
 $('modalCT').onclick = function (e) { if (e.target === this) closeCT(); };
 
 /* ---------- H2: tab Đối soát hộp ---------- */
-var DS_TT = [['', 'Tất cả'], ['DU', 'Đủ'], ['NHAN_CHUA_LAM', 'Đã nhận chưa làm'], ['DANG_LAM', 'Đang làm dở'], ['XONG_CHUA_TRA', 'Tách xong, chưa Trả cho TTLT'], ['THIEU_NHAN', 'Thiếu Nhận từ TTLT'], ['DA_TRA', 'Đã trả, thiếu Nhận từ TTLT'], ['TRA_SOM', 'Trả khi chưa Tách xong']];
+var DS_TT = [['', 'Tất cả'], ['CAN_XU_LY', 'Cần xử lý'], ['DU', 'Đủ'], ['NHAN_CHUA_LAM', 'Đã nhận chưa làm'], ['DANG_LAM', 'Đang làm dở'], ['XONG_CHUA_TRA', 'Tách xong, chưa Trả cho TTLT'], ['THIEU_NHAN', 'Thiếu Nhận từ TTLT'], ['DA_TRA', 'Đã trả, thiếu Nhận từ TTLT'], ['TRA_SOM', 'Trả khi chưa Tách xong']];
 var DS_CHIP = { DU: 'ok', NHAN_CHUA_LAM: 'chip-mut', DANG_LAM: 'warn', XONG_CHUA_TRA: 'bad', THIEU_NHAN: 'bad', DA_TRA: 'bad', TRA_SOM: 'bad' };
 // F-TH-01: dòng thiếu Nhận/Trả (hoặc Trả sai) tô nền đỏ bằng MỘT class .ds-do (Antigravity chỉnh màu)
 var DS_DO = { TRA_SOM: 1, DA_TRA: 1, THIEU_NHAN: 1, XONG_CHUA_TRA: 1 };
@@ -4602,12 +4601,12 @@ function dashDsTai() {
     S.data = r; dashDsBang();
   }).catch(function (e) { if ($('dsBody')) $('dsBody').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });
 }
-function dsLoc() { var S = DASH.ds, r = S.data; return r ? r.hop.filter(function (x) { return !S.tt || x.tt === S.tt; }) : []; }
+function dsLoc() { var S = DASH.ds, r = S.data; return r ? r.hop.filter(function (x) { return !S.tt || (S.tt === 'CAN_XU_LY' ? !!DS_DO[x.tt] : x.tt === S.tt); }) : []; }      // D2: 'CAN_XU_LY' = mọi dòng DS_DO (lọc ở trình duyệt, không gửi máy chủ)
 function dashDsBang() {
   var S = DASH.ds, r = S.data; if (!r || !$('dsBody')) return;
   var ds = dsLoc(), qly = !!(ME && ME.isAdmin), cot = qly ? 9 : 8;
   var h = '<div class="card"><div class="ds-dem noprint">' + DS_TT.map(function (t) {
-    return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] ? r.dem[t[0]] : r.dem.tong) + ')</button>';
+    return '<button type="button" class="sm' + (S.tt === t[0] ? ' on' : '') + '" data-dtt="' + t[0] + '">' + t[1] + ' (' + nfi(t[0] === 'CAN_XU_LY' ? r.hop.filter(function (x) { return DS_DO[x.tt]; }).length : (t[0] ? r.dem[t[0]] : r.dem.tong)) + ')</button>';
   }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
     '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
     (qly ? '<div class="th-bar noprint" id="dsThBar"></div>' : '') +
@@ -4680,16 +4679,23 @@ function thGhi(buoc) {
   if (!ds.length) { msg('dsMsg', 'Chưa tick hộp nào phù hợp (Nhận: hộp thiếu Nhận từ TTLT · Trả: hộp Tách xong chưa Trả)', 'warn'); return; }
   thHoi(buoc, ds.length).then(function (kq) {
     if (!kq) return;
-    var nhom = {};      // 'ngày|ca' → danh sách mã
+    var nhom = {}, boQua = [];      // 'ngày|ca' → danh sách mã; boQua = hộp không gửi vì ngày vô lý (D1)
     ds.forEach(function (x) {
       var ng = kq.ngay, ca = kq.ca;
-      if (kq.theoNhom) { if (x.nhanNhom) { ng = x.nhanNhom.ngay; ca = x.nhanNhom.ca; } else if (x.ngayMoc && x.ngayMoc <= ME.ngay) ng = x.ngayMoc; }      // thiếu ngày/ca nhóm nhận → ngày làm đầu tiên, ca đã chọn
+      if (kq.theoNhom) {
+        if (x.nhanNhom) { ng = x.nhanNhom.ngay; ca = x.nhanNhom.ca; } else if (x.ngayMoc && x.ngayMoc <= ME.ngay) ng = x.ngayMoc;      // thiếu ngày/ca nhóm nhận → ngày làm đầu tiên, ca đã chọn
+        if (x.batDau && ng > x.batDau) { ng = x.batDau; ca = kq.ca; }      // D1: Nhận không muộn hơn ngày bản ghi đầu tiên của hộp
+      }
+      // D1: không ghi Trả trước ngày Tách xong, không ghi Nhận sau ngày bản ghi đầu tiên của hộp (Dashboard sẽ tính tồn/hộp nhận sai)
+      if (buoc === 'TRA' && x.tach && x.tach.ngayXong && ng < x.tach.ngayXong) { boQua.push(x.ma + ' (Trả trước ngày Tách xong ' + ngayNgan(x.tach.ngayXong) + ')'); return; }
+      if (buoc === 'NHAN' && x.batDau && ng > x.batDau) { boQua.push(x.ma + ' (Nhận sau ngày hộp bắt đầu làm ' + ngayNgan(x.batDau) + ')'); return; }
       var k = ng + '|' + ca; (nhom[k] = nhom[k] || { ngay: ng, ca: ca, ma: [] }).ma.push(x.ma);
     });
     var viec = [];
     Object.keys(nhom).sort().forEach(function (k) { var g = nhom[k]; for (var i = 0; i < g.ma.length; i += 200) viec.push({ ngay: g.ngay, ca: g.ca, ma: g.ma.slice(i, i + 200) }); });
     var them = 0, bo = 0, canhBao = [], loi = [], p = Promise.resolve();
-    msg('dsMsg', 'Đang ghi ' + ds.length + ' hộp…', 'warn');
+    if (!viec.length) { TH_CHON = {}; msg('dsMsg', 'Không ghi hộp nào: ' + boQua.slice(0, 6).join('; ') + (boQua.length > 6 ? '…(+' + (boQua.length - 6) + ')' : '') + '. Chọn ngày hợp lý hơn.', 'warn'); dashDsBang(); return; }
+    msg('dsMsg', 'Đang ghi ' + (ds.length - boQua.length) + ' hộp…', 'warn');
     viec.forEach(function (v) {
       p = p.then(function () {
         var bs = !(v.ngay === ME.ngay && v.ca === CUR_CA && CUR_CA);
@@ -4701,8 +4707,8 @@ function thGhi(buoc) {
     });
     return p.then(function () {
       TH_CHON = {}; DASH.ds.data = null; dashDsTai();
-      var t = 'Đã ghi ' + them + ' hộp ' + (buoc === 'NHAN' ? 'Nhận từ TTLT' : 'Trả cho TTLT') + (bo ? ', bỏ qua ' + bo : '') + (loi.length ? '. Lỗi: ' + loi.slice(0, 2).join('; ') : '') + (canhBao.length ? '. Lưu ý: ' + canhBao.slice(0, 4).join('; ') + (canhBao.length > 4 ? '…' : '') : '');
-      msg('dsMsg', t, (loi.length || bo) ? 'warn' : 'ok');
+      var t = 'Đã ghi ' + them + ' hộp ' + (buoc === 'NHAN' ? 'Nhận từ TTLT' : 'Trả cho TTLT') + (bo ? ', bỏ qua ' + bo : '') + (boQua.length ? '. KHÔNG gửi ' + boQua.length + ' hộp vì ngày vô lý: ' + boQua.slice(0, 6).join('; ') + (boQua.length > 6 ? '…' : '') : '') + (loi.length ? '. Lỗi: ' + loi.slice(0, 2).join('; ') : '') + (canhBao.length ? '. Lưu ý: ' + canhBao.slice(0, 4).join('; ') + (canhBao.length > 4 ? '…' : '') : '');
+      msg('dsMsg', t, (loi.length || bo || boQua.length) ? 'warn' : 'ok');
     });
   });
 }

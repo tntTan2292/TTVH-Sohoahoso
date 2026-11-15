@@ -1761,7 +1761,7 @@ function hopHoSo_(rows) {
   rows.forEach(function (r) {
     if (!r.hop) return;
     const h = ho[r.hop] = ho[r.hop] || { khoa: r.hop, maGoc: [], nhan: null, nhanNhom: null, tra: null, lam: false,
-      scan: { to: 0, hs: 0, xong: false }, tach: { to: 0, hs: 0, xong: false }, ocr: { to: 0, hs: 0, xong: false }, batDau: '' };
+      scan: { to: 0, hs: 0, xong: false }, tach: { to: 0, hs: 0, xong: false, ngayXong: '' }, ocr: { to: 0, hs: 0, xong: false }, batDau: '' };
     if (r.ma && h.maGoc.indexOf(r.ma) < 0) h.maGoc.push(r.ma);
     if (!h.batDau || r.ngay < h.batDau) h.batDau = r.ngay;
     if (r.buoc === 'NHAN') { if (som(h.nhan, r)) h.nhan = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi, gc: r.gc }; }
@@ -1769,7 +1769,8 @@ function hopHoSo_(rows) {
     else if (r.buoc === 'TRA') { if (som(h.tra, r)) h.tra = { k: r.k, tg: r.tg, ngay: r.ngay, ca: r.ca, nguoi: r.nguoi, gc: r.gc }; }
     else if (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR') {
       const b = h[r.buoc.toLowerCase()];
-      h.lam = true; b.to += r.dv; b.hs += r.hs; if (r.het) b.xong = true;
+      h.lam = true; b.to += r.dv; b.hs += r.hs;
+      if (r.het) { b.xong = true; if (r.buoc === 'TACH' && (!b.ngayXong || r.ngay < b.ngayXong)) b.ngayXong = r.ngay; }      // D1: ngày Tách xong SỚM NHẤT (chặn ghi Trả trước ngày này)
     }
   });
   return ho;
@@ -1794,7 +1795,7 @@ function hopBanGhi_(h, ns) {      // một dòng cho giao diện (không lộ kh
   return { ma: maHopChuan_(rep), khoa: h.khoa, tt: tt, ttText: HOP_TT_[tt],
     nhan: h.nhan ? { ngay: h.nhan.ngay, ca: h.nhan.ca, nguoi: ten(h.nhan.nguoi), ghiChu: h.nhan.gc || '' } : null,
     nhanNhom: h.nhanNhom ? { ngay: h.nhanNhom.ngay, ca: h.nhanNhom.ca, nhom: h.nhanNhom.nhom } : null,
-    scan: { to: h.scan.to, xong: h.scan.xong }, tach: { to: h.tach.to, xong: h.tach.xong }, ocr: { to: h.ocr.to, xong: h.ocr.xong },
+    scan: { to: h.scan.to, xong: h.scan.xong }, tach: { to: h.tach.to, xong: h.tach.xong, ngayXong: h.tach.ngayXong }, ocr: { to: h.ocr.to, xong: h.ocr.xong }, batDau: h.batDau,
     tra: h.tra ? { ngay: h.tra.ngay, ca: h.tra.ca, nguoi: ten(h.tra.nguoi), ghiChu: h.tra.gc || '' } : null, ngayMoc: h.nhan ? h.nhan.ngay : h.batDau, ghiChu: ghiChu };
 }
 function hopSapXep_(a, b) { return a.ngayMoc.localeCompare(b.ngayMoc) || a.ma.localeCompare(b.ma, 'vi', { numeric: true }); }
