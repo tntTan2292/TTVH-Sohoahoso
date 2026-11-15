@@ -6,6 +6,8 @@
 
 ---
 
+> **15/11/2026 (Opus): Chủ dự án đã trả lời Q-A…Q-E → phương án Trả hộp CHỐT, ghi ở `docs/DE_XUAT_TRA_HOP.md` mục 9.** Nhận/Trả là bắt buộc: thiếu thì cảnh báo đỏ ở Quản lý ca và tô đỏ dòng ở Đối soát; Đối soát có 2 cột NHẬN TỪ TTLT / TRẢ CHO TTLT; "Đủ" không cần OCR (Tách xong là trả được); tick "Xong hộp" ở Tách = tổ viên đã giao hộp cho Quản lý (không thêm bước `GIAO`); **bỏ tập lệnh bù** – Quản lý tự ghi Nhận/Trả bổ sung ngay trong Đối soát (tick hộp, chọn ngày/ca). Phiếu Sonnet đã sửa: `docs/prompts/PROMPT_SONNET_TRA_HOP_TH1.md`. **Việc kế:** Sonnet làm F-TH-01/02/03 → phiếu Antigravity → Opus review gộp → chủ dự án đẩy tay.
+
 > **15/11/2026 (Opus): Đề xuất Trả hộp (nâng cấp lần 3) – DUYỆT CÓ ĐIỀU KIỆN.** Phương án chốt ở `docs/DE_XUAT_TRA_HOP.md` mục 8: A + "điền nhanh" (gợi ý Trả = hộp Tách xong chưa trả, nút điền tất cả, nhắc ở Quản lý ca; không thêm action, `dash_` không đổi dòng nào) + tập lệnh bù Nhận TTLT một lần (chỉ chạy khi chủ dự án trả lời Q-C). **Hoãn bước `GIAO`**. Đối soát đổi thứ tự trạng thái, thêm "Đã trả, chưa đủ" (lưu ý: OCR = 0 dòng thật nên chưa hộp nào lên được "Đủ"). Đã giao Sonnet: `docs/prompts/PROMPT_SONNET_TRA_HOP_TH1.md` (F-TH-01/02/03, mục 33–35). **Đang chờ:** chủ dự án trả lời Q-A…Q-E (mục 8.2); Sonnet làm được ngay F-TH-01, F-TH-02, viết F-TH-03 nhưng không chạy.
 
 > **15/11/2026 (Sonnet): NÂNG CẤP LẦN 3 – Quy chuẩn Trả hộp / giao nhận: đã soạn đề xuất `docs/DE_XUAT_TRA_HOP.md`, CHỜ OPUS XÉT DUYỆT, chưa sửa mã.** Phát hiện: hệ thống chỉ có bước `TRA` (Quản lý → TTLT), không có chặng Nhân viên → Quản lý; cột Trả ở Đối soát chỉ hiện ngày. Đề xuất A→B (hiển thị rõ rồi thêm bước `GIAO`). Việc kế: Opus duyệt → chủ dự án trả Q1–Q7 → giao Sonnet.

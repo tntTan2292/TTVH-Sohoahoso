@@ -124,3 +124,25 @@ Opus tự soi mã tại `790a840` (`ghi_` 559–650, `hopGoiY_` 792–804, `hopM
 | Q-C | Đồng ý **bù Nhận TTLT** cho 144 hộp, lấy ngày/ca = lúc nhóm nhận hộp (hoặc lúc làm đầu tiên)? Biết rằng số "hộp nhận" và "tồn đầu ca" của các ngày cũ trên Dashboard sẽ thay đổi. | Chưa chạy (chờ trả lời) |
 | Q-D | Quy chuẩn chặng Nhân viên → Quản lý: **tick "Xong hộp" ở Tách = đã giao hộp lại cho Quản lý**, không thêm thao tác. Đồng ý, hay cần một bước "Giao hộp" riêng? | Đồng ý tick Xong hộp; không thêm bước |
 | Q-E | Trên hệ thống chưa có báo cáo **OCR** nào. OCR có còn báo trên hệ thống không? Nếu không, "Đủ" chỉ cần Nhận + Tách xong + Trả? | Giữ điều kiện OCR |
+
+## 9. QUYẾT ĐỊNH CHỦ DỰ ÁN (15/11/2026) VÀ PHƯƠNG ÁN CHỐT LẦN CUỐI (Opus)
+
+| # | Chủ dự án trả lời | Opus chốt cách làm |
+|---|---|---|
+| Q-A | Nhận/Trả là quy trình **bắt buộc**; không làm thì phải cảnh báo | Thanh cảnh báo đỏ ở Quản lý ca (TT/TP/ADMIN) + dòng đỏ ở Đối soát. Không chặn báo cáo của tổ viên |
+| Q-B | Quản lý chưa báo → cảnh báo trên hệ thống, Đối soát **tô nền đỏ** | Tô nền đỏ các dòng: thiếu Nhận từ TTLT, Tách xong chưa Trả cho TTLT, Trả khi chưa Tách xong |
+| Q-C | **Quản lý tự nhập bổ sung trong hệ thống** (không phải tập lệnh) | **Bỏ tập lệnh bù `NHAN`.** F-TH-03 đổi thành thao tác ngay trong Đối soát: tick hộp dòng đỏ → "Ghi Nhận từ TTLT" / "Ghi Trả cho TTLT", chọn ngày + ca; dùng `ghi_` sẵn có (chế độ Bổ sung khi khác ca hiện tại). Hợp lệ theo `CHUAN_PROMPT.md` 3c vì người không phải chủ dự án phải tự làm |
+| Q-D | Đồng ý: nhân viên làm xong mặc định đã trả hộp cho Quản lý | Quy chuẩn: **tick "Xong hộp" ở Tách = tổ viên đã giao hộp lại cho Quản lý**. Không thêm bước `GIAO` |
+| Q-E | Không cần OCR (OCR không cần hồ sơ giấy); Tách xong là trả được cho TTLT | "Đủ" = Nhận từ TTLT + Tách xong + Trả cho TTLT. Cột OCR giữ để xem, **không** tính vào trạng thái |
+| Thêm | Đối soát có **2 cột: NHẬN TỪ TTLT và TRẢ CHO TTLT** | Hai cột cùng dạng: ngày · ca · người (ghi chú dòng nhỏ). CSV có đủ ngày, ca, người, ghi chú cho cả hai |
+
+**Trạng thái Đối soát (thay mục 8.1 điểm 6), xét từ trên xuống:**
+1. Có trả, Tách chưa xong → `TRA_SOM` "Trả khi chưa Tách xong" — **đỏ**
+2. Có trả, có nhận (Tách xong) → `DU` "Đủ"
+3. Có trả, không có nhận → `DA_TRA` "Đã trả, thiếu Nhận từ TTLT" — **đỏ**
+4. Không có nhận → `THIEU_NHAN` "Thiếu Nhận từ TTLT" — **đỏ**
+5. Tách xong, chưa trả → `XONG_CHUA_TRA` "Tách xong, chưa Trả cho TTLT" — **đỏ**
+6. Có làm → `DANG_LAM`; không → `NHAN_CHUA_LAM`
+
+**Giữ nguyên:** `dash_` (không đổi dòng nào), `ghi_` (quyền, bỏ qua trả lần hai, cảnh báo), cột Sheet, action, `Buoc`. Lưu ý: khi Quản lý nhập bù Nhận theo ngày cũ, số "hộp nhận"/"tồn đầu ca" của ngày đó trên Dashboard thay đổi — đúng ý (sửa dữ liệu, không đổi cách tính).
+Phiếu Sonnet đã sửa theo mục này: `docs/prompts/PROMPT_SONNET_TRA_HOP_TH1.md`.

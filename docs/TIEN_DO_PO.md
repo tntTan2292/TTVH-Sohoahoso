@@ -38,6 +38,6 @@
 | 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 32 | Phân nhóm sau khi đã nhận hộp thì hộp nhận tự vào nhóm (hết phải chuẩn hóa tay hằng ngày) | F-BC-21 | 🟡 Opus ĐẠT, đã lên link chính (phiên bản 31, 12/11/2026 13:49), chủ dự án đã tự chạy chuanHoaNhom cho dữ liệu cũ 10–11/11 (12/11), chờ chủ dự án thử ca mới |
-| 33 | Đối soát hộp hiện đủ ngày · ca · người · ghi chú khi Trả; hộp thiếu nhận không che việc đã trả | F-TH-01 | ⏳ Opus duyệt 15/11, đã giao Sonnet |
-| 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), có nhắc số hộp chưa trả | F-TH-02 | ⏳ Opus duyệt 15/11, đã giao Sonnet |
-| 35 | Bù ngày Nhận từ TTLT cho hộp cũ chưa báo (chạy một lần, chủ dự án duyệt trước) | F-TH-03 | ⏳ Chờ chủ dự án trả lời Q-C |
+| 33 | Đối soát hộp có 2 cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu Nhận/Trả tô đỏ, "Đủ" không cần OCR | F-TH-01 | ⏳ Phương án chốt 15/11, đã giao Sonnet |
+| 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), cảnh báo đỏ số hộp chưa Nhận/chưa Trả | F-TH-02 | ⏳ Phương án chốt 15/11, đã giao Sonnet |
+| 35 | Quản lý tự ghi bổ sung Nhận/Trả cho hộp cũ ngay trong Đối soát (tick hộp, chọn ngày/ca) | F-TH-03 | ⏳ Phương án chốt 15/11, đã giao Sonnet |

@@ -1,28 +1,27 @@
-# Phiếu Sonnet: Đợt TH1 – Trả hộp / Nhận TTLT (mục 33, 34, 35)
+# Phiếu Sonnet: Đợt TH1 – Nhận từ TTLT / Trả cho TTLT (mục 33, 34, 35)
 
-Người nhận: **Sonnet**. Opus duyệt có điều kiện ngày 15/11/2026, phương án chốt ở `docs/DE_XUAT_TRA_HOP.md` **mục 8** (đọc kỹ mục 8.1). Gốc so sánh: `790a840`.
+Người nhận: **Sonnet**. Phương án chốt: `docs/DE_XUAT_TRA_HOP.md` **mục 9** (chủ dự án đã trả lời Q-A…Q-E ngày 15/11/2026; mục 9 thay mục 8 ở chỗ khác nhau). Gốc so sánh: `790a840`.
 
 ## Việc (một việc một commit)
-**F-TH-01 – Đối soát: trạng thái + cột Trả TTLT (mục 33)**
-- `hopTrangThai_` theo đúng thứ tự 6 bước ở mục 8.1 điểm 6; thêm mã `DA_TRA` "Đã trả, chưa đủ"; đổi nhãn `XONG_CHUA_TRA` thành "Tách xong, chưa trả" (giữ mã). Cập nhật `HOP_TT_`, `DS_TT`, `DS_CHIP`.
-- `hopHoSo_` giữ thêm `ghiChu` của lần trả sớm nhất; `hopBanGhi_` trả `tra: {ngay, ca, nguoi, ghiChu}` (tên người qua `ns`) và ghi chú thiếu gì cho `DA_TRA`. Không lộ `k`/`tg`.
-- `Index.html` đối soát: cột Trả hiện ngày · ca · người (ghi chú dạng dòng nhỏ, qua `esc()`); CSV thêm Ca trả, Người trả, Ghi chú trả. Khung thô, để Antigravity làm đẹp.
+**F-TH-01 – Đối soát: trạng thái, 2 cột, tô đỏ (mục 33)**
+- `hopTrangThai_` đúng thứ tự 6 bước ở mục 9 (không xét OCR). Thêm mã `DA_TRA`; đổi nhãn theo mục 9 (giữ mã cũ). Cập nhật `HOP_TT_`, `DS_TT`, `DS_CHIP`.
+- `hopHoSo_` giữ thêm `ghiChu` của lần nhận/trả sớm nhất; `hopBanGhi_` trả `nhan` và `tra` cùng dạng `{ngay, ca, nguoi, ghiChu}` (tên qua `ns`). Không lộ `k`/`tg`.
+- Bảng: hai cột **NHẬN TỪ TTLT** và **TRẢ CHO TTLT** (ngày · ca · người, ghi chú dòng nhỏ, qua `esc()`); giữ cột OCR. Dòng `TRA_SOM`, `DA_TRA`, `THIEU_NHAN`, `XONG_CHUA_TRA` **nền đỏ** (một class, Antigravity chỉnh màu). CSV đủ ngày/ca/người/ghi chú cho cả hai.
 
-**F-TH-02 – Gợi ý + điền nhanh + nhắc (mục 34)**
-- `hopGoiY_`: `TRA` = hộp **Tách xong (HetHop) và chưa `TRA`** (không đòi `NHAN`, không đòi OCR); thêm nhánh `NHAN` = hộp có bất kỳ bản ghi còn hiệu lực, chưa `NHAN`, chưa `TRA`. Các nhánh khác giữ nguyên.
-- Form Nhận TTLT / Trả hộp (ô dán mã): nút **"Điền tất cả hộp gợi ý (N)"** điền danh sách vào ô mã, mỗi mã một dòng, tối đa 200 (quá thì điền 200 đầu và báo). Hộp xác nhận gửi giữ như cũ. Ô ghi chú khi `TRA` có gợi ý "Số biên bản / người nhận bên TTLT". Chạy được cả ở chế độ Bổ sung.
-- Quản lý ca (chỉ TT/TP/ADMIN): một dòng nhắc "N hộp đã Tách xong chưa trả TTLT · M hộp chưa có Nhận TTLT", bấm mở đúng form. Lấy từ `hopGoiY`, không thêm action, không đụng `dash_`.
+**F-TH-02 – Gợi ý, điền nhanh, cảnh báo (mục 34)**
+- `hopGoiY_`: `TRA` = hộp Tách xong, chưa `TRA`; thêm nhánh `NHAN` = hộp có bản ghi còn hiệu lực, chưa `NHAN`. Nhánh khác giữ nguyên.
+- Form Nhận/Trả: nút **"Điền tất cả hộp gợi ý (N)"** (mỗi mã một dòng, tối đa 200). Ô ghi chú khi Trả gợi ý "Số biên bản / người nhận bên TTLT".
+- Quản lý ca (TT/TP/ADMIN): **thanh cảnh báo đỏ** "N hộp chưa có Nhận từ TTLT · M hộp Tách xong chưa Trả cho TTLT", bấm mở Đối soát đã lọc. Lấy từ `hopGoiY`, không thêm action.
 
-**F-TH-03 – Tập lệnh bù `NHAN` một lần (mục 35) – ĐIỂM PHẢI DỪNG**
-- `xemTruocBuNhan()` + `apDungBuNhan()` theo đúng mục 8.1 điểm 3 và `CHUAN_PROMPT.md` 3c. Áp dụng gọi lại xem trước trong cùng khóa, ghi `appendMany_`, `log_` từng hộp. Xem trước in: số hộp, phân bổ theo ngày/ca, 10 dòng mẫu (không in PIN/tên ngoài cần thiết).
-- **Chỉ viết + mock, KHÔNG chạy trên Sheet thật.** Chủ dự án chạy sau khi trả lời Q-C.
+**F-TH-03 – Quản lý nhập bổ sung ngay trong Đối soát (mục 35)**
+- Chỉ TT/TP/ADMIN (ẩn với Lãnh đạo): ô tick ở dòng đỏ; nút **"Ghi Nhận từ TTLT"** (cho dòng thiếu nhận) và **"Ghi Trả cho TTLT"** (cho dòng Tách xong chưa trả).
+- Hộp xác nhận tự vẽ (kiểu XN1): chọn ngày (≤ hôm nay) + ca, hiện số hộp. Riêng Nhận có lựa chọn **"Theo ngày/ca nhóm nhận của từng hộp"** (thiếu thì ngày làm đầu tiên) → gom theo ngày/ca.
+- Gọi `ghi_` sẵn có: ngày hôm nay + ca đang mở → báo thường; khác → `boSung`. Mỗi lần ≤ 200 mã, gọi lần lượt; xong tải lại Đối soát, hiện cảnh báo máy chủ.
 
 ## Ràng buộc
-- `dash_` không đổi dòng nào; mock so `dash_` với `git show 790a840:apps-script/Code.gs` (mọi ngày, có/không `gomThu`) **giống hệt**.
-- `ghi_` không đổi (quyền, bỏ qua trả lần hai, cảnh báo giữ nguyên). Không thêm cột, không thêm action, không thêm `Buoc`.
-- Mock thêm kiểm tra: đủ 6 nhánh trạng thái; gợi ý `TRA`/`NHAN`; bù `NHAN` chọn đúng hộp, ngày/ca đúng mốc, chạy lần hai không tạo trùng, bỏ THỬ NGHIỆM/hủy, biến thể mã H1.
-- Ghi `docs/CHUC_NANG.md` cùng commit; `docs/API.md` nếu đổi trường trả về.
-- Q-D, Q-E chưa trả lời: dùng mặc định ở mục 8.2. Chủ dự án trả lời khác → dừng phần đó, báo.
+- `dash_`, `ghi_`, cột Sheet, action, `Buoc`: **không đổi**. Mock so `dash_` với `790a840` (mọi ngày, có/không `gomThu`) giống hệt.
+- Mock thêm: 6 nhánh trạng thái (có hộp OCR chưa xong vẫn `DU`); `nhan`/`tra` có người + ghi chú; gợi ý `TRA`/`NHAN`; ghi Nhận bổ sung theo ngày nhóm nhận ra đúng ngày/ca, Loai `BỔ SUNG`; Lãnh đạo ghi bị chặn.
+- Ghi `docs/CHUC_NANG.md` (kèm quy chuẩn Q-D: tick "Xong hộp" ở Tách = đã giao hộp cho Quản lý), `docs/API.md` (trường `nhan`/`tra`, mã `DA_TRA`) cùng commit.
 
 ## Xong
-Viết phiếu Antigravity (mẫu 10.3: nút điền nhanh, chip `DA_TRA`, cột Trả TTLT, dòng nhắc Quản lý ca). Cập nhật SNAPSHOT, CHANGELOG, `docs/TIEN_DO_PO.md` mục 33–35. Báo cáo kênh B, nêu rõ F-TH-03 chưa chạy.
+Viết phiếu Antigravity (mẫu 10.3: màu nền đỏ, hai cột, thanh cảnh báo, ô tick + hộp chọn ngày/ca). Cập nhật SNAPSHOT, CHANGELOG, `docs/TIEN_DO_PO.md` mục 33–35. Báo cáo kênh B.
