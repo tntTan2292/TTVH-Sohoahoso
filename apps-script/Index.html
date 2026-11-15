@@ -2095,6 +2095,26 @@ tbody tr:last-child td { border-bottom: none; }
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(37,99,235,0.3);
 }
+/* Chip lọc "Cần xử lý" (data-dtt="CAN_XU_LY"): sắc đỏ nhẹ khi thường, đỏ đậm nổi bật khi đang chọn (.on) */
+.ds-dem button[data-dtt="CAN_XU_LY"] {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border-color: var(--bad-line);
+  font-weight: 700;
+}
+.ds-dem button[data-dtt="CAN_XU_LY"]:hover {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border-color: var(--bad);
+  filter: brightness(0.96);
+}
+.ds-dem button[data-dtt="CAN_XU_LY"].on {
+  background: var(--bad);
+  color: #fff;
+  border-color: var(--bad);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
 #dsCsv {
   border-color: var(--ok-line) !important;
   background: var(--ok-bg) !important;
@@ -2103,12 +2123,301 @@ tbody tr:last-child td { border-bottom: none; }
   margin-left: auto;
 }
 #dsCsv:hover { filter: brightness(0.95); }
-/* F-TH-01: dòng đối soát thiếu Nhận/Trả — nền đỏ (một class, chỉnh màu ở đây) */
-.ds-do td { background: var(--bad-bg); }
-/* F-TH-03: thanh nút ghi Nhận/Trả bổ sung ở Đối soát (Quản lý) */
-.th-bar { margin: 6px 0 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.th-canhbao { margin-bottom: 12px; }
-.ds-ghichu { display: block; font-size: 11px; color: var(--mut); margin-top: 2px; }
+
+/* F-TH-01: dòng đối soát thiếu Nhận/Trả — nền đỏ nổi bật, chữ rõ cả sáng/tối */
+.ds-do td {
+  background: var(--bad-bg);
+  border-bottom-color: var(--bad-line);
+  color: var(--tx);
+}
+.ds-do td:first-child {
+  box-shadow: inset 3.5px 0 0 var(--bad);
+}
+tbody tr.ds-do:hover td {
+  background: var(--bad-bg);
+  filter: brightness(0.97);
+}
+.ds-ghichu {
+  display: block;
+  font-size: 11.5px;
+  color: var(--mut);
+  margin-top: 2px;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.ds-do .ds-ghichu {
+  color: var(--tx-sec);
+}
+
+/* F-TH-03: cột tick + thanh nút ghi Nhận/Trả bổ sung ở Đối soát (Quản lý) */
+#dsChonHet, input[data-thc] {
+  width: 19px;
+  height: 19px;
+  cursor: pointer;
+  accent-color: var(--pri);
+  vertical-align: middle;
+  margin: 0;
+}
+.th-bar {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.th-bar > span {
+  font-size: 13px;
+  margin-right: 4px;
+}
+#thGhiNhan, #thGhiTra {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--pri);
+  color: #fff;
+  border: 1px solid var(--pri);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  transition: all 0.15s ease;
+}
+#thGhiNhan:hover:not(:disabled), #thGhiTra:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+#thGhiNhan:disabled, #thGhiTra:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background: var(--card, #f1f5f9) !important;
+  color: var(--mut, #94a3b8) !important;
+  border: 1px dashed var(--line, #cbd5e1) !important;
+  box-shadow: none !important;
+  filter: grayscale(1) !important;
+  pointer-events: none;
+}
+#dsMsg .msg {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  align-items: flex-start;
+}
+
+/* F-TH-03: Hộp chọn ngày/ca #modalTH (cùng phong cách #modalXN) */
+#modalTH { z-index: 1100; }
+#modalTH .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#thdNhomBox {
+  padding: 10px 12px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+#thdNhomBox .check-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  margin: 0;
+}
+#thdNhomBox input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+#thdHuy, #thdDongY {
+  min-height: 44px;
+  min-width: 96px;
+  padding: 10px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+#thdHuy {
+  background: var(--card);
+  color: var(--tx-sec);
+  border: 1px solid var(--line);
+}
+#thdHuy:hover {
+  background: var(--card-sub);
+  color: var(--tx);
+}
+#thdDongY {
+  background: var(--pri);
+  color: #fff;
+  border: 1px solid var(--pri);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+#thdDongY:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* F-TH-02: Thanh cảnh báo đỏ ở tab Quản lý ca (#thQl, #thNhan) + nút Điền tất cả hộp gợi ý (#fDienBox, #fDien) */
+.th-canhbao {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--bad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+.th-canhbao > span {
+  flex: 1 1 220px;
+  line-height: 1.45;
+}
+#thNhan {
+  background: var(--bad);
+  color: #fff;
+  border: 1px solid var(--bad);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 14px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+  transition: all 0.15s ease;
+}
+#thNhan:hover {
+  filter: brightness(1.08);
+}
+#fDienBox {
+  margin: 6px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#fDienBox:empty {
+  display: none;
+}
+#fDien {
+  background: var(--card-sub);
+  color: var(--tx-sec);
+  border: 1px dashed var(--line);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  min-height: 34px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+#fDien:hover {
+  background: var(--pri-sub);
+  color: var(--pri);
+  border: 1px solid var(--pri-border);
+}
+
+@media (max-width: 640px) {
+  .table-card-mobile tr.ds-do {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    border-left: 4px solid var(--bad);
+  }
+  .table-card-mobile tr.ds-do:hover {
+    background: var(--bad-bg);
+  }
+  .table-card-mobile tr.ds-do td {
+    background: transparent;
+    border-bottom-color: var(--bad-line);
+  }
+  .table-card-mobile tr.ds-do td:first-child {
+    box-shadow: none;
+  }
+  .table-card-mobile td[data-label] {
+    flex-wrap: wrap;
+  }
+  .table-card-mobile td[data-label] .ds-ghichu {
+    flex: 0 0 100%;
+    width: 100%;
+    text-align: right;
+    margin-top: 2px;
+  }
+  .table-card-mobile td[data-label="Chọn"]:empty {
+    display: none;
+  }
+  .table-card-mobile td[data-label="Chọn"] {
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px dashed var(--line-light);
+    padding: 4px 0 8px;
+    margin-bottom: 4px;
+    justify-content: space-between;
+  }
+  .table-card-mobile td[data-label="Chọn"] + td {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--tx);
+    border-bottom: 1.5px solid var(--line);
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    justify-content: flex-start;
+    text-align: left;
+    flex-wrap: wrap;
+  }
+  .table-card-mobile td:first-child .ds-ghichu,
+  .table-card-mobile td[data-label="Chọn"] + td .ds-ghichu {
+    flex: 0 0 100%;
+    width: 100%;
+    text-align: left;
+    font-weight: 400;
+  }
+  #dsChonHet, input[data-thc] {
+    width: 24px;
+    height: 24px;
+  }
+  .th-bar > span {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+  #thGhiNhan, #thGhiTra {
+    flex: 1 1 calc(50% - 4px);
+    min-height: 42px;
+    justify-content: center;
+    text-align: center;
+  }
+  #modalTH .xn-nut {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  #thdHuy, #thdDongY {
+    width: 100%;
+    min-width: 0;
+  }
+  .th-canhbao {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  #thNhan {
+    width: 100%;
+    min-height: 42px;
+    justify-content: center;
+    text-align: center;
+  }
+}
 
 /* C0: Modal chi tiết ô số liệu (#modalCT) */
 #modalCT {
