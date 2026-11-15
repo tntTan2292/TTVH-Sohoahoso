@@ -146,3 +146,5 @@ Opus tự soi mã tại `790a840` (`ghi_` 559–650, `hopGoiY_` 792–804, `hopM
 
 **Giữ nguyên:** `dash_` (không đổi dòng nào), `ghi_` (quyền, bỏ qua trả lần hai, cảnh báo), cột Sheet, action, `Buoc`. Lưu ý: khi Quản lý nhập bù Nhận theo ngày cũ, số "hộp nhận"/"tồn đầu ca" của ngày đó trên Dashboard thay đổi — đúng ý (sửa dữ liệu, không đổi cách tính).
 Phiếu Sonnet đã sửa theo mục này: `docs/prompts/PROMPT_SONNET_TRA_HOP_TH1.md`.
+
+**Bổ sung 15/11/2026 (chủ dự án):** Nhận từ TTLT **chỉ có Quản lý nhận**. Ngày Nhận từ TTLT không được suy ra từ ngày nhóm nhận hộp (chặng Quản lý → nhóm là chặng khác); Quản lý tự chọn ngày/ca thật khi ghi bổ sung. Bỏ tùy chọn "Theo ngày/ca nhóm nhận" (delta D3).
