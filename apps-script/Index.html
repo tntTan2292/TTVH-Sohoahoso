@@ -2441,6 +2441,7 @@ button.sm.bad:hover, button.bad:hover {
         <div style="align-self:end"><button id="qlLoad" class="pri" style="width:100%;">Tải dữ liệu ca</button></div>
       </div>
     </div>
+    <div id="thQl"></div>
     <div id="ccQl"></div>
     <div id="qlBody"></div>
   </section>
@@ -3294,9 +3295,9 @@ function buildForm(open, m) {
   } else {
     if (STEP === 'NHAN_NHOM') f += '<label>Nhận hộp cho</label><div class="steps kieu-nhan" id="kieuNhan">' +
       '<button type="button" class="step-btn step-nhan" data-k="CANHAN">👤 Cá nhân</button><button type="button" class="step-btn step-nhan" data-k="NHOM">👥 Nhóm</button></div><div id="kieuNhanInfo"></div>';
-    f += '<label>Mã hộp <small class="muted">(mỗi dòng 1 mã hoặc dán nhiều mã)</small></label><textarea id="fHop" placeholder="208.18.17&#10;208.18.18"></textarea><div class="muted helper-text" id="fCnt"></div>';
+    f += '<label>Mã hộp <small class="muted">(mỗi dòng 1 mã hoặc dán nhiều mã)</small></label><textarea id="fHop" placeholder="208.18.17&#10;208.18.18"></textarea><div class="muted helper-text" id="fCnt"></div>' + ((STEP === 'NHAN' || STEP === 'TRA') ? '<div id="fDienBox"></div>' : '');
   }
-  f += '<label>Ghi chú</label><input id="fNote" placeholder="Ghi chú thêm nếu cần">';
+  f += '<label>Ghi chú</label><input id="fNote" placeholder="' + (STEP === 'TRA' ? 'Số biên bản / người nhận bên TTLT' : 'Ghi chú thêm nếu cần') + '">';
   $('fields').innerHTML = f;
   if ($('fHop') && $('fHop').tagName === 'TEXTAREA') $('fHop').oninput = function () { var n = $('fHop').value.split(/[\s,;]+/).filter(Boolean).length; $('fCnt').textContent = 'Số hộp: ' + n; };
   if ($('fLoBox')) {
@@ -3333,6 +3334,12 @@ function buildForm(open, m) {
     if (!list) return;
     if ($('dlHop')) $('dlHop').innerHTML = list.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
     if ($('fHop') && $('fHop').tagName === 'TEXTAREA' && list.length) $('fCnt').textContent = 'Hộp gợi ý: ' + list.slice(0, 12).join(', ') + (list.length > 12 ? '…' : '');
+    // F-TH-02: nút điền tất cả hộp gợi ý (Nhận: hộp chưa có Nhận từ TTLT · Trả: hộp Tách xong chưa Trả), mỗi mã một dòng, tối đa 200; người dùng xóa bớt được trước khi gửi
+    if ($('fDienBox') && list.length) {
+      var dien = list.slice(0, 200);
+      $('fDienBox').innerHTML = '<button type="button" class="sm" id="fDien">Điền tất cả hộp gợi ý (' + dien.length + (list.length > 200 ? ' / ' + list.length : '') + ')</button>' + (list.length > 200 ? ' <span class="muted">Mỗi lần tối đa 200 hộp</span>' : '');
+      $('fDien').onclick = function () { $('fHop').value = dien.join('\n'); if ($('fHop').oninput) $('fHop').oninput(); };
+    }
   }).catch(function () {});
 }
 
@@ -3473,7 +3480,25 @@ function ccQuanLy() {
     $('ccQlBtn').onclick = function () { $('ccQlDs').classList.toggle('hide'); };
   }).catch(function () { });
 }
+// F-TH-02: thanh cảnh báo đỏ cho Quản lý: hộp chưa có Nhận từ TTLT / Tách xong chưa Trả cho TTLT. Lấy từ hopGoiY (không thêm action); bấm mở Đối soát đã lọc.
+function thMoDoiSoat(tt) {
+  DASH.tab = 'doisoat'; dashTabNho('doisoat'); DASH.ds.tt = tt; DASH.ds.data = null;
+  showTab('pDash');
+}
+function thQuanLy() {
+  if (!$('thQl')) return;
+  $('thQl').innerHTML = '';
+  Promise.all([call('hopGoiY', { buoc: 'NHAN' }), call('hopGoiY', { buoc: 'TRA' })]).then(function (kq) {
+    var n = (kq[0] || []).length, m = (kq[1] || []).length;
+    if (!$('thQl') || (!n && !m)) return;
+    $('thQl').innerHTML = '<div class="msg err th-canhbao"><span>⚠️ ' + (n ? '<b>' + n + '</b> hộp chưa có Nhận từ TTLT' : '') + (n && m ? ' · ' : '') + (m ? '<b>' + m + '</b> hộp Tách xong chưa Trả cho TTLT' : '') + '. Nhận từ TTLT và Trả cho TTLT là bắt buộc.</span> ' +
+      (n ? '<button type="button" class="sm" id="thNhan">Xem hộp thiếu Nhận</button> ' : '') + (m ? '<button type="button" class="sm" id="thTra">Xem hộp chưa Trả</button>' : '') + '</div>';
+    if ($('thNhan')) $('thNhan').onclick = function () { thMoDoiSoat('THIEU_NHAN'); };
+    if ($('thTra')) $('thTra').onclick = function () { thMoDoiSoat('XONG_CHUA_TRA'); };
+  }).catch(function () { });
+}
 function initQL() {
+  thQuanLy();
   ccQuanLy();
   if (!$('qlNgay').value) $('qlNgay').value = ME.ngay;
   if (!$('qlCa').innerHTML) { $('qlCa').innerHTML = CA_NAME.map(function (c) { return '<option>' + c + '</option>'; }).join(''); if (ME.cas.length) $('qlCa').value = ME.cas[ME.cas.length - 1].ca; }
