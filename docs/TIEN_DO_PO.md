@@ -37,7 +37,7 @@
 | 29 | Dọn chức năng chỉ dùng một lần sau khi dữ liệu chốt (DK1, F-NS-11) | DON1 | ⏳ Có phiếu, chờ đủ điều kiện và chủ dự án đồng ý dọn |
 | 30 | Chốt ca nghĩa là đã kiểm tra; ca chưa chốt hiện rõ, số liệu vẫn tính đủ; tính từ 10/11, ca trước đó coi là đã chốt | CC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
 | 31 | Tab Nhân sự xem được từ ngày đến ngày, tính theo ngày đang xem | LOC1 | 🟡 Đã lên link chính (phiên bản 30, chủ dự án đẩy tay 11/11), chờ chủ dự án xem giao diện và thử |
-| 32 | Phân nhóm sau khi đã nhận hộp thì hộp nhận tự vào nhóm (hết phải chuẩn hóa tay hằng ngày) | F-BC-21 | 🟡 Opus ĐẠT, đã lên link chính (phiên bản 31, 12/11/2026 13:49), chủ dự án đã tự chạy chuanHoaNhom cho dữ liệu cũ 10–11/11 (12/11), chờ chủ dự án thử ca mới |
+| 32 | Phân nhóm sau khi đã nhận hộp thì hộp nhận tự vào nhóm (hết phải chuẩn hóa tay hằng ngày) | F-BC-21 | 🟡 Opus ĐẠT; phiên bản 31 hóa ra bị Code.gs cũ ghi đè lại (phát hiện 15/11); khôi phục ở phiên bản 34 (15/11/2026 15:38), chờ chủ dự án thử ca mới |
 | 33 | Đối soát hộp có 2 cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu Nhận/Trả tô đỏ, "Đủ" không cần OCR | F-TH-01 | 🟢 Opus review ĐẠT (15/11, gồm D3), chờ chủ dự án đẩy tay Code.gs + Index.html (92f027f) và thử |
 | 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), cảnh báo đỏ số hộp chưa Nhận/chưa Trả | F-TH-02 | 🟢 Opus review ĐẠT (15/11, gồm D3), chờ chủ dự án đẩy tay Code.gs + Index.html (92f027f) và thử |
 | 35 | Quản lý tự ghi bổ sung Nhận/Trả cho hộp cũ ngay trong Đối soát (tick hộp, chọn ngày/ca) | F-TH-03 | 🟢 Opus review ĐẠT (15/11, gồm D3), chờ chủ dự án đẩy tay Code.gs + Index.html (92f027f) và thử |

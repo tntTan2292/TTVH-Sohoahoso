@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-15
+- **Triển khai phiên bản 34** (commit `92f027f`, Opus ĐẠT/GO `84ea956`, chủ dự án cho phép ghi đè) lên link chính, thay phiên bản 33. Trước khi đẩy: `Index.html` trên Apps Script = `8710afe`, `Code.gs` = `7b9621f` (thiếu F-BC-21, nguyên nhân chưa rõ); ghi đè cả hai, băm khớp `92f027f` sau tải lại. Gồm F-TH-01/02/03 (+D1/D2/D3) và khôi phục F-BC-21. Quay lui: chọn phiên bản 33 (lưu ý Code.gs của 33 là bản cũ) · chưa xác minh bằng người.
 - F-TH-01 · Đối soát hộp: hai cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu tô đỏ (`.ds-do`), trạng thái đổi theo chủ dự án (Đủ không cần OCR, thêm `DA_TRA`), CSV đủ ngày/ca/người/ghi chú · `8eba04f`
 - F-TH-02 · `hopGoiY` thêm nhánh `NHAN`, `TRA` = hộp Tách xong chưa Trả; nút "Điền tất cả hộp gợi ý"; thanh cảnh báo đỏ ở Quản lý ca · `3db8ef3`
 - F-TH-03 · Quản lý ghi Nhận/Trả bổ sung ngay trong Đối soát (tick hộp, hộp chọn ngày/ca, gom theo ngày/ca nhóm nhận), gọi `ghi` sẵn có · (commit F-TH-03)
