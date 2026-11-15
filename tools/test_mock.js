@@ -1458,7 +1458,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const mongDoi = { P1: 'DU', P2: 'DANG_LAM', P3: 'DU', P4: 'TRA_SOM', '02.01.05': 'NHAN_CHUA_LAM', P6: 'NHAN_CHUA_LAM', P7: 'THIEU_NHAN', P8: 'THIEU_NHAN', P9: 'XONG_CHUA_TRA' };
   ok(r.ok && JSON.stringify(Object.keys(mongDoi).map(k => tt[k])) === JSON.stringify(Object.values(mongDoi)), 'H2 + F-TH-01: trạng thái từng hộp đúng (P3 đã trả, Tách xong, OCR chưa xong = Đủ; Đang làm dở / Trả khi chưa Tách xong / Đã nhận chưa làm / Thiếu nhận / Tách xong chưa trả)', tt);
   const bg = k => r.data.hop.find(h => h.ma === k);
-  ok(/nhóm 2 đã nhận/.test(bg('P7').ghiChu) && bg('P8').ghiChu === '' && /2 kiểu/.test(bg('02.01.05').ghiChu), 'H2: hộp thiếu nhận ghi rõ "nhóm đã nhận"; hộp ghi hai kiểu mã có ghi chú biến thể', [bg('P7').ghiChu, bg('02.01.05').ghiChu]);
+  ok(/Nhóm 2 nhận hộp từ Quản lý/.test(bg('P7').ghiChu) && !/đã nhận/.test(bg('P7').ghiChu) && bg('P8').ghiChu === '' && /2 kiểu/.test(bg('02.01.05').ghiChu), 'H2 + D3: hộp thiếu nhận ghi rõ "Nhóm X nhận hộp từ Quản lý" (không gây hiểu nhầm là nhận từ TTLT); hộp ghi hai kiểu mã có ghi chú biến thể', [bg('P7').ghiChu, bg('02.01.05').ghiChu]);
   ok(bg('P1').nhan.ngay === D1 && bg('P1').scan.xong && bg('P1').tach.xong && bg('P1').ocr.xong && bg('P1').ocr.to === 10 && bg('P1').tra.ngay === D2 && bg('P2').scan.to === 3 && !bg('P2').scan.xong, 'H2: dòng hộp có ngày nhận, từng khâu (số tờ lũy kế, ✔ khi HetHop), ngày trả');
   const demSo = Object.values(r.data.dem).slice(1).reduce((a, b) => a + b, 0);
   ok(r.data.dem.tong === r.data.hop.length && demSo === r.data.dem.tong && r.data.soDong === r.data.hop.length && !r.data.catBot, 'H2: bộ đếm theo trạng thái cộng lại = tổng = số dòng', r.data.dem);

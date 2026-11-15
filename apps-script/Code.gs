@@ -1791,7 +1791,7 @@ function hopBanGhi_(h, ns) {      // một dòng cho giao diện (không lộ kh
   const tt = hopTrangThai_(h), ten = function (ma) { return ns[ma] || ma; };
   let ghiChu = '';
   if (h.maGoc.length > 1) ghiChu = 'Mã ghi ' + h.maGoc.length + ' kiểu: ' + h.maGoc.join(', ');
-  if (tt === 'THIEU_NHAN' && h.nhanNhom) ghiChu = (ghiChu ? ghiChu + '; ' : '') + 'nhóm ' + h.nhanNhom.nhom + ' đã nhận ' + h.nhanNhom.ngay + ' ca ' + h.nhanNhom.ca;
+  if (tt === 'THIEU_NHAN' && h.nhanNhom) ghiChu = (ghiChu ? ghiChu + '; ' : '') + 'Nhóm ' + h.nhanNhom.nhom + ' nhận hộp từ Quản lý ' + h.nhanNhom.ngay + ' ca ' + h.nhanNhom.ca;      // D3: nhóm nhận từ Quản lý, KHÁC Nhận từ TTLT (do Quản lý)
   return { ma: maHopChuan_(rep), khoa: h.khoa, tt: tt, ttText: HOP_TT_[tt],
     nhan: h.nhan ? { ngay: h.nhan.ngay, ca: h.nhan.ca, nguoi: ten(h.nhan.nguoi), ghiChu: h.nhan.gc || '' } : null,
     nhanNhom: h.nhanNhom ? { ngay: h.nhanNhom.ngay, ca: h.nhanNhom.ca, nhom: h.nhanNhom.nhom } : null,

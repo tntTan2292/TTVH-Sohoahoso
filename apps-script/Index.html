@@ -2213,25 +2213,6 @@ tbody tr.ds-do:hover td {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-#thdNhomBox {
-  padding: 10px 12px;
-  background: var(--card-sub);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-}
-#thdNhomBox .check-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 1.4;
-  cursor: pointer;
-  margin: 0;
-}
-#thdNhomBox input[type="checkbox"] {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
 #thdHuy, #thdDongY {
   min-height: 44px;
   min-width: 96px;
@@ -2994,8 +2975,7 @@ button.sm.bad:hover, button.bad:hover {
     <div class="modal-header"><h2 style="margin:0;" id="thdTieuDe">Ghi Nhận từ TTLT</h2></div>
     <div class="modal-body">
       <div id="thdNoiDung" class="xn-nd"></div>
-      <div class="row" style="margin-top:12px;"><div><label for="thdNgay">Ngày</label><input type="date" id="thdNgay"></div><div><label for="thdCa">Ca</label><select id="thdCa"></select></div></div>
-      <div id="thdNhomBox" class="hide" style="margin-top:10px;"><label class="check-label"><input type="checkbox" id="thdTheoNhom"> <span>Theo ngày/ca nhóm nhận của từng hộp (thiếu thì lấy ngày làm đầu tiên, ca đã chọn)</span></label></div>
+      <div class="row" style="margin-top:12px;"><div><label for="thdNgay" id="thdNgayLb">Ngày</label><input type="date" id="thdNgay"></div><div><label for="thdCa">Ca</label><select id="thdCa"></select></div></div>
       <label for="thdGhiChu" style="margin-top:10px;">Ghi chú</label><input id="thdGhiChu" type="text" autocomplete="off">
       <div id="thdLoi" class="msg err hide" style="margin-top:8px;"></div>
       <div class="xn-nut"><button type="button" class="sm" id="thdHuy">Hủy</button> <button type="button" class="pri sm" id="thdDongY">Ghi</button></div>
@@ -4951,7 +4931,7 @@ function thBang(ds) {
     het.onchange = function () { cs.forEach(function (c) { c.checked = het.checked; if (het.checked) TH_CHON[c.getAttribute('data-thc')] = true; else delete TH_CHON[c.getAttribute('data-thc')]; }); thBang(ds); };
   }
 }
-// Hộp chọn ngày + ca. Trả Promise: { ngay, ca, theoNhom, ghiChu } hoặc null (Hủy/Esc).
+// Hộp chọn ngày + ca. Trả Promise: { ngay, ca, ghiChu } hoặc null (Hủy/Esc). D3: ngày Nhận từ TTLT do Quản lý tự chọn, không lấy theo ngày nhóm nhận.
 function thHoi(buoc, soHop) {
   return new Promise(function (resolve) {
     if (TH_DANG || XN_DANG) { resolve(null); return; }
@@ -4966,7 +4946,7 @@ function thHoi(buoc, soHop) {
       var ng = $('thdNgay').value, ca = $('thdCa').value;
       if (!ng || ng > ME.ngay) { $('thdLoi').textContent = 'Chọn ngày (không quá hôm nay)'; $('thdLoi').classList.remove('hide'); return; }
       if (!ca) { $('thdLoi').textContent = 'Chọn ca'; $('thdLoi').classList.remove('hide'); return; }
-      dong({ ngay: ng, ca: ca, theoNhom: buoc === 'NHAN' && $('thdTheoNhom').checked, ghiChu: $('thdGhiChu').value });
+      dong({ ngay: ng, ca: ca, ghiChu: $('thdGhiChu').value });
     };
     var phim = function (e) { var k = e.key || ''; if (k === 'Escape' || e.keyCode === 27) { e.preventDefault(); dong(null); } };
     TH_DANG = dong;
@@ -4974,7 +4954,7 @@ function thHoi(buoc, soHop) {
     $('thdNoiDung').textContent = 'Ghi ' + soHop + ' hộp "' + (buoc === 'NHAN' ? 'Nhận từ TT Lưu trữ' : 'Trả hộp') + '". Chọn ngày và ca thực tế của việc ' + (buoc === 'NHAN' ? 'nhận' : 'trả') + ' (khác hôm nay/ca đang mở thì ghi là bổ sung).';
     $('thdNgay').max = ME.ngay; $('thdNgay').value = ME.ngay;
     $('thdCa').innerHTML = CA_NAME.map(function (c) { return '<option' + (c === CUR_CA ? ' selected' : '') + '>' + c + '</option>'; }).join('');
-    $('thdNhomBox').classList.toggle('hide', buoc !== 'NHAN'); $('thdTheoNhom').checked = false;
+    $('thdNgayLb').textContent = buoc === 'NHAN' ? 'Ngày Quản lý nhận hộp từ TTLT' : 'Ngày Quản lý trả hộp cho TTLT';
     $('thdGhiChu').value = ''; $('thdGhiChu').placeholder = buoc === 'TRA' ? 'Số biên bản / người nhận bên TTLT' : 'Ghi chú (không bắt buộc)';
     $('thdLoi').classList.add('hide');
     $('thdDongY').onclick = dongY; $('thdHuy').onclick = function () { dong(null); };
@@ -4990,11 +4970,7 @@ function thGhi(buoc) {
     if (!kq) return;
     var nhom = {}, boQua = [];      // 'ngày|ca' → danh sách mã; boQua = hộp không gửi vì ngày vô lý (D1)
     ds.forEach(function (x) {
-      var ng = kq.ngay, ca = kq.ca;
-      if (kq.theoNhom) {
-        if (x.nhanNhom) { ng = x.nhanNhom.ngay; ca = x.nhanNhom.ca; } else if (x.ngayMoc && x.ngayMoc <= ME.ngay) ng = x.ngayMoc;      // thiếu ngày/ca nhóm nhận → ngày làm đầu tiên, ca đã chọn
-        if (x.batDau && ng > x.batDau) { ng = x.batDau; ca = kq.ca; }      // D1: Nhận không muộn hơn ngày bản ghi đầu tiên của hộp
-      }
+      var ng = kq.ngay, ca = kq.ca;      // ngày/ca do Quản lý chọn (D3: không suy ra từ nhóm nhận)
       // D1: không ghi Trả trước ngày Tách xong, không ghi Nhận sau ngày bản ghi đầu tiên của hộp (Dashboard sẽ tính tồn/hộp nhận sai)
       if (buoc === 'TRA' && x.tach && x.tach.ngayXong && ng < x.tach.ngayXong) { boQua.push(x.ma + ' (Trả trước ngày Tách xong ' + ngayNgan(x.tach.ngayXong) + ')'); return; }
       if (buoc === 'NHAN' && x.batDau && ng > x.batDau) { boQua.push(x.ma + ' (Nhận sau ngày hộp bắt đầu làm ' + ngayNgan(x.batDau) + ')'); return; }
