@@ -58,6 +58,15 @@ Quản lý bấm **xác nhận đã nhận** từng hộp nhân viên giao (hai 
 ## 4. Bước 0 (chỉ đọc, không ghi Sheet) – cần chủ dự án đồng ý
 Dùng tab Đối soát/Nhật ký trên link thật, hoặc ADMIN xuất CSV đối soát (không PIN), để thống kê: số hộp có `NHAN` nhưng không có `TRA`; số dòng `TRA` bị bỏ qua (xem log `BAO_CAO` có "KHÔNG ghi trả"); số hộp `TRA` mà thiếu `NHAN`. Kết quả quyết định giả thuyết ở mục 1.3.
 
+## 4a. KẾT QUẢ BƯỚC 0 (đã đọc trực tiếp tab `NhatKy` trên Google Sheet thật, 15/11/2026, chỉ đọc, không ghi)
+374 dòng (2 dòng đã hủy bỏ ra), ngày 02/11–15/11, 150 hộp (gộp theo khóa mã). Số dòng theo bước: `NHAN` 6, `NHAN_NHOM` 95, `SCAN` 119, `TACH` 146, `TRA` 6, `OCR` 0.
+- **Chỉ 6 hộp có `NHAN` và đúng 6 hộp có `TRA`**: cùng 6 mã (2.1.83, .87–.91); nhận ca Sáng 10/11, trả ca Chiều 13/11 (không ghi chú). Ngoài 6 hộp này, **không có hộp nào được báo Nhận từ TTLT hay Trả**.
+- **144/150 hộp thiếu `NHAN`**; trong đó **137 hộp đã Tách xong** nhưng không có `NHAN` và không có `TRA`. Nhóm có báo "Nhận hộp" (`NHAN_NHOM`) cho 94 hộp, 89 hộp trong số đó không có `NHAN`.
+- Không có hộp `TRA` mà chưa Tách xong, không có hộp `TRA` thiếu `NHAN`: giả thuyết "lệnh Trả bị bỏ qua" **không đúng**; lỗi nằm ở chỗ **không ai báo**.
+- Hộp mới tính từ 09/11: 36 + 12 + 18 + 18 + 19 + 10 + 7 hộp có làm, đa số Tách xong, chỉ 6 hộp có nhận/trả.
+- **Kết luận:** cột "Trả" ở Đối soát gần như trống vì (a) Quản lý **không báo `NHAN` và `TRA`** (chỉ làm cho 6 hộp), (b) hộp cũ trước khi dùng hệ thống chưa có lịch sử nhận (đã dự đoán ở Q1 đợt trước), (c) không có bước nào buộc/nhắc báo. Giả thuyết 1 và 4 ở mục 1.3 đúng; giả thuyết 2 sai; giả thuyết 3 là lỗi hiển thị đã nêu. **Hệ quả cho thiết kế:** B (bước `GIAO`) chưa đủ nếu Quản lý vẫn không báo `NHAN`/`TRA`; cần thêm cách báo **hàng loạt, tối thiểu thao tác** (ví dụ "Trả tất cả hộp đã Tách xong và chưa trả" bằng một lần bấm, có Xem trước) và cho phép **nhập bổ sung ngày trả/nhận thật** cho hộp cũ. Đề xuất Opus cân nhắc làm A + "trả hàng loạt" trước.
+- Chưa đọc tab Nhật ký hành động và tab `ChotCa`; không cần cho kết luận trên.
+
 ## 5. Câu hỏi cho chủ dự án (Opus lọc trước khi hỏi)
 | # | Câu hỏi | Mặc định đề xuất |
 |---|---|---|
