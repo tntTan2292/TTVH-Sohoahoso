@@ -41,4 +41,4 @@
 | 33 | Đối soát hộp có 2 cột Nhận từ TTLT / Trả cho TTLT (ngày · ca · người · ghi chú), dòng thiếu Nhận/Trả tô đỏ, "Đủ" không cần OCR | F-TH-01 | ✅ Xong (chủ dự án xác nhận 15/11, phiên bản 34) |
 | 34 | Quản lý Nhận/Trả nhiều hộp một lần (điền tất cả hộp gợi ý), cảnh báo đỏ số hộp chưa Nhận/chưa Trả | F-TH-02 | ✅ Xong (chủ dự án xác nhận 15/11, phiên bản 34) |
 | 35 | Quản lý tự ghi bổ sung Nhận/Trả cho hộp cũ ngay trong Đối soát (tick hộp, chọn ngày/ca) | F-TH-03 | ✅ Xong (chủ dự án xác nhận 15/11, phiên bản 34) |
-| 36 | Tách file và OCR tính theo số file (= số hồ sơ), mục tiêu 102.995; Quản lý chỉnh số quy đổi; form chỉ nhập Số file | F-FILE-01 | 🟠 Đợt 1 (Opus, 26/11) xong. **Đợt 2 (Sonnet, 26/11) xong mã**: bỏ tờ/trang ở Tách/OCR mọi nơi, Tách chặn 100%, chốt OCR bằng tập lệnh một lần; mock 641/0; **chờ Opus review** (điểm phải dừng số 2), chưa giao Antigravity, chưa triển khai |
+| 36 | Tách file và OCR tính theo số file (= số hồ sơ), mục tiêu 102.995; Quản lý chỉnh số quy đổi; form chỉ nhập Số file | F-FILE-01 | 🟢 Opus review ĐẠT (26/11, `bf71c72`), chờ chủ dự án đẩy tay + chạy chốt OCR |
