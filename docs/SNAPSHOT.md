@@ -6,6 +6,8 @@
 
 ---
 
+> **26/11/2026 (Opus): ĐÃ GIAO Sonnet F-FILE-01 đợt 2** – phiếu `docs/prompts/PROMPT_SONNET_FILE01_DOT2.md` (quyết định chủ dự án Q1–Q4 ghi trong phiếu: bỏ tờ/trang ở Tách/OCR mọi nơi; số cá nhân cũ để yên; Tổng quan Tách = 102.995 = 100%; OCR = lũy kế đến hết ca Tối 26/11 chốt cố định ÷ 102.995). Điểm phải dừng số 2 → Sonnet xong báo Opus review, chưa giao Antigravity.
+
 > **26/11/2026 (Opus, việc GẤP – chủ dự án cho Opus tự code):** F-FILE-01 – Tách file và OCR tính theo **số file = số hồ sơ** từ ca Tối 26/11 (`docs/DE_XUAT_TINH_THEO_FILE.md`). Xong mã + tài liệu: mock **630 đạt / 0 lỗi** (thêm 23), `kiem_tra_giao_dien` 735/0, `node --check` đạt. **Chưa triển khai** – chủ dự án tự đẩy `Code.gs` + `Index.html` lên Apps Script; sau đó vào Dashboard → "⚙ Số quy đổi" kiểm tra 102.995 / 102.995 / OCR để trống (tạm tính), khi có số file OCR thật thì nhập vào. Chưa thử trên trình duyệt (giao diện cần máy chủ Apps Script). **Đợt sau (chưa làm):** biểu đồ ngày, bảng nhóm/nhân sự, năng suất tờ/giờ, CSV Đối soát vẫn cộng chung tờ + file cho Tách/OCR.
 
 > **15/11/2026 (chủ dự án): thử xong phiên bản 34, ĐẠT cả 4 việc** (Đối soát hai cột + chip Cần xử lý; thanh cảnh báo Quản lý ca; ghi Nhận/Trả bổ sung; F-BC-21 phân nhóm sau nhận hộp). Mục 32–35 ✅ Xong. Việc tiếp theo: Quản lý ghi Nhận/Trả bổ sung cho các hộp cũ ngay trong Đối soát (chọn ngày thật); DON1 (mục 29) và H3 (mục 21) vẫn chờ điều kiện.
