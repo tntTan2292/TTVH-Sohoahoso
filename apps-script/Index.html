@@ -733,6 +733,12 @@ button.btn-large {
   gap: 8px !important;
   margin: 8px 0 !important;
 }
+.lo-row .num-row:has(> div:nth-child(2)[style*="display:none"]) {
+  grid-template-columns: 1fr !important;
+}
+.lo-row .num-row > div:first-child:nth-last-child(2) {
+  grid-column: 1 / -1;
+}
 .lo-row .num-row > div:nth-child(3) {
   grid-column: 1 / -1;
 }
@@ -939,11 +945,33 @@ button.btn-large {
   color: var(--tx);
   cursor: pointer;
 }
+.num-row {
+  margin: 8px 0;
+}
+.num-row:has(> div[style*="display:none"]:nth-child(2)) {
+  grid-template-columns: 1fr;
+}
 .num-row input {
   font-size: 17px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   padding: 10px 12px;
+}
+.msg-file-hint {
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  border-radius: var(--radius-sm);
+  background: var(--bad-bg) !important;
+  border: 1px solid var(--bad-line) !important;
+  border-left: 3.5px solid var(--bad) !important;
+  color: var(--tx) !important;
+  margin: 8px 0;
+  display: block;
+  box-sizing: border-box;
+}
+.msg-file-hint b {
+  color: var(--bad);
 }
 .helper-text {
   font-size: 12.5px;
@@ -1042,18 +1070,27 @@ button.btn-large {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
   margin: 12px 0 18px;
+  align-items: stretch;
 }
 .ringbox {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: var(--card-sub);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  height: 100%;
+  box-sizing: border-box;
 }
 .ring-svg-wrap { flex-shrink: 0; }
-.ring-info { flex: 1; min-width: 0; }
+.ring-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .rt {
   font-size: 14px;
   font-weight: 700;
@@ -1077,6 +1114,67 @@ button.btn-large {
   font-size: 12px;
   line-height: 1.45;
   margin-top: 4px;
+}
+.ring-line {
+  line-height: 1.45;
+}
+.ring-chip-line {
+  margin: 3px 0;
+}
+.ring-chip-line .chip {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  line-height: 1.3;
+}
+
+/* F-FILE-01: Khung số quy đổi Tách file / OCR */
+.qdf-details {
+  margin: 12px 0 16px;
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.qdf-summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 14px;
+  color: var(--tx);
+  user-select: none;
+  background: var(--card);
+  border-bottom: 1px solid transparent;
+}
+.qdf-details[open] .qdf-summary {
+  border-bottom: 1px solid var(--line);
+}
+.qdf-body {
+  padding: 12px 14px;
+}
+.qdf-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--tx-sec);
+  margin-bottom: 10px;
+}
+.qdf-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.qdf-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#qdfLuuBtn {
+  min-height: 36px;
+  padding: 0 16px;
+  font-weight: 600;
 }
 
 .wgs {
@@ -1479,7 +1577,23 @@ button.btn-large {
 .ns-kpi-to { border-top: 4px solid var(--pri); }
 .ns-kpi-gio { border-top: 4px solid var(--col-tach); }
 .ns-kpi-speed { border-top: 4px solid var(--ok); }
-.ns-kpi-speed b { color: var(--ok); }
+.ns-kpi-speed b {
+  color: var(--ok);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+}
+.ns-kpi-speed b small {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--mut);
+}
+.ns-kpi-speed span {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.35;
+}
 
 .ns-card-head {
   display: flex;
@@ -1851,7 +1965,23 @@ tbody tr:last-child td { border-bottom: none; }
   .big { font-size: 20px; }
   .mts { grid-template-columns: 1fr 1fr; gap: 6px; }
   .steps button { min-width: calc(50% - 6px); padding: 10px 8px; font-size: 13.5px; min-height: 44px; }
-  .chartbox { height: 240px; }
+  .chartbox { height: 260px; }
+  .card h3 { font-size: 14px; line-height: 1.35; word-break: break-word; }
+  .ringbox { padding: 12px; gap: 12px; }
+  .ring-svg-wrap svg { width: 76px; height: 76px; }
+  .ns-summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ns-kpi { padding: 10px 10px; }
+  .ns-kpi-tag { font-size: 10px; margin-bottom: 4px; }
+  .ns-kpi b { font-size: 17px; }
+  .ns-kpi-to b { font-size: 14px !important; }
+  .ns-kpi-speed b { flex-direction: column; gap: 0; }
+  .ns-kpi-speed b small { font-size: 10.5px; line-height: 1.2; }
+  .ns-kpi-speed span { font-size: 10.5px; line-height: 1.25; }
+  .ns-table th:first-child, .ns-table td:first-child { width: 36px; min-width: 36px; }
+  .ns-table th:nth-child(2), .ns-table td:nth-child(2) { left: 36px; min-width: 105px; max-width: 125px; padding: 8px 6px; }
+  .ns-table th, .ns-table td { padding: 8px 6px; font-size: 11.5px; }
+  .ns-card-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .qdf-inputs { grid-template-columns: 1fr; }
   .zone { padding: 10px 12px; gap: 8px; margin: 20px 0 10px; }
   .zone .ztag { font-size: 11px; padding: 3px 8px; }
   .zone-title { font-size: 14.5px; }
@@ -2993,7 +3123,7 @@ var nfi = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN
 var STEP_LABEL = { NHAN: 'Nhận từ TT Lưu trữ', NHAN_NHOM: 'Nhận hộp', SCAN: 'Scan', TACH: 'Tách file PDF', OCR: 'OCR (xử lý TT)', TRA: 'Trả hộp' };
 // F-FILE-01: khâu Tách file và OCR báo cáo theo SỐ FILE (= số hồ sơ), không nhập trang/tờ
 function laKhauFile(b) { return b === 'TACH' || b === 'OCR'; }
-var GHI_CHU_FILE_HTML = '<div class="msg warn" style="margin:8px 0;">⚠ Khâu <b>Tách file</b> và <b>OCR</b> chỉ báo cáo <b>SỐ FILE</b> thực hiện (số file = số hồ sơ). Không nhập số trang/số tờ.</div>';
+var GHI_CHU_FILE_HTML = '<div class="msg warn msg-file-hint" style="margin:8px 0;">⚠ Khâu <b>Tách file</b> và <b>OCR</b> chỉ báo cáo <b>SỐ FILE</b> thực hiện (số file = số hồ sơ). Không nhập số trang/số tờ.</div>';
 function vaiHienThi(vaiTro, chucVu) { return vaiTro === 'LANHDAO' && chucVu ? chucVu : (VAI_LABEL[vaiTro] || chucVu || ''); }      // B5c: Lãnh đạo có Chức vụ thì hiện Chức vụ (vd Trưởng ban · Quyền Giám đốc BĐTP)
 var VAI_LABEL = { TOVIEN: 'Tổ viên', TOTRUONG: 'Tổ trưởng', TOPHO: 'Tổ phó', LANHDAO: 'Lãnh đạo', ADMIN: 'Quản trị' };
 var CA_NAME = ['Sáng', 'Chiều', 'Tối'];
@@ -4398,6 +4528,8 @@ function editDL(r) {
     '<div><label>Ngày</label><input id="eNgay" type="date" value="' + esc(r.ngay) + '"></div>' +
     '<div><label>Ca</label><select id="eCa">' + CA_NAME.map(function (c) { return '<option' + (c === r.ca ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
     '<div><label>Nhóm</label><input id="eNhom" value="' + esc(r.nhom) + '"></div><div><label>Mã hộp</label><input id="eHop" value="' + esc(r.hop) + '"></div>' +
+    '</div>' +
+    '<div class="row num-row">' +
     '<div><label>' + (laKhauFile(r.buoc) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="eHs" type="number" value="' + r.hs + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="eTrang" type="number" value="' + r.trang + '"></div>' +
     '<div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="eTo" type="number" value="' + r.to + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Trang lỗi</label><input id="eLoi" type="number" value="' + r.loi + '"></div></div>' +      // F-FILE-01: Tách/OCR chỉ sửa Số file
     '<div class="check-card"><label class="check-label"><input type="checkbox" id="eHet"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
@@ -4447,13 +4579,19 @@ function ring(p, col, title, val, sub, donVi) {      // F-FILE-01: donVi 'tờ' 
 function qdfHtml(T) {
   if (!T || !T.theoFile || !T.quyDoiFile || !(ME && ME.isAdmin)) return '';
   var q = T.quyDoiFile;
-  return '<details class="noprint" style="margin:10px 0;"><summary style="cursor:pointer;font-weight:600;">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
-    '<div class="muted" style="font-size:12.5px;margin:6px 0;">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
-    '<div class="row num-row">' +
-      '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
-      '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
-      '<div><label>OCR trước mốc (file)</label><input id="qdfOcr" type="number" min="0" placeholder="Để trống = tạm tính" value="' + (q.ocrFileCu === null || q.ocrFileCu === undefined ? '' : esc(q.ocrFileCu)) + '"></div>' +
-    '</div><button type="button" class="pri sm" id="qdfLuuBtn" onclick="qdfLuu()">Lưu số quy đổi</button><div id="qdfMsg"></div></details>';
+  return '<details class="qdf-details noprint"><summary class="qdf-summary">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
+    '<div class="qdf-body">' +
+      '<div class="qdf-desc">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
+      '<div class="row num-row qdf-inputs">' +
+        '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
+        '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
+        '<div><label>OCR trước mốc (file)</label><input id="qdfOcr" type="number" min="0" placeholder="Để trống = tạm tính" value="' + (q.ocrFileCu === null || q.ocrFileCu === undefined ? '' : esc(q.ocrFileCu)) + '"></div>' +
+      '</div>' +
+      '<div class="qdf-actions">' +
+        '<button type="button" class="pri sm" id="qdfLuuBtn" onclick="qdfLuu()">Lưu số quy đổi</button>' +
+        '<div id="qdfMsg"></div>' +
+      '</div>' +
+    '</div></details>';
 }
 function qdfLuu() {
   var p = { mucTieuFile: $('qdfMuc').value, tachFileCu: $('qdfTach').value, ocrFileCu: $('qdfOcr').value };
@@ -4480,7 +4618,12 @@ function widgetHtml(d) {
     '<div class="rings">';
   T.buoc.forEach(function (b, i) {
     var dvi = b.donVi || 'tờ';      // F-FILE-01
-    h += ring(b.tyLe, cols[i], b.ten, b.daLam, (b.mucTieu ? 'Mục tiêu <b>' + nf(b.mucTieu) + '</b> ' + dvi + '<br>' : '') + (b.xong ? '<span class="chip ok">✔ Đủ mục tiêu (100%)</span><br>' : 'Còn <b>' + nf(b.conLai) + '</b> ' + dvi + '<br>') + 'TB <b>' + nf(b.tbNgay) + '</b> ' + dvi + '/ngày · <b>' + nf(b.tbCa) + '</b> ' + dvi + '/ca' + (!b.xong && b.ngayConLai ? '<br>Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)' : ''), dvi);      // F-FILE-01 (Q3): đủ 100% thì không hiện Còn lại / Dự kiến xong; bỏ chip Tạm tính (Q4)
+    var sub = (b.mucTieu ? '<div class="ring-line">Mục tiêu <b>' + nf(b.mucTieu) + '</b> ' + dvi + '</div>' : '') +
+      (b.tam ? '<div class="ring-chip-line"><span class="chip warn">Tạm tính</span></div>' : '') +
+      (b.xong ? '<div class="ring-chip-line"><span class="chip ok">✔ Đủ mục tiêu (100%)</span></div>' : '<div class="ring-line">Còn <b>' + nf(b.conLai) + '</b> ' + dvi + '</div>') +
+      '<div class="ring-line">TB <b>' + nf(b.tbNgay) + '</b> ' + dvi + '/ngày · <b>' + nf(b.tbCa) + '</b> ' + dvi + '/ca</div>' +
+      (!b.xong && b.ngayConLai ? '<div class="ring-line">Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)</div>' : '');
+    h += ring(b.tyLe, cols[i], b.ten, b.daLam, sub, dvi);
   });
   h += '</div>' + qdfHtml(T) +
     '<div class="wgs">' +
@@ -5106,7 +5249,7 @@ function mk(id, cfg) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, padding: 12, color: txt } }
+      legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, padding: 8, font: { size: 11 }, color: txt } }
     },
     scales: {
       x: { grid: { color: grid }, ticks: { color: txt } },

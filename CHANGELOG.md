@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-26
+- F-FILE-01 · Làm đẹp giao diện Tách file / OCR tính theo file: ô Số file không lệch khi ẩn trang/tờ (.num-row, .lo-row .num-row, sửa bản ghi); ghi chú đỏ nổi bật gọn gàng (.msg-file-hint); ba vòng tiến độ cao bằng nhau, chip và dòng mục tiêu xuống dòng đẹp; khung ⚙ Số quy đổi (.qdf-*); thẻ năng suất TB tính riêng 2 dòng và bảng Nhân sự không tràn ở 360px; tối ưu legend và tiêu đề biểu đồ · Antigravity · mock 641/0, giao diện 747/0 · chưa triển khai
 - F-FILE-01 đợt 2 · Tách file/OCR chỉ còn "file" ở mọi nơi (biểu đồ, bảng nhóm/cá nhân/nhân sự, Nhật ký, Đối soát, CSV, form sửa); năng suất Scan tờ/giờ và Tách+OCR file/giờ tính riêng; Tổng quan Tách chặn 100% (102.995), đủ thì không hiện Còn lại/Dự kiến xong; bỏ chip Tạm tính; tập lệnh chạy một lần `xemChotOcrQuyDoi`/`apDungChotOcrQuyDoi` chốt số OCR trước mốc · mock 641/0 · chưa triển khai
 - F-FILE-01 · Tách file và OCR tính theo số file (= số hồ sơ) từ ca Tối 26/11; mục tiêu 102.995 file; Tách quy đổi 102.995; OCR tạm tính; Quản lý chỉnh số quy đổi ở Dashboard (`luuQuyDoiFile`); form Tách/OCR chỉ nhập Số file + ghi chú · chưa triển khai
 
