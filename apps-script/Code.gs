@@ -769,6 +769,53 @@ function suaMaHopNgay() {
   });
 }
 
+/* ---------- F-FILE-01 (Q4): chốt cố định số OCR trước mốc quy đổi sang file (CHỈ chủ Sheet chạy từ trình soạn, một lần) ----------
+   Giá trị = OCR đã làm TRƯỚC mốc (DauKy mọi dòng + bản ghi OCR trước ca Tối 26/11, đơn vị như đã báo cáo: tờ nếu có, không thì trang).
+   Chạy: xemChotOcrQuyDoi (chỉ đọc, in số) → apDungChotOcrQuyDoi (ghi ocrFileCu vào QUY_DOI_FILE). Đọc thẳng Sheet, không qua đệm. Dùng xong xóa hàm (CHUAN_PROMPT mục 3c). */
+function tinhOcrTruocMoc_() {
+  const ss = ss_(), q = quyDoiFile_();
+  const doc = function (ten) { const sh = ss.getSheetByName(ten); return sh ? sh.getDataRange().getValues() : []; };
+  const cot = function (v, ten) { return (v[0] || []).indexOf(ten); };
+  let nhatKy = 0, dauKy = 0, soDongNk = 0, soDongDk = 0;
+  const nk = doc('NhatKy');
+  if (nk.length >= 2) {
+    const iHuy = cot(nk, 'Huy'), iBuoc = cot(nk, 'Buoc'), iNgay = cot(nk, 'Ngay'), iCa = cot(nk, 'Ca'), iLoai = cot(nk, 'Loai'), iTo = cot(nk, 'SoTo'), iTrang = cot(nk, 'SoTrang');
+    for (let i = 1; i < nk.length; i++) {
+      const r = nk[i];
+      if (b_(r[iHuy]) || s_(r[iBuoc]) !== 'OCR' || s_(r[iLoai]) === 'THỬ NGHIỆM' || !CA[s_(r[iCa])]) continue;
+      if (laBanGhiFile_('OCR', d_(r[iNgay]), s_(r[iCa]))) continue;      // từ mốc: đã là file, cộng trực tiếp lúc tính
+      nhatKy += n_(r[iTo]) > 0 ? n_(r[iTo]) : n_(r[iTrang]); soDongNk++;
+    }
+  }
+  const dk = doc('DauKy');
+  if (dk.length >= 2) {
+    const iBuoc = cot(dk, 'Buoc'), iTo = cot(dk, 'SoTo'), iTrang = cot(dk, 'SoTrang');
+    for (let i = 1; i < dk.length; i++) {
+      if (s_(dk[i][iBuoc]).toUpperCase() !== 'OCR') continue;
+      dauKy += n_(dk[i][iTo]) > 0 ? n_(dk[i][iTo]) : n_(dk[i][iTrang]); soDongDk++;
+    }
+  }
+  return { gia: Math.round(nhatKy + dauKy), nhatKy: nhatKy, dauKy: dauKy, soDongNk: soDongNk, soDongDk: soDongDk, hienTai: q.ocrFileCu, moc: q.mocNgay + ' ca ' + q.mocCa };
+}
+function xemChotOcrQuyDoi() {      // chỉ đọc, KHÔNG ghi
+  ownerOnly_();
+  const r = tinhOcrTruocMoc_();
+  Logger.log('Số OCR trước mốc ' + r.moc + ' sẽ chốt: ' + r.gia + ' (DauKy ' + r.dauKy + ' từ ' + r.soDongDk + ' dòng + NhatKy ' + r.nhatKy + ' từ ' + r.soDongNk + ' bản ghi). Giá trị đang lưu: ' + (r.hienTai === null ? 'chưa có (tạm tính)' : r.hienTai));
+  return r;
+}
+function apDungChotOcrQuyDoi() {
+  ownerOnly_();
+  return withLock_(function () {
+    const r = tinhOcrTruocMoc_(), cu = quyDoiFile_();
+    const moi = { mucTieuFile: cu.mucTieuFile, tachFileCu: cu.tachFileCu, ocrFileCu: r.gia, mocNgay: cu.mocNgay, mocCa: cu.mocCa };
+    PropertiesService.getScriptProperties().setProperty('QUY_DOI_FILE', JSON.stringify(moi));
+    QDF_ = null;
+    log_('CHU_SHEET', 'QUY_DOI_FILE', 'chốt OCR trước mốc ' + r.moc + ': ' + (cu.ocrFileCu === null ? 'tạm theo tờ' : cu.ocrFileCu) + ' → ' + r.gia + ' (DauKy ' + r.dauKy + ' + NhatKy ' + r.nhatKy + ')');
+    Logger.log('Đã chốt số OCR trước mốc = ' + r.gia);
+    return r;
+  });
+}
+
 function huy_(u, p) {
   const t = now_();
   const r = read_('NhatKy').filter(function (x) { return s_(x.ID) === s_(p.id); })[0];
@@ -1421,8 +1468,11 @@ function suaBanGhi_(u, p) {
   if (p.ca !== undefined) { if (!CA[s_(p.ca)]) throw 'Ca không hợp lệ'; set('Ca', s_(p.ca)); }
   if (p.nhom !== undefined) set('Nhom', s_(p.nhom));
   if (p.hop !== undefined) set('MaHop', s_(p.hop));
+  // F-FILE-01 (Q1): bản ghi Tách/OCR tính theo file (từ mốc) chỉ sửa SoHoSo (= số file); không ghi SoTrang/SoTo dù giao diện cũ có gửi
+  const chiFile = laBanGhiFile_(s_(r.Buoc), p.ngay !== undefined ? d_(p.ngay) : d_(r.Ngay), p.ca !== undefined ? s_(p.ca) : s_(r.Ca));
   ['soHoSo:SoHoSo', 'soTrang:SoTrang', 'soTo:SoTo', 'trangLoi:TrangLoi'].forEach(function (m) {
-    const k = m.split(':'); if (p[k[0]] !== undefined) set(k[1], Math.max(0, Math.floor(n_(p[k[0]]))));
+    const k = m.split(':'); if (chiFile && (k[0] === 'soTrang' || k[0] === 'soTo')) return;
+    if (p[k[0]] !== undefined) set(k[1], Math.max(0, Math.floor(n_(p[k[0]]))));
   });
   if (p.hetHop !== undefined) set('HetHop', !!p.hetHop);
   if (p.ghiChu !== undefined) set('GhiChu', s_(p.ghiChu));
@@ -1883,6 +1933,11 @@ function chiTietCa_(u, p, gomThu) {
 }
 
 const SERIES_MAC_DINH_ = 10, SERIES_TOI_DA_ = 30;      // C1: số ngày của dash_.series (mặc định 10 cho widget tab Báo cáo; biểu đồ tiến độ xin tới 30)
+// F-FILE-01: thứ tự xếp người/nhóm theo sản lượng. Trước mốc mọi khâu cùng đơn vị tờ → như cũ (tổng giảm dần). Từ mốc Scan là tờ còn Tách/OCR là file → KHÔNG cộng trộn: Scan trước, rồi Tách + OCR (file)
+function xepNangSuat_(a, b, theoFile) {
+  if (!theoFile) return (b.scanDV + b.tachDV + b.ocrDV) - (a.scanDV + a.tachDV + a.ocrDV);
+  return (b.scanDV - a.scanDV) || ((b.tachDV + b.ocrDV) - (a.tachDV + a.ocrDV));
+}
 function dash_(ngayIn, gomThu, soNgayIn) {
   const t = now_(), ngay = d_(ngayIn) || t.ngay;
   const soNgayIn0 = Math.floor(n_(soNgayIn)), soNgayChuoi = soNgayIn0 >= 1 ? Math.min(SERIES_TOI_DA_, soNgayIn0) : SERIES_MAC_DINH_;      // <1 / không phải số → mặc định; > 30 → 30
@@ -1977,12 +2032,14 @@ function dash_(ngayIn, gomThu, soNgayIn) {
     const tvs = (mem && mem.length) ? mem : (g ? g.tv : []);   // báo cáo cá nhân (không nhóm): chỉ tính cho cá nhân, không vào bảng nhóm
     congCaNhan_(canhan, tvs, r.ca, b, add);
   });
+  const theoFile = ngay >= quyDoiFile_().mocNgay;      // F-FILE-01
   const nhomOut = Object.keys(nhoms).map(function (k) {
     const g = nhoms[k], gio = g.tv.length * CA[g.ca].gio;
     g.gioNguoi = gio;
     g.scanDVGio = gio ? Math.round(g.scanDV / gio * 10) / 10 : 0;
     g.tachDVGio = gio ? Math.round(g.tachDV / gio * 10) / 10 : 0;
     g.ocrDVGio = gio ? Math.round(g.ocrDV / gio * 10) / 10 : 0;
+    if (theoFile) g.fileDVGio = gio ? Math.round((g.tachDV + g.ocrDV) / gio * 10) / 10 : 0;      // F-FILE-01: Tách+OCR (file) riêng; Scan (tờ) = scanDVGio, không cộng trộn
     g.scanTrangGio = g.scanDVGio; g.tachTrangGio = g.tachDVGio; g.ocrTrangGio = g.ocrDVGio;   // tên cũ (giao diện cũ); giao diện mới dùng *DVGio
     return g;
   }).sort(function (a, b) { return CA[a.ca].o - CA[b.ca].o || a.nhom.localeCompare(b.nhom); });
@@ -1990,7 +2047,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
     const c = canhan[k]; c.soCa = Object.keys(c.ca).length; delete c.ca;
     Object.keys(c).forEach(function (f) { if (typeof c[f] === 'number') c[f] = Math.round(c[f] * 10) / 10; });
     return c;
-  }).sort(function (a, b) { return (b.scanDV + b.tachDV + b.ocrDV) - (a.scanDV + a.tachDV + a.ocrDV); });
+  }).sort(function (a, b) { return xepNangSuat_(a, b, theoFile); });      // F-FILE-01: từ mốc không xếp theo tổng trộn tờ + file
 
   // TỪNG CA: mỗi người trong ca thuộc nhóm nào, làm được bao nhiêu (kể cả người chưa báo cáo)
   const cn = {};
@@ -2038,20 +2095,20 @@ function dash_(ngayIn, gomThu, soNgayIn) {
   const soCa = cDK + Object.keys(caKetThuc).length, soNgay = nDK + Object.keys(ngayCoCa).length;
   const tuNgay = NGAY_BAT_DAU;
   const buocs = [['scan', 'SCAN', 'scanDV', 'Scan'], ['tach', 'TACH', 'tachDV', 'Tách file PDF'], ['ocr', 'OCR', 'ocrDV', 'OCR']];
-  const qdf = quyDoiFile_(), theoFile = ngay >= qdf.mocNgay;      // F-FILE-01: từ ngày mốc, Tách/OCR tính theo file
+  const qdf = quyDoiFile_();      // F-FILE-01: từ ngày mốc (theoFile), Tách/OCR tính theo file
   const fileMoi = function (B) { return rows.reduce(function (a, r) { return a + ((r.buoc === B && r.laFile && r.ngay <= ngay) ? r.dv : 0); }, 0); };
   const tienDo = { mucTieu: MUC_TIEU_TO, denNgay: ngay, tuNgay: tuNgay, soNgay: soNgay, soCa: soCa, theoFile: theoFile, quyDoiFile: qdf, buoc: buocs.map(function (b) {
     let da = all[b[2]] + dv(dk[b[1]]) + dkSum(b[1], { den: ngay }), muc = MUC_TIEU_TO, donVi = 'tờ', tam = false;
     if (theoFile && BUOC_FILE_.indexOf(b[1]) >= 0) {
       muc = qdf.mucTieuFile; donVi = 'file';
-      if (b[1] === 'TACH') da = qdf.tachFileCu + fileMoi('TACH');
+      if (b[1] === 'TACH') da = Math.min(qdf.mucTieuFile, qdf.tachFileCu + fileMoi('TACH'));      // Q3: Tách file không vượt mục tiêu (100%)
       else if (qdf.ocrFileCu === null) tam = true;      // OCR chưa có số quy đổi: TẠM giữ số hiện tại (tờ cũ + file mới) chia mục tiêu file
       else da = qdf.ocrFileCu + fileMoi('OCR');
     }
     const con = Math.max(0, muc - da);
     const tbNgay = soNgay ? da / soNgay : 0, tbCa = soCa ? da / soCa : 0;
-    const nConLai = tbNgay > 0 ? Math.ceil(con / tbNgay) : null;
-    return { key: b[0], ten: b[3], daLam: da, mucTieu: muc, donVi: donVi, tam: tam, tyLe: da / muc * 100, conLai: con, tbNgay: Math.round(tbNgay), tbCa: Math.round(tbCa),
+    const nConLai = (con > 0 && tbNgay > 0) ? Math.ceil(con / tbNgay) : null;      // đã đủ mục tiêu → không có 'Dự kiến xong'
+    return { key: b[0], ten: b[3], daLam: da, mucTieu: muc, donVi: donVi, tam: tam, xong: con <= 0, tyLe: da / muc * 100, conLai: con, tbNgay: Math.round(tbNgay), tbCa: Math.round(tbCa),
       ngayConLai: nConLai, ngayXong: nConLai === null ? '' : Utilities.formatDate(new Date((ngay < t.ngay ? new Date(ngay + 'T12:00:00+07:00').getTime() : Date.now()) + nConLai * 86400000), TZ, 'dd/MM/yyyy') };
   }) };
   // ai nhập, nhập bao nhiêu: chi tiết từng lần báo cáo trong ngày + tổng hợp theo ca / người nhập
@@ -2113,20 +2170,23 @@ function thongKeNhanSu_(p, gomThu) {
     r.tvs.forEach(function (m) { const g = gioDK[m.ma] = gioDK[m.ma] || {}; if (g[key] === undefined) g[key] = m.gio; });
   });
   const r1 = function (v) { return Math.round(v * 10) / 10; };
+  const theoFileNS = den >= quyDoiFile_().mocNgay;      // F-FILE-01: từ mốc có năng suất tách riêng (Scan tờ/giờ, Tách+OCR file/giờ)
   const nguoi = Object.keys(canhan).filter(function (ma) { return gomThu || ma.indexOf('TN-') !== 0; }).map(function (ma) {
     const c = canhan[ma], keys = Object.keys(c.ca), gk = gioDK[ma] || {};
     c.soCa = keys.reduce(function (a, k) { return a + (gk[k] !== undefined && k.split('|')[1] === 'Ngày' && gk[k] >= 8 ? 2 : 1); }, 0);      // DK1: ca Ngày 8 giờ tính 2 ca
     c.gio = keys.reduce(function (a, k) { return a + (gk[k] !== undefined ? gk[k] : CA[k.split('|')[1]].gio); }, 0);
     const dvTong = c.scanDV + c.tachDV + c.ocrDV;
-    c.dvGio = c.gio ? r1(dvTong / c.gio) : 0;
+    c.dvGio = c.gio ? r1(dvTong / c.gio) : 0;      // trường cũ (trộn), giao diện không còn dùng
+    if (theoFileNS) { c.toGio = c.gio ? r1(c.scanDV / c.gio) : 0; c.fileGio = c.gio ? r1((c.tachDV + c.ocrDV) / c.gio) : 0; }      // F-FILE-01: Scan tờ/giờ và Tách+OCR file/giờ riêng
     delete c.ca;
-    Object.keys(c).forEach(function (f) { if (typeof c[f] === 'number' && f !== 'soCa' && f !== 'gio' && f !== 'dvGio') c[f] = r1(c[f]); });
+    Object.keys(c).forEach(function (f) { if (typeof c[f] === 'number' && f !== 'soCa' && f !== 'gio' && f !== 'dvGio' && f !== 'toGio' && f !== 'fileGio') c[f] = r1(c[f]); });
     return c;
-  }).sort(function (a, b) { return (b.scanDV + b.tachDV + b.ocrDV) - (a.scanDV + a.tachDV + a.ocrDV) || a.ten.localeCompare(b.ten, 'vi'); });
+  }).sort(function (a, b) { return xepNangSuat_(a, b, theoFileNS) || a.ten.localeCompare(b.ten, 'vi'); });      // F-FILE-01
   const tong = { soNguoi: nguoi.length, soCa: 0, gio: 0, scanDV: 0, tachDV: 0, ocrDV: 0, scanHop: 0, tachHop: 0, ocrHop: 0, scanHs: 0, tachHs: 0 };
   nguoi.forEach(function (c) { Object.keys(tong).forEach(function (f) { if (f !== 'soNguoi') tong[f] += c[f] || 0; }); });
   Object.keys(tong).forEach(function (f) { tong[f] = r1(tong[f]); });
-  tong.dvGio = tong.gio ? r1((tong.scanDV + tong.tachDV + tong.ocrDV) / tong.gio) : 0;
+  tong.dvGio = tong.gio ? r1((tong.scanDV + tong.tachDV + tong.ocrDV) / tong.gio) : 0;      // trường cũ (trộn)
+  if (theoFileNS) { tong.toGio = tong.gio ? r1(tong.scanDV / tong.gio) : 0; tong.fileGio = tong.gio ? r1((tong.tachDV + tong.ocrDV) / tong.gio) : 0; }      // F-FILE-01
   const kq = { tu: tu, den: den, soNgay: Object.keys(ngayCo).length, dauKyDen: DAU_KY_DEN, nguoi: nguoi, tong: tong };
   if (dkn.length) { kq.coDauKyNguoi = true; kq.chuaRo = chuaRo; }      // DK1: chỉ thêm khi khoảng ngày có số theo từng người (khoảng khác: kết quả y hệt bản trước)
   return kq;
