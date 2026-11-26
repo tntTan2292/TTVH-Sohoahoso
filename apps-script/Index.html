@@ -4361,7 +4361,7 @@ function chChay(apDung, t) {
 function veChXem(r) {
   var bang = function (ds, tieuDe) {
     return ds.length ? '<h3 style="margin:14px 0 6px;">' + tieuDe + ' (' + ds.length + ')</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Dòng</th><th>Giờ</th><th>Khâu</th><th>Hộp</th><th>Số liệu</th><th>Người</th><th>Cũ</th><th>Mới</th><th>Lý do</th></tr>' + ds.map(function (x) {
-      return '<tr><td><code>' + esc(x.id) + '</code></td><td data-label="Giờ">' + esc(x.gio) + '</td><td data-label="Khâu">' + esc(STEP_LABEL[x.buoc] || x.buoc) + '</td><td data-label="Hộp"><b>' + esc(x.hop) + '</b></td><td data-label="Số liệu">' + x.hs + ' hs / ' + x.trang + ' trang / ' + x.to + ' tờ' + (x.het ? ' ✔' : '') + '</td><td data-label="Người">' + esc(x.nguoi) + '</td>' +
+      return '<tr><td><code>' + esc(x.id) + '</code></td><td data-label="Giờ">' + esc(x.gio) + '</td><td data-label="Khâu">' + esc(STEP_LABEL[x.buoc] || x.buoc) + '</td><td data-label="Hộp"><b>' + esc(x.hop) + '</b></td><td data-label="Số liệu">' + (laKhauFile(x.buoc) ? x.hs + ' file' : x.hs + ' hs / ' + x.trang + ' trang / ' + x.to + ' tờ') + (x.het ? ' ✔' : '') + '</td><td data-label="Người">' + esc(x.nguoi) + '</td>' +
         '<td data-label="Cũ">' + esc(x.nhomCu) + ': ' + esc(x.tvCu) + '</td><td data-label="Mới">' + (x.hanhDong === 'HUY_TRUNG' ? '<span class="chip bad">Hủy mềm</span>' : 'Nhóm ' + esc(x.nhomMoi) + ': ' + esc(x.tvMoi)) + '</td><td data-label="Lý do">' + esc(x.ly) + '</td></tr>';
     }).join('') + '</table></div>' : '';
   };
@@ -4370,7 +4370,7 @@ function veChXem(r) {
   if (r.xungDot.length) {
     h += '<h3 style="margin:14px 0 6px;">Xung đột – cần chủ dự án chọn dòng đúng (' + r.xungDot.length + ')</h3>' + r.xungDot.map(function (k) {
       return '<div class="msg warn"><span><b>Nhóm ' + esc(k.nhom) + ' · ' + esc(STEP_LABEL[k.buoc] || k.buoc) + ' · hộp ' + esc(k.hop) + '</b> – ' + esc(k.ly) + '<br>' + k.dong.map(function (d) {
-        return '<code>' + esc(d.id) + '</code> ' + esc(d.gio) + ' ' + esc(d.nguoi) + ' (' + esc(d.nhomHienTai) + '): ' + d.hs + ' hs / ' + d.trang + ' trang / ' + d.to + ' tờ' + (d.het ? ' ✔' : '');
+        return '<code>' + esc(d.id) + '</code> ' + esc(d.gio) + ' ' + esc(d.nguoi) + ' (' + esc(d.nhomHienTai) + '): ' + (laKhauFile(k.buoc) ? d.hs + ' file' : d.hs + ' hs / ' + d.trang + ' trang / ' + d.to + ' tờ') + (d.het ? ' ✔' : '');
       }).join('<br>') + '</span></div>';
     }).join('');
   }
@@ -4383,8 +4383,8 @@ function veChXem(r) {
 function loadDL() {
   $('dlEdit').classList.add('hide');
   call('nhatKy', { ngay: $('dlNgay').value, includeHuy: true }).then(function (rs) {
-    $('dlList').innerHTML = rs.length ? '<table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Nhóm</th><th>Bước</th><th>Hộp</th><th>Hồ sơ</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Loại</th><th>Thao tác</th></tr>' + rs.map(function (r, i) {
-      return '<tr' + (r.daXoa ? ' style="opacity:.45;text-decoration:line-through"' : '') + '><td>' + r.gio + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Nhóm">' + esc(r.nhom) + '</td><td data-label="Bước">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td data-label="Hộp"><b>' + esc(r.hop) + '</b></td><td data-label="Hồ sơ">' + r.hs + '</td><td data-label="Trang">' + r.trang + '</td><td data-label="Tờ">' + r.to + '</td><td data-label="Xong hộp">' + (r.het ? '✔' : '') + '</td><td data-label="Người nhập">' + esc(r.nguoi) + '</td><td data-label="Loại">' + esc(r.loai) + '</td>' +
+    $('dlList').innerHTML = rs.length ? '<table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Nhóm</th><th>Bước</th><th>Hộp</th><th>Hồ sơ / file</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Loại</th><th>Thao tác</th></tr>' + rs.map(function (r, i) {
+      return '<tr' + (r.daXoa ? ' style="opacity:.45;text-decoration:line-through"' : '') + '><td>' + r.gio + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Nhóm">' + esc(r.nhom) + '</td><td data-label="Bước">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td data-label="Hộp"><b>' + esc(r.hop) + '</b></td><td data-label="Hồ sơ">' + r.hs + '</td><td data-label="Trang">' + (laKhauFile(r.buoc) ? '—' : r.trang) + '</td><td data-label="Tờ">' + (laKhauFile(r.buoc) ? '—' : r.to) + '</td><td data-label="Xong hộp">' + (r.het ? '✔' : '') + '</td><td data-label="Người nhập">' + esc(r.nguoi) + '</td><td data-label="Loại">' + esc(r.loai) + '</td>' +
         '<td data-label="Thao tác">' + (r.daXoa ? '<button class="sm" data-u="' + r.id + '">Khôi phục</button>' : '<button class="sm" data-e="' + i + '">Sửa</button> <button class="sm bad" data-d="' + r.id + '">Xóa</button>') + '</td></tr>';
     }).join('') + '</table>' : '<div class="empty-state"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--mut)" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><div>Không có bản ghi nào trong ngày này.</div></div>';
     Array.prototype.forEach.call($('dlList').querySelectorAll('[data-d]'), function (b) { b.onclick = function () { hoiXacNhan('Xóa bản ghi', 'Xóa bản ghi này?').then(function (ok) { if (ok) call('huy', { id: b.dataset.d }).then(loadDL).catch(alert); }); }; });
@@ -4398,8 +4398,8 @@ function editDL(r) {
     '<div><label>Ngày</label><input id="eNgay" type="date" value="' + esc(r.ngay) + '"></div>' +
     '<div><label>Ca</label><select id="eCa">' + CA_NAME.map(function (c) { return '<option' + (c === r.ca ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
     '<div><label>Nhóm</label><input id="eNhom" value="' + esc(r.nhom) + '"></div><div><label>Mã hộp</label><input id="eHop" value="' + esc(r.hop) + '"></div>' +
-    '<div><label>Số hồ sơ</label><input id="eHs" type="number" value="' + r.hs + '"></div><div><label>Số trang</label><input id="eTrang" type="number" value="' + r.trang + '"></div>' +
-    '<div><label>Số tờ</label><input id="eTo" type="number" value="' + r.to + '"></div><div><label>Trang lỗi</label><input id="eLoi" type="number" value="' + r.loi + '"></div></div>' +
+    '<div><label>' + (laKhauFile(r.buoc) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="eHs" type="number" value="' + r.hs + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="eTrang" type="number" value="' + r.trang + '"></div>' +
+    '<div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="eTo" type="number" value="' + r.to + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Trang lỗi</label><input id="eLoi" type="number" value="' + r.loi + '"></div></div>' +      // F-FILE-01: Tách/OCR chỉ sửa Số file
     '<div class="check-card"><label class="check-label"><input type="checkbox" id="eHet"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
     '<div id="eMsg"></div><p style="margin-top:14px;"><button class="pri" id="eSave">Lưu thay đổi</button> <button id="eCancel">Đóng</button></p>';
   $('eCancel').onclick = function () { box.classList.add('hide'); };
@@ -4448,7 +4448,7 @@ function qdfHtml(T) {
   if (!T || !T.theoFile || !T.quyDoiFile || !(ME && ME.isAdmin)) return '';
   var q = T.quyDoiFile;
   return '<details class="noprint" style="margin:10px 0;"><summary style="cursor:pointer;font-weight:600;">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
-    '<div class="muted" style="font-size:12.5px;margin:6px 0;">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Để trống ô OCR = tạm lấy số hiện tại (tờ cũ).</div>' +
+    '<div class="muted" style="font-size:12.5px;margin:6px 0;">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
     '<div class="row num-row">' +
       '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
       '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
@@ -4480,8 +4480,7 @@ function widgetHtml(d) {
     '<div class="rings">';
   T.buoc.forEach(function (b, i) {
     var dvi = b.donVi || 'tờ';      // F-FILE-01
-    h += ring(b.tyLe, cols[i], b.ten, b.daLam, (b.mucTieu ? 'Mục tiêu <b>' + nf(b.mucTieu) + '</b> ' + dvi + '<br>' : '') + 'Còn <b>' + nf(b.conLai) + '</b> ' + dvi + '<br>TB <b>' + nf(b.tbNgay) + '</b> ' + dvi + '/ngày · <b>' + nf(b.tbCa) + '</b> ' + dvi + '/ca' + (b.ngayConLai ? '<br>Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)' : '') +
-      (b.tam ? '<br><span class="chip warn">Tạm tính: số OCR hiện tại (gồm tờ cũ) ÷ ' + nf(b.mucTieu) + ' file – chờ Quản lý nhập số file OCR quy đổi</span>' : ''), dvi);
+    h += ring(b.tyLe, cols[i], b.ten, b.daLam, (b.mucTieu ? 'Mục tiêu <b>' + nf(b.mucTieu) + '</b> ' + dvi + '<br>' : '') + (b.xong ? '<span class="chip ok">✔ Đủ mục tiêu (100%)</span><br>' : 'Còn <b>' + nf(b.conLai) + '</b> ' + dvi + '<br>') + 'TB <b>' + nf(b.tbNgay) + '</b> ' + dvi + '/ngày · <b>' + nf(b.tbCa) + '</b> ' + dvi + '/ca' + (!b.xong && b.ngayConLai ? '<br>Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)' : ''), dvi);      // F-FILE-01 (Q3): đủ 100% thì không hiện Còn lại / Dự kiến xong; bỏ chip Tạm tính (Q4)
   });
   h += '</div>' + qdfHtml(T) +
     '<div class="wgs">' +
@@ -4494,18 +4493,19 @@ function widgetHtml(d) {
   return h;
 }
 function tungCaHtml(d) {
-  var tong = function (x) { return (x.scanDV || 0) + (x.tachDV || 0) + (x.ocrDV || 0); };
-  var max = Math.max.apply(null, [1].concat(d.caNguoi.map(tong)));
+  // F-FILE-01: Scan (tờ) và Tách/OCR (file) khác đơn vị → không cộng trộn; mỗi khâu chiếm tối đa 1/3 thanh, so với người làm nhiều nhất CỦA KHÂU ĐÓ
+  var mx = function (f) { return Math.max.apply(null, [1].concat(d.caNguoi.map(function (x) { return x[f] || 0; }))); };
+  var maxS = mx('scanDV'), maxT = mx('tachDV'), maxO = mx('ocrDV');
   var bar = function (x) {
-    var w = function (v) { return (v / max * 100).toFixed(1) + '%'; };
-    return '<div class="bar3"><span style="width:' + w(x.scanDV) + ';background:var(--col-scan)"></span><span style="width:' + w(x.tachDV) + ';background:var(--col-tach)"></span><span style="width:' + w(x.ocrDV) + ';background:var(--col-ocr)"></span></div>';
+    var w = function (v, m) { return ((v || 0) / m * 100 / 3).toFixed(1) + '%'; };
+    return '<div class="bar3"><span style="width:' + w(x.scanDV, maxS) + ';background:var(--col-scan)"></span><span style="width:' + w(x.tachDV, maxT) + ';background:var(--col-tach)"></span><span style="width:' + w(x.ocrDV, maxO) + ';background:var(--col-ocr)"></span></div>';
   };
   var so = function (x) {
     return '<span class="ng-so"><b style="color:var(--col-scan)">' + nfi(x.scanDV) + '</b> · <b style="color:var(--col-tach)">' + nfi(x.tachDV) + '</b> · <b style="color:var(--col-ocr)">' + nfi(x.ocrDV) + '</b>' + (x.nhanHop ? ' <small class="muted">· nhận ' + nfi(x.nhanHop) + ' hộp</small>' : '') + '</span>';
   };
   var TT = { chua: ['Chưa bắt đầu', ''], dang: ['Đang làm', 'warn'], xong: ['Hết ca', 'ok'] };
-  var h = zone('z5', 'TỪNG CA', 'Tình hình từng ca – nhóm – cá nhân', 'Mỗi người: tờ Scan · Tách · OCR (báo cáo nhóm chia đều cho thành viên). Thanh màu so với người làm nhiều nhất trong ngày');
-  h += '<div class="ca-legend"><span><i style="background:var(--col-scan)"></i>Scan</span><span><i style="background:var(--col-tach)"></i>Tách file</span><span><i style="background:var(--col-ocr)"></i>OCR</span></div><div class="ca-grid">';
+  var h = zone('z5', 'TỪNG CA', 'Tình hình từng ca – nhóm – cá nhân', 'Mỗi người: Scan (tờ) · Tách (file) · OCR (file); báo cáo nhóm chia đều cho thành viên. Mỗi khâu so với người làm nhiều nhất của khâu đó trong ngày');
+  h += '<div class="ca-legend"><span><i style="background:var(--col-scan)"></i>Scan (tờ)</span><span><i style="background:var(--col-tach)"></i>Tách file (file)</span><span><i style="background:var(--col-ocr)"></i>OCR (file)</span></div><div class="ca-grid">';
   d.cas.forEach(function (c) {
     var ps = d.caNguoi.filter(function (x) { return x.ca === c.ca; });
     var cs = ccTrangThai(c), tt = cs === 'da' ? ['Đã chốt', 'ok'] : (cs === 'quaHan' ? ['Quá hạn chốt', 'bad'] : (cs === 'chua' ? ['Chưa chốt ca', 'warn'] : (c.tt === 'xong' ? ['Hết ca', 'chip-mut'] : (TT[c.tt] || ['', '']))));
@@ -4610,10 +4610,10 @@ function dashTabTongQuan(d) {
       '<div class="kpi"><span class="kpi-tag">Trả</span><b>' + nf(D.traHop) + '</b><span>Hộp đã trả TTLT</span></div>' +
       '<div class="kpi"><span class="kpi-tag">Tồn</span><b>' + nf(D.tonCuoi) + '</b><span>Hộp tồn cuối ngày</span></div>' +
       '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
-  h += '<div class="card" style="margin-top:14px;"><div class="ns-card-head"><h3 id="c1Tieu">Tiến độ hằng ngày (tờ / ngày)</h3><div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="sm" id="c1Truoc">◀ 30 ngày trước</button><button type="button" class="sm" id="c1Nay">Về hiện tại</button></div></div><div class="muted" style="font-size:12.5px;margin-bottom:6px;" id="c1Ghi"></div><div id="c1Msg"></div><div class="chartbox" style="height:320px;"><canvas id="c6"></canvas></div><div class="muted" style="font-size:12px;margin-top:6px;">Cột chồng: tờ Scan / Tách / OCR mỗi ngày có dữ liệu (gồm số đầu kỳ theo ngày). Đường: TB toàn dự án (tờ / ngày, cả 3 khâu) và TB 7 ngày. Bấm một cột để mở tab Theo ngày của ngày đó.</div></div>';
-  h += '<div class="card" style="margin-top:14px;"><h3>Kết quả – cuối ngày (tờ / ngày, 10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>';
+      '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>File tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
+      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>File OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
+  h += '<div class="card" style="margin-top:14px;"><div class="ns-card-head"><h3 id="c1Tieu">Tiến độ hằng ngày (Scan: tờ · Tách, OCR: file)</h3><div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="sm" id="c1Truoc">◀ 30 ngày trước</button><button type="button" class="sm" id="c1Nay">Về hiện tại</button></div></div><div class="muted" style="font-size:12.5px;margin-bottom:6px;" id="c1Ghi"></div><div id="c1Msg"></div><div class="chartbox" style="height:320px;"><canvas id="c6"></canvas></div><div class="muted" style="font-size:12px;margin-top:6px;">Cột: Scan (tờ), Tách file (file), OCR (file) mỗi ngày có dữ liệu (gồm số đầu kỳ theo ngày; số trước ca Tối 26/11/2026 giữ theo báo cáo cũ). Đường: TB Scan (tờ / ngày) toàn dự án và TB 7 ngày. Bấm một cột để mở tab Theo ngày của ngày đó.</div></div>';
+  h += '<div class="card" style="margin-top:14px;"><h3>Kết quả – cuối ngày (Scan: tờ · Tách, OCR: file; 10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div>';
   return h;
 }
 // ----- Tab 2: Theo ngày (đầu ca, cuối ca, kết thúc ngày) -----
@@ -4630,14 +4630,14 @@ function dashTabNgay(d) {
       '<div class="card"><h3>Kết quả – khối lượng chờ xử lý đầu ca (hộp)</h3><div class="chartbox"><canvas id="c3"></canvas></div></div></div>';
 
     // ===== KHU VỰC 2: CUỐI CA =====
-    h += zone('z2', 'CUỐI CA', 'Kết quả sau từng ca', 'Số tờ đã scan / tách / OCR và hộp nhận – trả trong ca; trạng thái chốt của Tổ trưởng/Tổ phó');
+    h += zone('z2', 'CUỐI CA', 'Kết quả sau từng ca', 'Scan (tờ), Tách file (file), OCR (file) và hộp nhận – trả trong ca; trạng thái chốt của Tổ trưởng/Tổ phó');
     h += '<div class="tiles">' + d.cas.map(function (c) {
       var bcText = (c.nhomDaBC !== undefined && c.tongNhom !== undefined) ? (c.nhomDaBC + '/' + c.tongNhom) : (c.nguoiBaoCao + '/' + c.nguoiPhan);
       return '<div class="tile' + ccLop(c) + '">' +
         '<div class="th"><div class="th-left"><b>Ca ' + esc(c.ca) + '</b> <span class="muted th-time">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div> ' + ttChip(c) + '</div>' +
-        '<div class="mts">' + m('Scan', c.scanDV, 'tờ') + m('Tách file', c.tachDV, d.tienDo && d.tienDo.theoFile ? 'file' : 'tờ') + m('OCR', c.ocrDV, d.tienDo && d.tienDo.theoFile ? 'file' : 'tờ') + m('Hộp nhận', c.nhanHop, 'hộp') + m('Hộp trả', c.traHop, 'hộp') + m('Nhóm đã báo cáo', bcText, 'nhóm') + '</div></div>';
+        '<div class="mts">' + m('Scan', c.scanDV, 'tờ') + m('Tách file', c.tachDV, 'file') + m('OCR', c.ocrDV, 'file') + m('Hộp nhận', c.nhanHop, 'hộp') + m('Hộp trả', c.traHop, 'hộp') + m('Nhóm đã báo cáo', bcText, 'nhóm') + '</div></div>';
     }).join('') + '</div>';
-    h += '<div class="card" style="margin-top:14px;"><h3>Sản lượng theo từng ca (tờ)</h3><div class="chartbox"><canvas id="c5"></canvas></div></div>';
+    h += '<div class="card" style="margin-top:14px;"><h3>Sản lượng theo từng ca (Scan: tờ · Tách, OCR: file)</h3><div class="chartbox"><canvas id="c5"></canvas></div></div>';
 
     // ===== KHU VỰC 3: KẾT THÚC NGÀY =====
     h += zone('z3', 'KẾT THÚC NGÀY', 'Tổng kết ngày ' + esc(d.ngay), 'Cộng dồn cả 3 ca và xu hướng các ngày gần nhất');
@@ -4646,10 +4646,10 @@ function dashTabNgay(d) {
       '<div class="kpi"><span class="kpi-tag">Trả</span><b>' + nf(D.traHop) + '</b><span>Hộp đã trả TTLT</span></div>' +
       '<div class="kpi"><span class="kpi-tag">Tồn</span><b>' + nf(D.tonCuoi) + '</b><span>Hộp tồn cuối ngày</span></div>' +
       '<div class="kpi kpi-scan"><b>' + nf(D.scanDV) + '</b><span>Tờ scan · ' + nf(D.scanHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>Tờ tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
-      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>Tờ OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
+      '<div class="kpi kpi-tach"><b>' + nf(D.tachDV) + '</b><span>File tách · ' + nf(D.tachHop) + ' hộp xong</span></div>' +
+      '<div class="kpi kpi-ocr"><b>' + nf(D.ocrDV) + '</b><span>File OCR · ' + nf(D.ocrHop) + ' hộp xong</span></div></div>' + ccGhiChu(d);
     h += '<div class="grid2" style="margin-top:14px;"><div class="card"><h3>Nhận hồ sơ – cuối ngày (10 ngày gần nhất)</h3><div class="chartbox"><canvas id="c2"></canvas></div></div>' +
-      '<div class="card"><h3>Kết quả – cuối ngày (tờ / ngày)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div></div>';
+      '<div class="card"><h3>Kết quả – cuối ngày (Scan: tờ · Tách, OCR: file)</h3><div class="chartbox"><canvas id="c4"></canvas></div></div></div>';
 
   return h;
 }
@@ -4658,13 +4658,13 @@ function dashTabCaNhom(d) {
   var h = '';
   if (d.caNguoi && (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN')) h += tungCaHtml(d);
   if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
-      h += zone('z4', 'CHI TIẾT', 'Theo nhóm và cá nhân', 'Năng suất = tờ / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Cá nhân chia đều 50/50 trong nhóm');
-      h += '<div class="card"><h3>Năng suất và sản lượng theo nhóm</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca – Nhóm</th><th>Thành viên</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>Giờ-người</th><th>Scan/giờ</th><th>Tách/giờ</th><th>OCR/giờ</th></tr>' +
+      h += zone('z4', 'CHI TIẾT', 'Theo nhóm và cá nhân', 'Năng suất tính riêng từng khâu: Scan tờ/giờ-người, Tách và OCR file/giờ-người, không cộng tờ với file (ca sáng, chiều 4 giờ; ca tối 3 giờ). Cá nhân chia đều 50/50 trong nhóm');
+      h += '<div class="card"><h3>Năng suất và sản lượng theo nhóm</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca – Nhóm</th><th>Thành viên</th><th>Tờ scan</th><th>HS scan</th><th>File tách</th><th>HS tách</th><th>File OCR</th><th>Giờ-người</th><th>Scan (tờ/giờ)</th><th>Tách (file/giờ)</th><th>OCR (file/giờ)</th></tr>' +
         (d.nhom.map(function (g) {
           var sGio = g.scanDVGio !== undefined ? g.scanDVGio : (g.scanTrangGio || 0);
           var tGio = g.tachDVGio !== undefined ? g.tachDVGio : (g.tachTrangGio || 0);
           var oGio = g.ocrDVGio !== undefined ? g.ocrDVGio : (g.ocrTrangGio || 0);
-          return '<tr><td><b>Ca ' + g.ca + ' – N' + esc(g.nhom) + '</b></td><td data-label="Thành viên" style="white-space:normal;text-align:left">' + esc(g.tv.map(function (x) { return x.ten; }).join(' + ')) + '</td><td data-label="Tờ scan"><b>' + nf(g.scanDV) + '</b></td><td data-label="HS scan">' + g.scanHs + '</td><td data-label="Tờ tách"><b>' + nf(g.tachDV) + '</b></td><td data-label="HS tách">' + g.tachHs + '</td><td data-label="Tờ OCR"><b>' + nf(g.ocrDV) + '</b></td><td data-label="Giờ-người">' + nf(g.gioNguoi) + '</td><td data-label="Scan/giờ">' + nf(sGio) + '</td><td data-label="Tách/giờ">' + nf(tGio) + '</td><td data-label="OCR/giờ">' + nf(oGio) + '</td></tr>';
+          return '<tr><td><b>Ca ' + g.ca + ' – N' + esc(g.nhom) + '</b></td><td data-label="Thành viên" style="white-space:normal;text-align:left">' + esc(g.tv.map(function (x) { return x.ten; }).join(' + ')) + '</td><td data-label="Tờ scan"><b>' + nf(g.scanDV) + '</b></td><td data-label="HS scan">' + g.scanHs + '</td><td data-label="File tách"><b>' + nf(g.tachDV) + '</b></td><td data-label="HS tách">' + g.tachHs + '</td><td data-label="File OCR"><b>' + nf(g.ocrDV) + '</b></td><td data-label="Giờ-người">' + nf(g.gioNguoi) + '</td><td data-label="Scan (tờ/giờ)">' + nf(sGio) + '</td><td data-label="Tách (file/giờ)">' + nf(tGio) + '</td><td data-label="OCR (file/giờ)">' + nf(oGio) + '</td></tr>';
         }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có dữ liệu nhóm</td></tr>') + '</table></div></div>';
   }
   return h;
@@ -4675,14 +4675,14 @@ function dashTabNhatKy(d) {
   if (!ME || !ME.user || ME.user.vaiTro !== 'TOVIEN') {
       var nnRows = d.nguoiNhap || [], ctRows = d.chiTiet || [];
       h += zone('z4', 'AI NHẬP', 'Ai nhập – nhập bao nhiêu trong từng ca', 'Số liệu theo người bấm gửi báo cáo ngày ' + esc(d.ngay) + ' (nhập hộ tính cho người nhập hộ; cột "Thực hiện" là người/nhóm làm)');
-      h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>Tờ tách</th><th>HS tách</th><th>Tờ OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
-        (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td data-label="Người nhập" style="text-align:left"><b>' + esc(r.ten) + '</b></td><td data-label="Nhóm">' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td data-label="Số lần">' + r.soLan + '</td><td data-label="Tờ scan"><b>' + nf(r.scanDV) + '</b></td><td data-label="HS scan">' + r.scanHs + '</td><td data-label="Tờ tách"><b>' + nf(r.tachDV) + '</b></td><td data-label="HS tách">' + r.tachHs + '</td><td data-label="Tờ OCR"><b>' + nf(r.ocrDV) + '</b></td><td data-label="HS OCR">' + r.ocrHs + '</td><td data-label="Hộp nhận">' + r.nhanHop + '</td><td data-label="Hộp trả">' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
-      h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
+      h += '<div class="card"><h3>Tổng hợp theo ca và người nhập</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Ca</th><th>Người nhập</th><th>Nhóm</th><th>Số lần báo</th><th>Tờ scan</th><th>HS scan</th><th>File tách</th><th>HS tách</th><th>File OCR</th><th>HS OCR</th><th>Hộp nhận</th><th>Hộp trả</th></tr>' +
+        (nnRows.map(function (r) { return '<tr><td><b>Ca ' + esc(r.ca) + '</b></td><td data-label="Người nhập" style="text-align:left"><b>' + esc(r.ten) + '</b></td><td data-label="Nhóm">' + (r.nhom ? 'N' + esc(r.nhom) : 'Cá nhân') + '</td><td data-label="Số lần">' + r.soLan + '</td><td data-label="Tờ scan"><b>' + nf(r.scanDV) + '</b></td><td data-label="HS scan">' + r.scanHs + '</td><td data-label="File tách"><b>' + nf(r.tachDV) + '</b></td><td data-label="HS tách">' + r.tachHs + '</td><td data-label="File OCR"><b>' + nf(r.ocrDV) + '</b></td><td data-label="HS OCR">' + r.ocrHs + '</td><td data-label="Hộp nhận">' + r.nhanHop + '</td><td data-label="Hộp trả">' + r.traHop + '</td></tr>'; }).join('') || '<tr><td colspan="12" style="text-align:center;padding:16px;">Chưa có báo cáo nào trong ngày này</td></tr>') + '</table></div></div>';
+      h += '<div class="card"><h3>Chi tiết từng lần báo cáo trong ngày</h3><div class="scroll"><table class="table-card-mobile"><tr><th>Giờ</th><th>Ca</th><th>Khâu</th><th>Mã hộp</th><th>HS / file</th><th>Trang</th><th>Tờ</th><th>Xong hộp</th><th>Người nhập</th><th>Thực hiện</th><th>Loại</th></tr>' +
         (ctRows.map(function (r) {
           var stepHtml = '<span class="step-pill step-pill-' + String(r.buoc).toLowerCase() + '">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</span>';
           var hetHtml = r.het ? '<span class="chip ok" style="padding:1px 6px;font-size:11px;">✔</span>' : '<span class="muted">—</span>';
           var loaiHtml = r.loai === 'NHẬP HỘ' ? '<span class="chip warn" style="padding:1px 6px;font-size:11px;">Nhập hộ</span>' : '<span class="chip" style="padding:1px 6px;font-size:11px;">Báo cáo</span>';
-          return '<tr><td>' + esc(r.gio) + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Khâu">' + stepHtml + '</td><td data-label="Mã hộp"><b>' + esc(r.hop) + '</b></td><td data-label="HS">' + r.hs + '</td><td data-label="Trang">' + r.trang + '</td><td data-label="Tờ"><b>' + r.to + '</b></td><td data-label="Xong hộp">' + hetHtml + '</td><td data-label="Người nhập" style="text-align:left">' + esc(r.nguoi) + '</td><td data-label="Thực hiện" style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td data-label="Loại">' + loaiHtml + '</td></tr>';
+          return '<tr><td>' + esc(r.gio) + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Khâu">' + stepHtml + '</td><td data-label="Mã hộp"><b>' + esc(r.hop) + '</b></td><td data-label="HS">' + r.hs + '</td><td data-label="Trang">' + (laKhauFile(r.buoc) ? '—' : r.trang) + '</td><td data-label="Tờ"><b>' + (laKhauFile(r.buoc) ? '—' : r.to) + '</b></td><td data-label="Xong hộp">' + hetHtml + '</td><td data-label="Người nhập" style="text-align:left">' + esc(r.nguoi) + '</td><td data-label="Thực hiện" style="white-space:normal;text-align:left">' + esc(r.thucHien || (r.nhom ? 'Nhóm ' + r.nhom : '')) + '</td><td data-label="Loại">' + loaiHtml + '</td></tr>';
         }).join('') || '<tr><td colspan="11" style="text-align:center;padding:16px;">Chưa có bản ghi</td></tr>') + '</table></div></div>';
   }
   return h;
@@ -4696,23 +4696,23 @@ function c1Tb7(arr) {      // TB 7 ngày: trung bình tổng tờ của tối đ
 function c1Ve() {
   var d = c1Ngay(); if (!d || !$('c6')) return;
   var ser = d.series || [];
-  var tong = ser.map(function (s) { return (s.scanDV || 0) + (s.tachDV || 0) + (s.ocrDV || 0); });
-  var tbDA = (d.tienDo && d.tienDo.buoc) ? d.tienDo.buoc.reduce(function (a, b) { return a + (b.tbNgay || 0); }, 0) : 0;
+  var tong = ser.map(function (s) { return s.scanDV || 0; });      // F-FILE-01: TB chỉ tính Scan (tờ); Tách/OCR (file) không cộng trộn với tờ
+  var tbDA = (d.tienDo && d.tienDo.buoc && d.tienDo.buoc[0]) ? (d.tienDo.buoc[0].tbNgay || 0) : 0;
   var tb7 = c1Tb7(tong), labels = ser.map(function (s) { return s.ngay.slice(8, 10) + '/' + s.ngay.slice(5, 7); });
-  $('c1Ghi').textContent = ser.length ? ('Từ ' + ser[0].ngay.split('-').reverse().join('/') + ' đến ' + ser[ser.length - 1].ngay.split('-').reverse().join('/') + ' · ' + ser.length + ' ngày có dữ liệu · TB toàn dự án ' + nfi(tbDA) + ' tờ/ngày') : 'Chưa có dữ liệu trong khoảng này.';
+  $('c1Ghi').textContent = ser.length ? ('Từ ' + ser[0].ngay.split('-').reverse().join('/') + ' đến ' + ser[ser.length - 1].ngay.split('-').reverse().join('/') + ' · ' + ser.length + ' ngày có dữ liệu · TB Scan toàn dự án ' + nfi(tbDA) + ' tờ/ngày') : 'Chưa có dữ liệu trong khoảng này.';
   $('c1Nay').disabled = !C1.d;
   var tu0 = DASH.d && DASH.d.khoangNgay ? DASH.d.khoangNgay.tu : '';
   $('c1Truoc').disabled = !ser.length || (!!tu0 && ser[0].ngay <= tu0);      // đã tới ngày đầu tiên có dữ liệu của dự án
   mk('c6', { type: 'bar', data: { labels: labels, datasets: [
-    { label: 'Scan', data: ser.map(function (s) { return s.scanDV; }), backgroundColor: COL.scan, stack: 'a', borderRadius: 3 },
-    { label: 'Tách file', data: ser.map(function (s) { return s.tachDV; }), backgroundColor: COL.tach, stack: 'a', borderRadius: 3 },
-    { label: 'OCR', data: ser.map(function (s) { return s.ocrDV; }), backgroundColor: COL.ocr, stack: 'a', borderRadius: 3 },
-    { type: 'line', label: 'TB toàn dự án', stack: 'tbDuAn', data: ser.map(function () { return tbDA; }), borderColor: '#e11d48', backgroundColor: '#e11d48', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, order: 0 },
-    { type: 'line', label: 'TB 7 ngày', stack: 'tb7Ngay', data: tb7, borderColor: '#d97706', backgroundColor: '#d97706', tension: 0.25, borderWidth: 2.5, pointRadius: 3, order: 0 }
+    { label: 'Scan (tờ)', data: ser.map(function (s) { return s.scanDV; }), backgroundColor: COL.scan, borderRadius: 3 },
+    { label: 'Tách file (file)', data: ser.map(function (s) { return s.tachDV; }), backgroundColor: COL.tach, borderRadius: 3 },
+    { label: 'OCR (file)', data: ser.map(function (s) { return s.ocrDV; }), backgroundColor: COL.ocr, borderRadius: 3 },
+    { type: 'line', label: 'TB Scan toàn dự án (tờ/ngày)', stack: 'tbDuAn', data: ser.map(function () { return tbDA; }), borderColor: '#e11d48', backgroundColor: '#e11d48', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, order: 0 },
+    { type: 'line', label: 'TB 7 ngày (Scan, tờ)', stack: 'tb7Ngay', data: tb7, borderColor: '#d97706', backgroundColor: '#d97706', tension: 0.25, borderWidth: 2.5, pointRadius: 3, order: 0 }
   ] }, options: {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, padding: 12 } } },
-    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+    scales: { x: { stacked: false }, y: { stacked: false, beginAtZero: true } },
     onClick: function (ev, els, chart) {
       var e = chart.getElementsAtEventForMode(ev, 'index', { intersect: false }, true);
       if (e && e.length && ser[e[0].index]) c1MoNgay(ser[e[0].index].ngay);
@@ -4744,12 +4744,12 @@ function dashVeBieuDo(d, t) {
     if (t === 'ngay') {
       mk('c1', { type: 'bar', data: { labels: cl, datasets: [bar('Hộp tồn đầu ca', d.cas.map(function (c) { return c.tonDau; }), COL.scan), bar('Nhận trong ca', d.cas.map(function (c) { return c.nhanHop; }), COL.nhan), bar('Nhóm nhận từ TT/TP', d.cas.map(function (c) { return c.nhanNhomHop; }), COL.tach)] } });
       mk('c3', { type: 'bar', data: { labels: cl, datasets: [bar('Chưa scan', d.cas.map(function (c) { return c.chuaScan; }), COL.scan), bar('Chờ tách file', d.cas.map(function (c) { return c.chuaTach; }), COL.tach), bar('Chờ OCR', d.cas.map(function (c) { return c.chuaOcr; }), COL.ocr)] } });
-      mk('c5', { type: 'bar', data: { labels: cl, datasets: [bar('Scan', d.cas.map(function (c) { return c.scanDV; }), COL.scan), bar('Tách file', d.cas.map(function (c) { return c.tachDV; }), COL.tach), bar('OCR', d.cas.map(function (c) { return c.ocrDV; }), COL.ocr)] } });
+      mk('c5', { type: 'bar', data: { labels: cl, datasets: [bar('Scan (tờ)', d.cas.map(function (c) { return c.scanDV; }), COL.scan), bar('Tách file (file)', d.cas.map(function (c) { return c.tachDV; }), COL.tach), bar('OCR (file)', d.cas.map(function (c) { return c.ocrDV; }), COL.ocr)] } });
       mk('c2', { type: 'bar', data: { labels: sl, datasets: [bar('Nhận', ser.map(function (s) { return s.nhanHop; }), COL.nhan), bar('Trả', ser.map(function (s) { return s.traHop; }), COL.tra), { type: 'line', label: 'Tồn cuối ngày', data: ser.map(function (s) { return s.tonCuoi; }), borderColor: COL.scan, backgroundColor: COL.scan, tension: 0.25, borderWidth: 2.5, pointRadius: 3 }] } });
     }
     if (t === 'tq') c1Ve();
     if (t === 'ngay' || t === 'tq') {
-      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan', ser.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file', ser.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR', ser.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
+      mk('c4', { type: 'bar', data: { labels: sl, datasets: [bar('Scan (tờ)', ser.map(function (s) { return s.scanDV; }), COL.scan), bar('Tách file (file)', ser.map(function (s) { return s.tachDV; }), COL.tach), bar('OCR (file)', ser.map(function (s) { return s.ocrDV; }), COL.ocr)] } });
     }
   } catch (errChart) {
     console.warn('Lỗi hiển thị biểu đồ:', errChart);
@@ -4808,10 +4808,12 @@ function dashNsTai() {
 }
 function dashNsBang() {
   var S = DASH.ns, r = S.data; if (!r || !$('nsBody')) return;
-  var tongDV = function (x) { return (x.scanDV || 0) + (x.tachDV || 0) + (x.ocrDV || 0); };
+  var tongDV = function (x) { return (x.scanDV || 0) * 1000000000 + (x.tachDV || 0) + (x.ocrDV || 0); };      // F-FILE-01: chỉ để XẾP HẠNG, không cộng trộn tờ với file: Scan (tờ) trước, rồi Tách + OCR (file)
+  var r1 = function (v) { return Math.round(v * 10) / 10; };
+  var toGioX = function (x) { return x.toGio !== undefined ? x.toGio : (x.gio ? r1((x.scanDV || 0) / x.gio) : 0); }, fileGioX = function (x) { return x.fileGio !== undefined ? x.fileGio : (x.gio ? r1(((x.tachDV || 0) + (x.ocrDV || 0)) / x.gio) : 0); };
   var hop = function (x) { return (x.scanHop || 0) + (x.tachHop || 0) + (x.ocrHop || 0); };
   var rank = {}; r.nguoi.slice().sort(function (a, b) { return tongDV(b) - tongDV(a); }).forEach(function (x, i) { rank[x.ma] = i + 1; });
-  var val = { ten: function (x) { return x.ten; }, soCa: function (x) { return x.soCa; }, scanDV: function (x) { return x.scanDV; }, tachDV: function (x) { return x.tachDV; }, ocrDV: function (x) { return x.ocrDV; }, hop: hop, gio: function (x) { return x.gio; }, dvGio: function (x) { return x.dvGio; }, tong: tongDV };
+  var val = { ten: function (x) { return x.ten; }, soCa: function (x) { return x.soCa; }, scanDV: function (x) { return x.scanDV; }, tachDV: function (x) { return x.tachDV; }, ocrDV: function (x) { return x.ocrDV; }, hop: hop, gio: function (x) { return x.gio; }, dvGio: function (x) { return x.dvGio; }, toGio: toGioX, fileGio: fileGioX, tong: tongDV };
   var f = val[S.sk] || tongDV, dir = S.asc ? 1 : -1;
   var ds = r.nguoi.slice().sort(function (a, b) { var x = f(a), y = f(b); return (typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y) * dir; });
   var th = function (k, t) { return '<th class="nsort' + (S.sk === k ? ' ns-sorted' : '') + '" data-sk="' + k + '">' + t + (S.sk === k ? (S.asc ? ' ▲' : ' ▼') : '') + '</th>'; };
@@ -4820,9 +4822,9 @@ function dashNsBang() {
 
   var h = '<div class="ns-summary-grid">' +
     '<div class="ns-kpi ns-kpi-people"><span class="ns-kpi-tag">Nhân sự</span><b>' + nf(r.tong.soNguoi) + ' <small>người</small></b><span>' + nf(r.tong.soCa) + ' ca làm việc</span></div>' +
-    '<div class="ns-kpi ns-kpi-to"><span class="ns-kpi-tag">Sản lượng từng khâu (tờ)</span><b style="font-size:1.05em;"><span style="color:var(--col-scan)">' + nfi(r.tong.scanDV) + '</span> · <span style="color:var(--col-tach)">' + nfi(r.tong.tachDV) + '</span> · <span style="color:var(--col-ocr)">' + nfi(r.tong.ocrDV) + '</span></b><span>Scan · Tách · OCR · ' + nf(tongHop) + ' hộp xong</span></div>' +
+    '<div class="ns-kpi ns-kpi-to"><span class="ns-kpi-tag">Sản lượng từng khâu (Scan: tờ · Tách, OCR: file)</span><b style="font-size:1.05em;"><span style="color:var(--col-scan)">' + nfi(r.tong.scanDV) + '</span> · <span style="color:var(--col-tach)">' + nfi(r.tong.tachDV) + '</span> · <span style="color:var(--col-ocr)">' + nfi(r.tong.ocrDV) + '</span></b><span>Scan · Tách · OCR · ' + nf(tongHop) + ' hộp xong</span></div>' +
     '<div class="ns-kpi ns-kpi-gio"><span class="ns-kpi-tag">Tổng giờ làm</span><b>' + nf(r.tong.gio) + ' <small>giờ</small></b><span>Giờ-người thực tế</span></div>' +
-    '<div class="ns-kpi ns-kpi-speed"><span class="ns-kpi-tag">Năng suất TB (cả 3 khâu)</span><b>' + nf(r.tong.dvGio) + ' <small>tờ/giờ-người</small></b><span>(Scan + Tách + OCR) ÷ giờ-người</span></div>' +
+    '<div class="ns-kpi ns-kpi-speed"><span class="ns-kpi-tag">Năng suất TB (tính riêng)</span><b>' + nf(toGioX(r.tong)) + ' <small>tờ Scan/giờ-người</small></b><span>Tách + OCR: ' + nf(fileGioX(r.tong)) + ' file/giờ-người</span></div>' +
   '</div>';
 
   h += '<div class="card"><div class="ns-card-head">' +
@@ -4832,15 +4834,15 @@ function dashNsBang() {
       '<span class="step-pill step-pill-tach">Tách: <b>' + nfi(r.tong.tachDV) + '</b></span>' +
       '<span class="step-pill step-pill-ocr">OCR: <b>' + nfi(r.tong.ocrDV) + '</b></span>' +
     '</div></div>' +
-    '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất = tờ (cộng cả 3 khâu Scan + Tách + OCR) / người-giờ (ca sáng, chiều 4 giờ; ca tối 3 giờ). Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
-    (r.coDauKyNguoi ? '<br>⚠️ Số ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' lấy theo tên trên bảng cũ, đang chờ người phụ trách xác nhận; giai đoạn này không có số hồ sơ, số hộp.' + (r.chuaRo && (r.chuaRo.scanDV || r.chuaRo.tachDV || r.chuaRo.ocrDV) ? '<br>Chưa rõ người làm: ' + nfi(r.chuaRo.scanDV) + ' tờ Scan · ' + nfi(r.chuaRo.tachDV) + ' tờ Tách · ' + nfi(r.chuaRo.ocrDV) + ' tờ OCR (không chia cho ai, không nằm trong bảng này).' : '') : (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '')) + '</div>' +
-    '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'Tờ tách') + th('ocrDV', 'Tờ OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('dvGio', 'Tờ (cả 3 khâu) / giờ-người') + '</tr>' +
+    '<div class="muted" style="margin-bottom:10px;font-size:12.5px;">Năng suất tính riêng: Scan tờ/giờ-người, Tách + OCR file/giờ-người, không cộng tờ với file (ca sáng, chiều 4 giờ; ca tối 3 giờ). Số Tách/OCR trước ca Tối 26/11/2026 giữ theo báo cáo cũ. Báo cáo nhóm chia đều cho thành viên. Bấm tiêu đề cột để sắp xếp.' +
+    (r.coDauKyNguoi ? '<br>⚠️ Số ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' lấy theo tên trên bảng cũ, đang chờ người phụ trách xác nhận; giai đoạn này không có số hồ sơ, số hộp.' + (r.chuaRo && (r.chuaRo.scanDV || r.chuaRo.tachDV || r.chuaRo.ocrDV) ? '<br>Chưa rõ người làm: ' + nfi(r.chuaRo.scanDV) + ' Scan (tờ) · ' + nfi(r.chuaRo.tachDV) + ' Tách · ' + nfi(r.chuaRo.ocrDV) + ' OCR (không chia cho ai, không nằm trong bảng này).' : '') : (r.tu <= r.dauKyDen ? '<br>⚠️ Số đầu kỳ ' + ngayVN('2026-11-02').slice(0, 5) + '–' + ngayVN(r.dauKyDen).slice(0, 5) + ' chưa có chi tiết từng người nên không nằm trong bảng này.' : '')) + '</div>' +
+    '<div class="scroll"><table class="ns-table"><tr><th style="width:44px;text-align:center;">#</th>' + th('ten', 'Họ và tên') + th('soCa', 'Số ca') + th('scanDV', 'Tờ scan') + th('tachDV', 'File tách') + th('ocrDV', 'File OCR') + th('hop', 'Hộp xong') + th('gio', 'Giờ-người') + th('toGio', 'Scan (tờ/giờ-người)') + th('fileGio', 'Tách + OCR (file/giờ-người)') + '</tr>' +
     (ds.map(function (x) {
       var rk = rank[x.ma], rkCls = rk === 1 ? 'rank-1' : (rk === 2 ? 'rank-2' : (rk === 3 ? 'rank-3' : 'rank-other'));
       var rkTxt = rk === 1 ? '🥇 1' : (rk === 2 ? '🥈 2' : (rk === 3 ? '🥉 3' : rk));
-      return '<tr><td style="text-align:center;"><span class="ns-badge-rank ' + rkCls + '">' + rkTxt + '</span></td><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + x.soCa + '</td><td>' + nfi(x.scanDV) + '</td><td>' + nfi(x.tachDV) + '</td><td>' + nfi(x.ocrDV) + '</td><td>' + nf(hop(x)) + '</td><td>' + nf(x.gio) + '</td><td><b class="ns-speed">' + nf(x.dvGio) + '</b></td></tr>';
-    }).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px;">Chưa có dữ liệu trong khoảng này</td></tr>') +
-    (ds.length ? '<tr class="ns-tong"><td style="text-align:center;">—</td><td style="text-align:left"><b>Tổng cộng</b></td><td>' + nf(r.tong.soCa) + '</td><td>' + nfi(r.tong.scanDV) + '</td><td>' + nfi(r.tong.tachDV) + '</td><td>' + nfi(r.tong.ocrDV) + '</td><td>' + nf(r.tong.scanHop + r.tong.tachHop + r.tong.ocrHop) + '</td><td>' + nf(r.tong.gio) + '</td><td><b class="ns-speed">' + nf(r.tong.dvGio) + '</b></td></tr>' : '') +
+      return '<tr><td style="text-align:center;"><span class="ns-badge-rank ' + rkCls + '">' + rkTxt + '</span></td><td style="text-align:left"><b>' + esc(x.ten) + '</b></td><td>' + x.soCa + '</td><td>' + nfi(x.scanDV) + '</td><td>' + nfi(x.tachDV) + '</td><td>' + nfi(x.ocrDV) + '</td><td>' + nf(hop(x)) + '</td><td>' + nf(x.gio) + '</td><td><b class="ns-speed">' + nf(toGioX(x)) + '</b></td><td><b class="ns-speed">' + nf(fileGioX(x)) + '</b></td></tr>';
+    }).join('') || '<tr><td colspan="10" style="text-align:center;padding:16px;">Chưa có dữ liệu trong khoảng này</td></tr>') +
+    (ds.length ? '<tr class="ns-tong"><td style="text-align:center;">—</td><td style="text-align:left"><b>Tổng cộng</b></td><td>' + nf(r.tong.soCa) + '</td><td>' + nfi(r.tong.scanDV) + '</td><td>' + nfi(r.tong.tachDV) + '</td><td>' + nfi(r.tong.ocrDV) + '</td><td>' + nf(r.tong.scanHop + r.tong.tachHop + r.tong.ocrHop) + '</td><td>' + nf(r.tong.gio) + '</td><td><b class="ns-speed">' + nf(toGioX(r.tong)) + '</b></td><td><b class="ns-speed">' + nf(fileGioX(r.tong)) + '</b></td></tr>' : '') +
     '</table></div></div>';
   $('nsBody').innerHTML = h;
   Array.prototype.forEach.call($('nsBody').querySelectorAll('[data-sk]'), function (c) {
@@ -4889,8 +4891,8 @@ function ctVe() {
     $('ctBody').innerHTML = h; return;
   }
   var ds = rows.filter(function (x) { return !q || x.ma.toLowerCase().indexOf(q) >= 0 || x.khoa.toLowerCase().indexOf(q) >= 0; });
-  h = '<div class="muted" style="margin-bottom:8px;">' + ds.length + (ds.length !== rows.length ? ' / ' + rows.length : '') + ' hộp</div><div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Tờ đã báo</th></tr>' + ds.map(function (x) {
-    return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận TTLT">' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) : '<span class="muted">–</span>') + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + ' · ' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Tờ đã báo">' + nfi(x.scan.to + x.tach.to + x.ocr.to) + '</td></tr>';
+  h = '<div class="muted" style="margin-bottom:8px;">' + ds.length + (ds.length !== rows.length ? ' / ' + rows.length : '') + ' hộp</div><div class="scroll"><table class="table-card-mobile"><tr><th>Mã hộp</th><th>Nhận TTLT</th><th>Nhóm nhận</th><th>Scan (tờ)</th><th>Tách (file)</th><th>OCR (file)</th><th>Đã báo</th></tr>' + ds.map(function (x) {
+    return '<tr><td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận TTLT">' + (x.nhan ? ngayNgan(x.nhan.ngay) + ' · ' + esc(x.nhan.ca) : '<span class="muted">–</span>') + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + ' · ' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Đã báo">' + nfi(x.scan.to) + ' tờ · ' + nfi(x.tach.to + x.ocr.to) + ' file</td></tr>';
   }).join('') + '</table></div>';
   $('ctBody').innerHTML = ds.length || !rows.length ? h : '<div class="muted">Không có hộp nào khớp "' + esc(q) + '".</div>';
 }
@@ -4932,7 +4934,7 @@ function dashDsBang() {
   }).join('') + '<button type="button" class="sm" id="dsCsv">⬇ Xuất CSV</button></div>' +
     '<div class="muted" style="margin-bottom:8px;">' + nfi(ds.length) + ' hộp' + (r.catBot ? ' · ⚠️ chỉ hiện ' + nfi(r.hop.length) + ' hộp đầu, thu hẹp bộ lọc để xem hết' : '') + ' · trạng thái tính tới hết ' + r.den.split('-').reverse().join('/') + '</div>' +
     (qly ? '<div class="th-bar noprint" id="dsThBar"></div>' : '') +
-    '<div class="scroll"><table class="table-card-mobile"><tr>' + (qly ? '<th class="noprint"><input type="checkbox" id="dsChonHet" title="Chọn tất cả dòng cần ghi Nhận/Trả"></th>' : '') + '<th>Mã hộp</th><th>Nhận từ TTLT</th><th>Nhóm nhận</th><th>Scan</th><th>Tách</th><th>OCR</th><th>Trả cho TTLT</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
+    '<div class="scroll"><table class="table-card-mobile"><tr>' + (qly ? '<th class="noprint"><input type="checkbox" id="dsChonHet" title="Chọn tất cả dòng cần ghi Nhận/Trả"></th>' : '') + '<th>Mã hộp</th><th>Nhận từ TTLT</th><th>Nhóm nhận</th><th>Scan (tờ)</th><th>Tách (file)</th><th>OCR (file)</th><th>Trả cho TTLT</th><th>Trạng thái</th></tr>' + (ds.map(function (x) {
       var can = thCan(x);
       return '<tr' + (DS_DO[x.tt] ? ' class="ds-do"' : '') + '>' + (qly ? '<td class="noprint" data-label="Chọn">' + ((can.nhan || can.tra) ? '<input type="checkbox" data-thc="' + esc(x.khoa) + '"' + (TH_CHON[x.khoa] ? ' checked' : '') + '>' : '') + '</td>' : '') + '<td style="text-align:left"><b>' + esc(x.ma) + '</b>' + (x.ghiChu ? '<span class="ds-ghichu">' + esc(x.ghiChu) + '</span>' : '') + '</td><td data-label="Nhận từ TTLT">' + dsNhanTra(x.nhan) + '</td><td data-label="Nhóm nhận">' + (x.nhanNhom ? 'Nhóm ' + esc(x.nhanNhom.nhom) + '<span class="ds-ghichu">' + ngayNgan(x.nhanNhom.ngay) + ' ' + esc(x.nhanNhom.ca) + '</span>' : '<span class="muted">–</span>') + '</td><td data-label="Scan">' + khauOo(x.scan) + '</td><td data-label="Tách">' + khauOo(x.tach) + '</td><td data-label="OCR">' + khauOo(x.ocr) + '</td><td data-label="Trả cho TTLT">' + dsNhanTra(x.tra) + '</td><td data-label="Trạng thái"><span class="chip ' + (DS_CHIP[x.tt] || '') + '">' + esc(x.ttText) + '</span></td></tr>';
     }).join('') || '<tr><td colspan="' + cot + '" style="text-align:center;padding:16px;">Không có hộp nào trong bộ lọc này</td></tr>') + '</table></div></div>';
@@ -5033,7 +5035,7 @@ function thGhi(buoc) {
 function csvO(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
 function dsCsv() {
   var ds = dsLoc(), r = DASH.ds.data;
-  var rows = [['Mã hộp', 'Ngày nhận TTLT', 'Ca nhận', 'Người nhận', 'Ghi chú nhận', 'Nhóm nhận', 'Scan (tờ)', 'Scan xong', 'Tách (tờ)', 'Tách xong', 'OCR (tờ)', 'OCR xong', 'Ngày trả TTLT', 'Ca trả', 'Người trả', 'Ghi chú trả', 'Trạng thái', 'Ghi chú']];
+  var rows = [['Mã hộp', 'Ngày nhận TTLT', 'Ca nhận', 'Người nhận', 'Ghi chú nhận', 'Nhóm nhận', 'Scan (tờ)', 'Scan xong', 'Tách (file)', 'Tách xong', 'OCR (file)', 'OCR xong', 'Ngày trả TTLT', 'Ca trả', 'Người trả', 'Ghi chú trả', 'Trạng thái', 'Ghi chú']];
   ds.forEach(function (x) { rows.push([x.ma, x.nhan ? x.nhan.ngay : '', x.nhan ? x.nhan.ca : '', x.nhan ? x.nhan.nguoi : '', x.nhan ? x.nhan.ghiChu : '', x.nhanNhom ? x.nhanNhom.nhom : '', x.scan.to, x.scan.xong ? 'x' : '', x.tach.to, x.tach.xong ? 'x' : '', x.ocr.to, x.ocr.xong ? 'x' : '', x.tra ? x.tra.ngay : '', x.tra ? x.tra.ca : '', x.tra ? x.tra.nguoi : '', x.tra ? x.tra.ghiChu : '', x.ttText, x.ghiChu]); });
   var txt = '\uFEFF' + rows.map(function (rw) { return rw.map(csvO).join(','); }).join('\r\n');
   var a = document.createElement('a');
