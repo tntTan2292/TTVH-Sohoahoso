@@ -2,6 +2,9 @@
 
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
+## 2026-11-26
+- F-FILE-01 · Tách file và OCR tính theo số file (= số hồ sơ) từ ca Tối 26/11; mục tiêu 102.995 file; Tách quy đổi 102.995; OCR tạm tính; Quản lý chỉnh số quy đổi ở Dashboard (`luuQuyDoiFile`); form Tách/OCR chỉ nhập Số file + ghi chú · chưa triển khai
+
 ## 2026-11-15
 - **Triển khai phiên bản 34** (commit `92f027f`, Opus ĐẠT/GO `84ea956`, chủ dự án cho phép ghi đè) lên link chính, thay phiên bản 33. Trước khi đẩy: `Index.html` trên Apps Script = `8710afe`, `Code.gs` = `7b9621f` (thiếu F-BC-21, nguyên nhân chưa rõ); ghi đè cả hai, băm khớp `92f027f` sau tải lại. Gồm F-TH-01/02/03 (+D1/D2/D3) và khôi phục F-BC-21. Quay lui: chọn phiên bản 33 (lưu ý Code.gs của 33 là bản cũ) · chưa xác minh bằng người.
 - Phiên bản 34: chủ dự án thử cả 4 việc (TH1 hai cột/chip/cảnh báo, ghi Nhận/Trả bổ sung, F-BC-21) → ĐẠT, mục 32–35 ✅.

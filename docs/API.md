@@ -41,6 +41,7 @@
 | `chot` | TT/TP/ADMIN | `{ngay, ca, ghiChu, SCAN, TACH, OCR}`; mở khóa: `{ngay, ca, mo:true}` | — |
 | `resetPin` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | `{ten, pin}` (PIN tạm, chỉ hiện 1 lần) |
 | `moKhoaTK` | TT/TP (chỉ tổ viên), ADMIN | `{ma}` | chuỗi thông báo |
+| `luuQuyDoiFile` (F-FILE-01) | TT/TP/ADMIN | `{mucTieuFile, tachFileCu, ocrFileCu}` (số nguyên; `ocrFileCu` rỗng = tạm tính theo số hiện tại) | `{mucTieuFile, tachFileCu, ocrFileCu (null nếu trống), mocNgay, mocCa}`; log `QUY_DOI_FILE` |
 | `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa,thuTu}` (không có cột PIN; `thuTu` = số hoặc `''`; sắp theo đơn vị → thuTu → tên — B5e) |
 | `luuNhanSu` | ADMIN (đầy đủ, tạo mới được; `donVi` phải thuộc danh mục — B1); TT/TP: sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, sửa quản lý/LĐ/ADMIN → từ chối); **thêm tổ viên mới chỉ khi gửi `taoMoi:true`** (F-NS-12b: luôn vai trò Tổ viên, bỏ qua email/thuTu, mã trùng → "Mã HRM này đã có trong hệ thống"; không có `taoMoi` thì tạo mới vẫn bị từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong, thuTu?, taoMoi?}` (`thuTu`: chỉ ADMIN; số nguyên ≥ 0, `''` = xếp cuối, bỏ qua = giữ nguyên; sai → lỗi, không ghi — B5e) | `{moi, ma, pin?}` |
 | `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
@@ -62,6 +63,7 @@
 |---|---|
 | `ngay`, `capNhat` | tiêu đề, dòng "cập nhật lúc" |
 | `tienDo`, `luyKe` (`luyKe.dauKyDen`) | widget tiến độ (`widgetHtml`) |
+| `tienDo.theoFile`, `tienDo.quyDoiFile`, `tienDo.buoc[].mucTieu/donVi/tam` (F-FILE-01) | `theoFile` = ngày xem ≥ ngày mốc; `donVi` `tờ`/`file`; `tam` = OCR đang tạm tính. `chiTiet[].laFile`; `lichSu` trả thêm `donVi` từng dòng |
 | `cas[]`: `nhanNhom` (`{nhóm: số hộp nhận khác nhau}`, ví dụ `{'1':2}`), `ca, bd, kt, nguoiPhan, tonDau, chuaScan, chuaTach, chuaOcr, scanDV, tachDV, ocrDV, nhanHop, traHop, nguoiBaoCao, nhomDaBC, tongNhom`, trạng thái chốt | khu ĐẦU CA, CUỐI CA |
 | `cas[].trangThaiChot`, `soCaChuaChot` (CC1) | `trangThaiChot`: `da` (ngày trước 2026-11-10 hoặc dòng `ChotCa` mới nhất là CHOT) · `chua` (cần chốt, cùng ngày hôm nay, hết giờ ca) · `quaHan` (cần chốt, ngày < hôm nay) · `''` (ca đang làm, tương lai, hoặc không có dữ liệu thật). `soCaChuaChot` = số ca `chua` + `quaHan` của ngày đang xem. Trường `chot` cũ giữ nguyên. Chỉ để hiển thị |
 | `caGop` `{scanDV, tachDV, ocrDV}` | thẻ "Ca ngày (gộp)" giai đoạn 02–08/11 |

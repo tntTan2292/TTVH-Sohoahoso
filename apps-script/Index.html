@@ -2991,6 +2991,9 @@ var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, f
 var nf = function (n) { return Number(n || 0).toLocaleString('vi-VN', { maximumFractionDigits: 1 }); };
 var nfi = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN'); };
 var STEP_LABEL = { NHAN: 'Nhận từ TT Lưu trữ', NHAN_NHOM: 'Nhận hộp', SCAN: 'Scan', TACH: 'Tách file PDF', OCR: 'OCR (xử lý TT)', TRA: 'Trả hộp' };
+// F-FILE-01: khâu Tách file và OCR báo cáo theo SỐ FILE (= số hồ sơ), không nhập trang/tờ
+function laKhauFile(b) { return b === 'TACH' || b === 'OCR'; }
+var GHI_CHU_FILE_HTML = '<div class="msg warn" style="margin:8px 0;">⚠ Khâu <b>Tách file</b> và <b>OCR</b> chỉ báo cáo <b>SỐ FILE</b> thực hiện (số file = số hồ sơ). Không nhập số trang/số tờ.</div>';
 function vaiHienThi(vaiTro, chucVu) { return vaiTro === 'LANHDAO' && chucVu ? chucVu : (VAI_LABEL[vaiTro] || chucVu || ''); }      // B5c: Lãnh đạo có Chức vụ thì hiện Chức vụ (vd Trưởng ban · Quyền Giám đốc BĐTP)
 var VAI_LABEL = { TOVIEN: 'Tổ viên', TOTRUONG: 'Tổ trưởng', TOPHO: 'Tổ phó', LANHDAO: 'Lãnh đạo', ADMIN: 'Quản trị' };
 var CA_NAME = ['Sáng', 'Chiều', 'Tối'];
@@ -3367,7 +3370,7 @@ function loModeBind(prefix, redraw) {
 }
 function loRenderBox(prefix, buoc) {
   var box = $(prefix + 'LoBox'); if (!box) return;
-  var st = loSt(prefix), coScan = !!(st.khau && st.khau.SCAN);
+  var st = loSt(prefix), coScan = !!(st.khau && st.khau.SCAN), coFile = !!(st.khau && (st.khau.TACH || st.khau.OCR));      // F-FILE-01
   var h = '<datalist id="' + prefix + 'LoDl">' + st.goiY.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>';
   h += '<div class="check-card lo-khau">' +
     '<div class="lo-khau-head">' +
@@ -3387,6 +3390,7 @@ function loRenderBox(prefix, buoc) {
         '</label>';
       }).join('') +
     '</div>' +
+    (coFile ? GHI_CHU_FILE_HTML : '') +
   '</div>';
   h += st.rows.map(function (r, i) {
     var da = LO_BUOC.filter(function (b) { return r.done && r.done[b]; });
@@ -3397,8 +3401,8 @@ function loRenderBox(prefix, buoc) {
       '<label>Mã hồ sơ đã làm <small class="muted">(VD: 472-476; nên nhập để ca sau biết làm tiếp)</small></label>' +
       '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
       '<div class="row num-row">' +
-        '<div><label>Số hồ sơ</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
-        '<div><label>Số tờ</label><input data-k="to" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.to) + '"></div>' +
+        '<div><label>' + (coFile ? (coScan ? 'Số hồ sơ <small class="muted">(= số file Tách/OCR)</small>' : 'Số file <small class="muted">(= số hồ sơ)</small>') : 'Số hồ sơ') + '</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
+        '<div' + (coFile && !coScan ? ' style="display:none"' : '') + '><label>Số tờ' + (coFile ? ' <small class="muted">(Scan)</small>' : '') + '</label><input data-k="to" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.to) + '"></div>' +
         (coScan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
       '</div>' +
       '<div class="check-card lo-het-card' + (r.het ? ' is-het' : '') + '"><label class="check-label"><input type="checkbox" data-k="het"' + (r.het ? ' checked' : '') + '> <span><b>Đã hoàn thành</b> toàn bộ hộp này</span></label></div>' +
@@ -3461,7 +3465,7 @@ function loOnInput(prefix, buoc, t) {
   if (k === 'hop') loRenderChips(prefix, buoc);
 }
 function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (máy chủ vẫn kiểm tra lại toàn bộ bằng ghi_)
-  var st = loSt(prefix), khs = loKhauChon(st), muc = [], seen = {}, loi = 0, tong = 0, xong = 0, thieuMa = 0, hop = 0;
+  var st = loSt(prefix), khs = loKhauChon(st), muc = [], seen = {}, loi = 0, tong = 0, tongFile = 0, xong = 0, thieuMa = 0, hop = 0, coScan = khs.indexOf('SCAN') >= 0;
   st.rows.forEach(function (r) { r.err = ''; });
   st.rows.forEach(function (r) {
     if (loRowTrong(r)) return;
@@ -3470,21 +3474,21 @@ function loThuThap(prefix, buoc) {   // kiểm tra sơ bộ phía giao diện (m
     else if (!LO_HOP_RE.test(h)) e = 'Mã hộp không hợp lệ (chỉ chữ, số, . _ - /; tối đa 30 ký tự; không dấu cách, không dấu phẩy)';
     else if (seen[h]) e = 'Trùng mã hộp với dòng phía trên';
     else if (Number(r.hs) < 0 || Number(r.to) < 0 || Number(r.loi) < 0) e = 'Số liệu không được âm';
-    else if (!(Number(r.hs) >= 1)) e = 'Nhập số hồ sơ (≥ 1)';
-    else if (!(Number(r.to) >= 1)) e = 'Nhập số tờ (≥ 1)';
+    else if (!(Number(r.hs) >= 1)) e = coScan ? 'Nhập số hồ sơ (≥ 1)' : 'Nhập số file (≥ 1)';
+    else if (coScan && !(Number(r.to) >= 1)) e = 'Nhập số tờ (≥ 1)';      // F-FILE-01: chỉ Scan cần số tờ
     if (e) { r.err = e; loi++; return; }
     seen[h] = 1;
     var conLai = khs.filter(function (b) { return !(r.done && r.done[b]); });
     if (!conLai.length) { r.err = 'Các khâu đã tick đều đã ghi cho hộp này – xóa dòng hoặc tick thêm khâu'; loi++; return; }
     conLai.forEach(function (b) {
-      muc.push({ hop: h, buoc: b, soHoSo: r.hs, soTo: r.to,   // P4/R2: chỉ gửi soTo (không gửi soTrang)
+      muc.push({ hop: h, buoc: b, soHoSo: r.hs, soTo: b === 'SCAN' ? r.to : '',   // P4/R2: chỉ gửi soTo (không gửi soTrang); F-FILE-01: Tách/OCR chỉ gửi số file (= soHoSo)
         trangLoi: b === 'SCAN' ? r.loi : '', hetHop: !!r.het, maHoSo: r.maHs });
     });
-    hop++; tong += Number(r.to);
+    hop++; if (coScan) tong += Number(r.to); tongFile += Number(r.hs);
     if (r.het) xong++;
     if (!String(r.maHs || '').replace(/\s+/g, '')) thieuMa++;
   });
-  return { muc: muc, loi: loi, tong: tong, xong: xong, thieuMa: thieuMa, hop: hop, khau: khs };
+  return { muc: muc, loi: loi, tong: tong, tongFile: tongFile, xong: xong, thieuMa: thieuMa, hop: hop, khau: khs };
 }
 function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ngay, nhom, nguoiHo, ghiChu} | chuỗi lỗi, btn, sau }
   var prefix = o.prefix, buoc = o.buoc, st = loSt(prefix), resEl = $(prefix + 'LoRes');
@@ -3496,8 +3500,9 @@ function loGui(o) {     // o = { prefix, buoc, base: function () {ca, boSung, ng
   if (tt.loi) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ ' + tt.loi + ' dòng chưa hợp lệ – xem thông báo đỏ ở từng hộp.</div>'; return; }
   if (!tt.muc.length) { if (resEl) resEl.innerHTML = '<div class="msg err">✕ Chưa có hộp nào để gửi.</div>'; return; }
   var ten = tt.khau.map(function (b) { return STEP_LABEL[b] || b; }).join(' + ');
-  var hoi = 'Xác nhận gửi ' + tt.hop + ' hộp: ' + ten + ' (mỗi khâu ' + nf(tt.tong) + ' tờ' + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
-  if (tt.khau.indexOf('OCR') >= 0) hoi += '\n\n⚠ Có khâu OCR: chỉ gửi nếu OCR đã làm xong đúng số tờ này.';
+  var coF = tt.khau.indexOf('TACH') >= 0 || tt.khau.indexOf('OCR') >= 0, coS = tt.khau.indexOf('SCAN') >= 0;      // F-FILE-01
+  var hoi = 'Xác nhận gửi ' + tt.hop + ' hộp: ' + ten + ' (' + (coS ? 'Scan ' + nf(tt.tong) + ' tờ' : '') + (coS && coF ? ' · ' : '') + (coF ? 'Tách/OCR ' + nf(tt.tongFile) + ' file' : '') + (tt.xong ? ', ' + tt.xong + ' hộp xong' : '') + ')' + (base.boSung ? ' – NHẬP HỘ' : '') + '?';
+  if (tt.khau.indexOf('OCR') >= 0) hoi += '\n\n⚠ Có khâu OCR: chỉ gửi nếu OCR đã làm xong đúng số file này.';
   if (tt.thieuMa) hoi += '\n\n⚠ ' + tt.thieuMa + ' hộp chưa nhập MÃ HỒ SƠ đã làm.';
   return hoiXacNhan('Xác nhận gửi báo cáo', hoi).then(function (dongY) {
   if (!dongY) return;
@@ -3590,14 +3595,14 @@ function buildForm(open, m) {
   } else if (laBaoCao) {
     f += '<label>Mã hộp hồ sơ</label><input id="fHop" list="dlHop" placeholder="VD: 208.18.17" autocomplete="off"><datalist id="dlHop"></datalist>' +
       '<div class="row num-row">' +
-        '<div><label>Số hồ sơ</label><input id="fHs" type="number" inputmode="numeric" min="1" placeholder="0"></div>' +
-        '<div><label>Số trang</label><input id="fTrang" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
-        '<div><label>Số tờ</label><input id="fTo" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
+        '<div><label>' + (laKhauFile(STEP) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="fHs" type="number" inputmode="numeric" min="1" placeholder="0"></div>' +
+        '<div' + (laKhauFile(STEP) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="fTrang" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
+        '<div' + (laKhauFile(STEP) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="fTo" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
         (STEP === 'SCAN' ? '<div><label>Trang lỗi / scan lại</label><input id="fLoi" type="number" inputmode="numeric" min="0" value="0"></div>' : '') +
       '</div>' +
-      '<div class="muted helper-text">💡 Nhập số trang hoặc số tờ (một trong hai).</div>' +
+      (laKhauFile(STEP) ? GHI_CHU_FILE_HTML : '<div class="muted helper-text">💡 Nhập số trang hoặc số tờ (một trong hai).</div>') +
       '<div class="check-card"><label class="check-label"><input type="checkbox" id="fHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
-      (STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="fKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b> bằng đúng số Scan này</span></label></div>' : '') +
+      (STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="fKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b>: số file = số hồ sơ đã nhập</span></label></div>' : '') +
       '<label>Mã hồ sơ <small class="muted">(không bắt buộc)</small></label><input id="fMaHs" placeholder="VD: HS-01">';
   } else {
     if (STEP === 'NHAN_NHOM') f += '<label>Nhận hộp cho</label><div class="steps kieu-nhan" id="kieuNhan">' +
@@ -3658,7 +3663,8 @@ function send() {
     p.soHoSo = $('fHs').value; p.soTrang = $('fTrang').value; p.soTo = $('fTo').value; p.hetHop = $('fHet').checked; p.maHoSo = $('fMaHs').value;
     if ($('fLoi')) p.trangLoi = $('fLoi').value;
     kemTach = STEP === 'SCAN' && $('fKemTach') && $('fKemTach').checked;
-    hoi = 'Xác nhận gửi' + (kemTach ? ' SCAN + TÁCH FILE PDF' : '') + ': hộp ' + p.hop + ', ' + p.soHoSo + ' hồ sơ, ' + (p.soTrang || 0) + ' trang, ' + (p.soTo || 0) + ' tờ' + (p.hetHop ? ' (xong cả hộp)' : '') + '?';
+    hoi = laKhauFile(STEP) ? 'Xác nhận gửi ' + STEP_LABEL[STEP] + ': hộp ' + p.hop + ', ' + (p.soHoSo || 0) + ' file' + (p.hetHop ? ' (xong cả hộp)' : '') + '?'      // F-FILE-01
+      : 'Xác nhận gửi' + (kemTach ? ' SCAN + TÁCH FILE PDF' : '') + ': hộp ' + p.hop + ', ' + p.soHoSo + ' hồ sơ, ' + (p.soTrang || 0) + ' trang, ' + (p.soTo || 0) + ' tờ' + (kemTach ? ' (Tách file: ' + (p.soHoSo || 0) + ' file)' : '') + (p.hetHop ? ' (xong cả hộp)' : '') + '?';
   }
   if (!(STEP === 'SCAN' || STEP === 'TACH' || STEP === 'OCR')) {
     var nh = String(p.hop || '').split(/[\s,;]+/).filter(Boolean).length;
@@ -3694,7 +3700,7 @@ function loadNK() {
     }
     $('nk').innerHTML = '<div class="nk-list">' + rs.map(function (r) {
       var kq = (r.buoc === 'SCAN' || r.buoc === 'TACH' || r.buoc === 'OCR') ?
-        r.hs + ' hồ sơ · ' + (r.trang ? r.trang + ' trang' : '') + (r.to ? ' ' + r.to + ' tờ' : '') + (r.het ? ' · <span class="badge-done">✔ Xong hộp</span>' : '') : '';
+        (laKhauFile(r.buoc) && !r.trang && !r.to ? r.hs + ' file' : r.hs + ' hồ sơ · ' + (r.trang ? r.trang + ' trang' : '') + (r.to ? ' ' + r.to + ' tờ' : '')) + (r.het ? ' · <span class="badge-done">✔ Xong hộp</span>' : '') : '';
       var stepCol = r.buoc === 'SCAN' ? 'col-scan' : (r.buoc === 'TACH' ? 'col-tach' : (r.buoc === 'OCR' ? 'col-ocr' : (r.buoc === 'TRA' ? 'col-tra' : 'col-nhan')));
       var canHuy = ME.isAdmin;   // chỉ Quản lý / Quản trị được hủy báo cáo
       return '<div class="log-item">' +
@@ -3723,23 +3729,25 @@ function closeLichSu() { $('modalLS').classList.add('hide'); }
 function loadLichSu() {
   $('lsBody').innerHTML = '<div class="empty-state"><div class="muted">Đang tải lịch sử cá nhân…</div></div>';
   call('lichSu', { tu: $('lsTu').value, den: $('lsDen').value }).then(function (rs) {
-    var sumScan = 0, sumTach = 0, sumOcr = 0;
+    var sumScan = 0, sumTach = 0, sumOcr = 0, toTach = 0, toOcr = 0;      // F-FILE-01: Tách/OCR cộng file; bản ghi cũ (tờ) cộng riêng
     rs.forEach(function (r) {
-      if (r.buoc === 'SCAN') sumScan += (r.phanCuaToi || 0);
-      else if (r.buoc === 'TACH') sumTach += (r.phanCuaToi || 0);
-      else if (r.buoc === 'OCR') sumOcr += (r.phanCuaToi || 0);
+      var v = r.phanCuaToi || 0, laF = r.donVi === 'file';
+      if (r.buoc === 'SCAN') sumScan += v;
+      else if (r.buoc === 'TACH') { if (laF) sumTach += v; else toTach += v; }
+      else if (r.buoc === 'OCR') { if (laF) sumOcr += v; else toOcr += v; }
     });
+    var cu = function (x) { return x ? '<small class="muted"> (+ ' + nf(x) + ' tờ trước khi đổi sang file)</small>' : ''; };
     var h = '<div class="kpis" style="margin-bottom:14px;">' +
       '<div class="kpi kpi-scan"><b>' + nf(sumScan) + '</b><span>Tờ Scan (phần của bạn)</span></div>' +
-      '<div class="kpi kpi-tach"><b>' + nf(sumTach) + '</b><span>Tờ Tách file (phần của bạn)</span></div>' +
-      '<div class="kpi kpi-ocr"><b>' + nf(sumOcr) + '</b><span>Tờ OCR (phần của bạn)</span></div>' +
-    '</div>';
+      '<div class="kpi kpi-tach"><b>' + nf(sumTach) + '</b><span>File Tách file (phần của bạn)' + cu(toTach) + '</span></div>' +
+      '<div class="kpi kpi-ocr"><b>' + nf(sumOcr) + '</b><span>File OCR (phần của bạn)' + cu(toOcr) + '</span></div>' +
+    '</div>' + GHI_CHU_FILE_HTML;
     if (!rs.length) {
       h += '<div class="empty-state"><div class="muted">Không có bản ghi nào trong khoảng thời gian này.</div></div>';
     } else {
-      h += '<div class="scroll"><table><tr><th>Ngày</th><th>Ca</th><th>Khâu</th><th>Hộp</th><th>Tổng tờ/trang</th><th>Phần của bạn</th><th>Xong hộp</th></tr>' +
+      h += '<div class="scroll"><table><tr><th>Ngày</th><th>Ca</th><th>Khâu</th><th>Hộp</th><th>Tổng (tờ / file)</th><th>Phần của bạn</th><th>Xong hộp</th></tr>' +
         rs.map(function (r) {
-          return '<tr><td>' + esc(r.ngay) + '</td><td>Ca ' + esc(r.ca) + '</td><td><span class="chip">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</span></td><td><b>' + esc(r.hop) + '</b></td><td>' + nf(r.dv) + '</td><td><b>' + nf(r.phanCuaToi) + '</b></td><td>' + (r.het ? '✔' : '') + '</td></tr>';
+          return '<tr><td>' + esc(r.ngay) + '</td><td>Ca ' + esc(r.ca) + '</td><td><span class="chip">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</span></td><td><b>' + esc(r.hop) + '</b></td><td>' + nf(r.dv) + ' ' + esc(r.donVi || 'tờ') + '</td><td><b>' + nf(r.phanCuaToi) + '</b> ' + esc(r.donVi || 'tờ') + '</td><td>' + (r.het ? '✔' : '') + '</td></tr>';
         }).join('') + '</table></div>';
     }
     $('lsBody').innerHTML = h;
@@ -3896,10 +3904,11 @@ function renderHo(d) {
     h += loModeHtml('ho');
     if (LO_MODE === 'LO') h += '<div id="hoLoBox"></div><div id="hoLoRes"></div>';
     else h += '<label>Mã hộp hồ sơ</label><input id="hoHop" autocomplete="off">' +
-      '<div class="row num-row"><div><label>Số hồ sơ</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
-      '<div><label>Số tờ</label><input id="hoTo" type="number" min="0" placeholder="0"></div>' + (HO_STEP === 'SCAN' ? '<div><label>Trang lỗi</label><input id="hoLoi" type="number" min="0" value="0"></div>' : '') + '</div>' +
+      '<div class="row num-row"><div><label>' + (laKhauFile(HO_STEP) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div' + (laKhauFile(HO_STEP) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
+      '<div' + (laKhauFile(HO_STEP) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="hoTo" type="number" min="0" placeholder="0"></div>' + (HO_STEP === 'SCAN' ? '<div><label>Trang lỗi</label><input id="hoLoi" type="number" min="0" value="0"></div>' : '') + '</div>' +
+      (laKhauFile(HO_STEP) ? GHI_CHU_FILE_HTML : '') +      // F-FILE-01
       '<div class="check-card"><label class="check-label"><input type="checkbox" id="hoHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
-      (HO_STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="hoKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b> bằng đúng số Scan này</span></label></div>' : '');
+      (HO_STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="hoKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b>: số file = số hồ sơ đã nhập</span></label></div>' : '');
   }
   h += '<label>Ghi chú</label><input id="hoNote" placeholder="Ghi chú thêm nếu cần"><div id="hoMsg"></div><p style="margin-top:16px;"><button class="pri btn-large" id="hoSend">Gửi báo cáo hộ</button></p></div>';
   $('qlBody').insertAdjacentHTML('beforeend', h);
@@ -4417,7 +4426,7 @@ function loadLG() {
 
 /* ---------- Dashboard ---------- */
 var COL = { scan: '#2563eb', tach: '#0d9488', ocr: '#7c3aed', nhan: '#d97706', tra: '#e11d48' };
-function ring(p, col, title, val, sub) {
+function ring(p, col, title, val, sub, donVi) {      // F-FILE-01: donVi 'tờ' (mặc định) hoặc 'file'
   var r = 38, c = 2 * Math.PI * r, o = c * (1 - Math.min(100, Math.max(0, p)) / 100);
   return '<div class="ringbox">' +
     '<div class="ring-svg-wrap">' +
@@ -4429,10 +4438,32 @@ function ring(p, col, title, val, sub) {
     '</div>' +
     '<div class="ring-info">' +
       '<div class="rt" style="color:' + col + '">' + esc(title) + '</div>' +
-      '<div class="big">' + nf(val) + ' <small>tờ</small></div>' +
+      '<div class="big">' + nf(val) + ' <small>' + esc(donVi || 'tờ') + '</small></div>' +
       '<div class="muted ring-sub">' + sub + '</div>' +
     '</div>' +
   '</div>';
+}
+// F-FILE-01: Quản lý (TT/TP/ADMIN) chỉnh số quy đổi file cho Tách file / OCR
+function qdfHtml(T) {
+  if (!T || !T.theoFile || !T.quyDoiFile || !(ME && ME.isAdmin)) return '';
+  var q = T.quyDoiFile;
+  return '<details class="noprint" style="margin:10px 0;"><summary style="cursor:pointer;font-weight:600;">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
+    '<div class="muted" style="font-size:12.5px;margin:6px 0;">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Để trống ô OCR = tạm lấy số hiện tại (tờ cũ).</div>' +
+    '<div class="row num-row">' +
+      '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
+      '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
+      '<div><label>OCR trước mốc (file)</label><input id="qdfOcr" type="number" min="0" placeholder="Để trống = tạm tính" value="' + (q.ocrFileCu === null || q.ocrFileCu === undefined ? '' : esc(q.ocrFileCu)) + '"></div>' +
+    '</div><button type="button" class="pri sm" id="qdfLuuBtn" onclick="qdfLuu()">Lưu số quy đổi</button><div id="qdfMsg"></div></details>';
+}
+function qdfLuu() {
+  var p = { mucTieuFile: $('qdfMuc').value, tachFileCu: $('qdfTach').value, ocrFileCu: $('qdfOcr').value };
+  hoiXacNhan('Lưu số quy đổi', 'Mục tiêu ' + p.mucTieuFile + ' file · Tách file trước mốc ' + p.tachFileCu + ' file · OCR trước mốc ' + (p.ocrFileCu === '' ? '(tạm tính theo số hiện tại)' : p.ocrFileCu + ' file') + '?').then(function (dongY) {
+    if (!dongY) return;
+    $('qdfLuuBtn').disabled = true;
+    call('luuQuyDoiFile', p).then(function () {
+      WG_D = null; msg('qdfMsg', 'Đã lưu số quy đổi', 'ok'); loadDash();
+    }).catch(function (e) { $('qdfLuuBtn').disabled = false; msg('qdfMsg', String(e && e.message ? e.message : e)); });
+  });
 }
 function widgetHtml(d) {
   var T = d.tienDo, L = d.luyKe, D = d.day, cols = [COL.scan, COL.tach, COL.ocr];
@@ -4444,18 +4475,20 @@ function widgetHtml(d) {
         '<span class="wgh-badge">TỔNG THỂ</span>' +
         '<h2>Tiến độ dự án số hóa hồ sơ</h2>' + (laHomNay ? '' : '<span class="chip warn" style="margin-left:8px;">Lũy kế đến hết ngày ' + ngayVN + '</span>') +
       '</div>' +
-      '<div class="wgh-meta">Mục tiêu: <b>' + nf(T.mucTieu) + '</b> tờ / mỗi khâu · Tính từ ' + esc(T.tuNgay || '—') + ' (' + T.soNgay + ' ngày, ' + T.soCa + ' ca đã làm) · Cập nhật ' + esc(d.capNhat.slice(11, 16)) + '</div>' +
+      '<div class="wgh-meta">Mục tiêu: ' + (T.theoFile && T.quyDoiFile ? 'Scan <b>' + nf(T.mucTieu) + '</b> tờ · Tách file, OCR <b>' + nf(T.quyDoiFile.mucTieuFile) + '</b> file' : '<b>' + nf(T.mucTieu) + '</b> tờ / mỗi khâu') + ' · Tính từ ' + esc(T.tuNgay || '—') + ' (' + T.soNgay + ' ngày, ' + T.soCa + ' ca đã làm) · Cập nhật ' + esc(d.capNhat.slice(11, 16)) + '</div>' +
     '</div>' +
     '<div class="rings">';
   T.buoc.forEach(function (b, i) {
-    h += ring(b.tyLe, cols[i], b.ten, b.daLam, 'Còn <b>' + nf(b.conLai) + '</b> tờ<br>TB <b>' + nf(b.tbNgay) + '</b> tờ/ngày · <b>' + nf(b.tbCa) + '</b> tờ/ca' + (b.ngayConLai ? '<br>Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)' : ''));
+    var dvi = b.donVi || 'tờ';      // F-FILE-01
+    h += ring(b.tyLe, cols[i], b.ten, b.daLam, (b.mucTieu ? 'Mục tiêu <b>' + nf(b.mucTieu) + '</b> ' + dvi + '<br>' : '') + 'Còn <b>' + nf(b.conLai) + '</b> ' + dvi + '<br>TB <b>' + nf(b.tbNgay) + '</b> ' + dvi + '/ngày · <b>' + nf(b.tbCa) + '</b> ' + dvi + '/ca' + (b.ngayConLai ? '<br>Dự kiến xong <b>~' + b.ngayXong + '</b> (' + b.ngayConLai + ' ngày)' : '') +
+      (b.tam ? '<br><span class="chip warn">Tạm tính: số OCR hiện tại (gồm tờ cũ) ÷ ' + nf(b.mucTieu) + ' file – chờ Quản lý nhập số file OCR quy đổi</span>' : ''), dvi);
   });
-  h += '</div>' +
+  h += '</div>' + qdfHtml(T) +
     '<div class="wgs">' +
       '<div class="wg-pill">📦 ' + (laHomNay ? 'Hộp tồn trong kho' : 'Hộp tồn cuối ngày ' + ngayVN) + ': <b>' + nf(L.ton) + '</b></div>' +
       '<div class="wg-pill">📥 Đã nhận từ TTLT: <b>' + nf(L.nhanHop) + '</b></div>' +
       '<div class="wg-pill">📤 Đã trả TTLT: <b>' + nf(L.traHop) + '</b></div>' +
-      '<div class="wg-pill wg-pill-today">⚡ ' + labelNgay + ': Scan <b style="color:' + COL.scan + '">' + nf(D.scanDV) + '</b> · Tách <b style="color:' + COL.tach + '">' + nf(D.tachDV) + '</b> · OCR <b style="color:' + COL.ocr + '">' + nf(D.ocrDV) + '</b> tờ' + (d.soCaChuaChot > 0 ? ' <span class="muted">(gồm ' + d.soCaChuaChot + ' ca chưa chốt)</span>' : '') + '</div>' +
+      '<div class="wg-pill wg-pill-today">⚡ ' + labelNgay + ': Scan <b style="color:' + COL.scan + '">' + nf(D.scanDV) + '</b>' + (T.theoFile ? ' tờ' : '') + ' · Tách <b style="color:' + COL.tach + '">' + nf(D.tachDV) + '</b> · OCR <b style="color:' + COL.ocr + '">' + nf(D.ocrDV) + '</b> ' + (T.theoFile ? 'file' : 'tờ') + (d.soCaChuaChot > 0 ? ' <span class="muted">(gồm ' + d.soCaChuaChot + ' ca chưa chốt)</span>' : '') + '</div>' +
     '</div>' +
   '</div>';
   return h;
@@ -4602,7 +4635,7 @@ function dashTabNgay(d) {
       var bcText = (c.nhomDaBC !== undefined && c.tongNhom !== undefined) ? (c.nhomDaBC + '/' + c.tongNhom) : (c.nguoiBaoCao + '/' + c.nguoiPhan);
       return '<div class="tile' + ccLop(c) + '">' +
         '<div class="th"><div class="th-left"><b>Ca ' + esc(c.ca) + '</b> <span class="muted th-time">' + esc(c.bd) + '–' + esc(c.kt) + '</span></div> ' + ttChip(c) + '</div>' +
-        '<div class="mts">' + m('Scan', c.scanDV, 'tờ') + m('Tách file', c.tachDV, 'tờ') + m('OCR', c.ocrDV, 'tờ') + m('Hộp nhận', c.nhanHop, 'hộp') + m('Hộp trả', c.traHop, 'hộp') + m('Nhóm đã báo cáo', bcText, 'nhóm') + '</div></div>';
+        '<div class="mts">' + m('Scan', c.scanDV, 'tờ') + m('Tách file', c.tachDV, d.tienDo && d.tienDo.theoFile ? 'file' : 'tờ') + m('OCR', c.ocrDV, d.tienDo && d.tienDo.theoFile ? 'file' : 'tờ') + m('Hộp nhận', c.nhanHop, 'hộp') + m('Hộp trả', c.traHop, 'hộp') + m('Nhóm đã báo cáo', bcText, 'nhóm') + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="card" style="margin-top:14px;"><h3>Sản lượng theo từng ca (tờ)</h3><div class="chartbox"><canvas id="c5"></canvas></div></div>';
 

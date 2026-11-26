@@ -97,7 +97,10 @@ const ok = (c, name, extra) => { if (c) { pass++; console.log('PASS', name); } e
 const tok = (ma, pin) => ctx.login(ma, pin).token;
 const api = (t, a, p) => ctx.api(t, a, p || {});
 // CC1: dash_ có thêm 2 trường mới (cas[].trangThaiChot, soCaChuaChot); so với bản CŨ thì bỏ hai trường này rồi so chuỗi
-const bo2CC1 = d => { const o = JSON.parse(JSON.stringify(d)); delete o.soCaChuaChot; o.cas.forEach(c => { delete c.trangThaiChot; }); return JSON.stringify(o); };
+// F-FILE-01: dash_ có thêm tienDo.theoFile, tienDo.quyDoiFile, tienDo.buoc[].mucTieu/donVi/tam, chiTiet[].laFile; ngày trước mốc thì mọi số khác PHẢI y hệt
+const boFILE = o => { if (o.tienDo) { delete o.tienDo.theoFile; delete o.tienDo.quyDoiFile; (o.tienDo.buoc || []).forEach(b => { delete b.mucTieu; delete b.donVi; delete b.tam; }); } (o.chiTiet || []).forEach(x => { delete x.laFile; }); return o; };
+const boFILEs = d => JSON.stringify(boFILE(JSON.parse(JSON.stringify(d))));
+const bo2CC1 = d => { const o = boFILE(JSON.parse(JSON.stringify(d))); delete o.soCaChuaChot; o.cas.forEach(c => { delete c.trangThaiChot; }); return JSON.stringify(o); };
 
 // ===== 1. dsLogin =====
 const dl = ctx.dsLogin();
@@ -1525,7 +1528,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const dem = r.data.dem; ok(dem.tong === r.data.hop.length && Object.keys(dem).filter(k => k !== 'tong').reduce((a, k) => a + dem[k], 0) === dem.tong, 'F-TH-01: bộ đếm theo trạng thái cộng lại = tổng', dem);
   // dash_ không đổi dòng nào
   let giong = true, sai = ''; const ngays = Array.from(new Set(sh('NhatKy').rows.slice(1).map(x => ctx.d_(x[2])).filter(Boolean))).sort();
-  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (JSON.stringify(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
+  ngays.forEach(d => [true, false].forEach(g => { memo2(); if (boFILEs(ctx.dash_(d, g)) !== JSON.stringify(ctx2.dash_(d, g))) { giong = false; sai += ' ' + d + g; } }));
   ok(giong && ngays.length >= 3, 'F-TH: dash_ (mọi ngày, có/không gomThu) GIỐNG HỆT bản gốc 790a840', [sai, ngays.length]);
   // D1: tach.ngayXong = ngày Tách xong SỚM NHẤT; batDau = ngày bản ghi đầu tiên của hộp
   ap('2026-10-19', 'Tối', 'TACH', 'Q9', { SoHoSo: 1, SoTrang: 2 }); ap('2026-10-21', 'Sáng', 'TACH', 'Q9', xong); ap('2026-10-20', 'Sáng', 'TACH', 'Q9', xong);
@@ -1885,6 +1888,62 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const r2 = api(tTT, 'luuNhom', { ngay: NG, ca: CAX, chiDoi: true, gan: [{ ma: 'C1', nhom: '2' }] });
   ok(r2.ok && nhomCua('GN20') === '2' && tvCua('GN20') === 'TT1,C1' && nhomCua('GN11') === '2', 'F-BC-21: nhánh chiDoi cũng chuyển nhận cá nhân của người vừa được phân', [r2.err, nhomCua('GN20'), tvCua('GN20')]);
   sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; sh('LogHeThong').rows.length = lg0; if (sh('SaoLuuXoa')) sh('SaoLuuXoa').rows.length = sl0; ctx.memoClear_();
+}
+
+// ===== F-FILE-01: Tách file và OCR tính theo SỐ FILE (= Số hồ sơ) từ mốc ca Tối 26/11/2026; Quản lý chỉnh số quy đổi =====
+{
+  const NG = '2026-11-26', CAX = 'Tối', props = {};
+  const psCu = ctx.PropertiesService;
+  ctx.PropertiesService = { getScriptProperties: () => ({ getProperty: k => (k in props ? props[k] : (k === 'QUY_DOI_FILE' ? null : 'X')), setProperty: (k, v) => { props[k] = v; } }) };
+  vm.runInContext('QDF_ = null', ctx);
+  const nk0 = sh('NhatKy').rows.length, pc0 = sh('PhanCa').rows.length, lg0 = sh('LogHeThong').rows.length;
+  ['D1', 'TT1'].forEach(m => sh('PhanCa').rows.push([NG, CAX, m, m, '', '']));
+  setNow(NG + ' 19:00:00');
+  const qd = ctx.quyDoiFile_();
+  ok(qd.mucTieuFile === 102995 && qd.tachFileCu === 102995 && qd.ocrFileCu === null && qd.mocNgay === NG && qd.mocCa === 'Tối', 'F-FILE-01: mặc định mục tiêu 102.995 file, Tách cũ 102.995, OCR cũ trống (tạm theo tờ), mốc ca Tối 26/11', qd);
+  ok(ctx.laBanGhiFile_('TACH', NG, 'Tối') && ctx.laBanGhiFile_('OCR', '2026-11-27', 'Sáng') && !ctx.laBanGhiFile_('OCR', NG, 'Chiều') && !ctx.laBanGhiFile_('SCAN', NG, 'Tối'), 'F-FILE-01: chỉ Tách/OCR từ ca Tối 26/11 tính file; ca Chiều 26/11 và Scan vẫn tờ');
+  ok(ctx.dvBanGhi_('OCR', NG, 'Tối', 7, 300, 150) === 7 && ctx.dvBanGhi_('OCR', NG, 'Chiều', 7, 300, 150) === 150 && ctx.dvBanGhi_('SCAN', NG, 'Tối', 7, 300, 0) === 300, 'F-FILE-01: đơn vị bản ghi = số hồ sơ (file) / tờ / trang đúng khâu, đúng mốc');
+  const d0 = api(tTT, 'dashboard', { ngay: NG }).data.tienDo, b0 = k => d0.buoc.find(x => x.key === k);
+  // ghi báo cáo: Tách/OCR chỉ cần số file; Scan vẫn bắt trang/tờ
+  const g1 = api(tD, 'ghi', { buoc: 'TACH', ca: CAX, hop: 'FF-1', soHoSo: 12, hetHop: true });
+  ok(g1.ok && g1.data.added === 1, 'F-FILE-01: báo cáo Tách file chỉ nhập số file (không trang/tờ) → ghi được', g1.err);
+  const g2 = api(tD, 'ghi', { buoc: 'OCR', ca: CAX, hop: 'FF-1', soHoSo: 9 });
+  ok(g2.ok && g2.data.added === 1, 'F-FILE-01: báo cáo OCR chỉ nhập số file → ghi được', g2.err);
+  const g3 = api(tD, 'ghi', { buoc: 'OCR', ca: CAX, hop: 'FF-2', soTo: 50 });
+  ok(!g3.ok && /số file/.test(g3.err), 'F-FILE-01: OCR thiếu số file → báo lỗi nhắc "số file"', g3.err);
+  const g4 = api(tD, 'ghi', { buoc: 'SCAN', ca: CAX, hop: 'FF-3', soHoSo: 3 });
+  ok(!g4.ok && /trang hoặc số tờ/.test(g4.err), 'F-FILE-01: Scan vẫn bắt số trang hoặc số tờ', g4.err);
+  ok(sh('LogHeThong').rows.slice(lg0).some(x => /12 file/.test(String(x.join('|')))), 'F-FILE-01: nhật ký hệ thống ghi "12 file" cho báo cáo Tách');
+  const d1 = api(tTT, 'dashboard', { ngay: NG }).data, t1 = d1.tienDo, b1 = k => t1.buoc.find(x => x.key === k);
+  ok(t1.theoFile === true && b1('tach').donVi === 'file' && b1('ocr').donVi === 'file' && b1('scan').donVi === 'tờ' && b1('scan').mucTieu === 175000 && b1('tach').mucTieu === 102995, 'F-FILE-01: tiến độ Tách/OCR đơn vị file, mục tiêu 102.995; Scan giữ tờ / 175.000', t1.buoc.map(x => [x.key, x.donVi, x.mucTieu]));
+  ok(b1('tach').daLam === 102995 + 12 && Math.abs(b1('tach').tyLe - (102995 + 12) / 102995 * 100) < 1e-9, 'F-FILE-01: Tách = 102.995 quy đổi + 12 file mới', b1('tach').daLam);
+  ok(b1('ocr').tam === true && b1('ocr').daLam === b0('ocr').daLam + 9 && Math.abs(b1('ocr').tyLe - b1('ocr').daLam / 102995 * 100) < 1e-9, 'F-FILE-01: OCR chưa có số quy đổi → TẠM lấy số hiện tại (+9 file mới) chia 102.995', [b0('ocr').daLam, b1('ocr').daLam]);
+  ok(b1('scan').daLam === b0('scan').daLam, 'F-FILE-01: Scan không đổi');
+  const cT = d1.cas.find(c => c.ca === CAX);
+  ok(cT && cT.tachDV === 12 && cT.ocrDV === 9, 'F-FILE-01: số ca Tối 26/11: Tách 12, OCR 9 (file)', cT && [cT.tachDV, cT.ocrDV]);
+  ok(d1.chiTiet.some(x => x.buoc === 'TACH' && x.laFile === true && x.dv === 12), 'F-FILE-01: chi tiết nhập trong ngày đánh dấu laFile, dv = số file');
+  const ls = api(tD, 'lichSu', { tu: NG, den: NG }).data;
+  ok(ls.some(x => x.buoc === 'OCR' && x.donVi === 'file' && x.dv === 9 && x.phanCuaToi === 9), 'F-FILE-01: Lịch sử cá nhân: OCR 9 file, đơn vị "file"', ls);
+  const tk = api(tTT, 'thongKeNhanSu', { tu: NG, den: NG }).data.nguoi.find(x => x.ma === 'D1');
+  ok(tk && tk.tachDV === 12 && tk.ocrDV === 9, 'F-FILE-01: thống kê nhân sự: D1 Tách 12, OCR 9 (file)', tk);
+  const dTruoc = api(tTT, 'dashboard', { ngay: '2026-11-25' }).data.tienDo;
+  ok(dTruoc.theoFile === false && dTruoc.buoc.every(x => x.donVi === 'tờ' && x.mucTieu === 175000), 'F-FILE-01: xem ngày trước mốc (25/11) → vẫn tính tờ như cũ');
+  // Quản lý chỉnh số quy đổi
+  const lgQ = sh('LogHeThong').rows.length;
+  const q1 = api(tD, 'luuQuyDoiFile', { mucTieuFile: 1, tachFileCu: 1, ocrFileCu: 1 });
+  ok(!q1.ok && !props.QUY_DOI_FILE, 'F-FILE-01: Tổ viên không được chỉnh số quy đổi', q1.err);
+  const q2 = api(tTT, 'luuQuyDoiFile', { mucTieuFile: 'abc', tachFileCu: 100, ocrFileCu: '' });
+  ok(!q2.ok && /Mục tiêu số file/.test(q2.err) && !props.QUY_DOI_FILE, 'F-FILE-01: số quy đổi không hợp lệ → báo lỗi, không lưu', q2.err);
+  const q3 = api(tTT, 'luuQuyDoiFile', { mucTieuFile: 103000, tachFileCu: 102990, ocrFileCu: 5000 });
+  ok(q3.ok && q3.data.mucTieuFile === 103000 && q3.data.ocrFileCu === 5000 && q3.data.mocNgay === NG, 'F-FILE-01: Tổ trưởng lưu số quy đổi (mốc giữ nguyên)', q3.err || q3.data);
+  ok(sh('LogHeThong').rows.slice(lgQ).filter(x => String(x.join('|')).indexOf('QUY_DOI_FILE') >= 0).length === 1, 'F-FILE-01: ghi 1 dòng log QUY_DOI_FILE');
+  const t2 = api(tTT, 'dashboard', { ngay: NG }).data.tienDo, b2 = k => t2.buoc.find(x => x.key === k);
+  ok(b2('tach').daLam === 102990 + 12 && b2('ocr').daLam === 5000 + 9 && b2('ocr').tam === false && b2('ocr').mucTieu === 103000 && t2.quyDoiFile.ocrFileCu === 5000, 'F-FILE-01: sau khi chỉnh: Tách 102.990+12, OCR 5.000+9, mục tiêu 103.000', t2.buoc.map(x => [x.key, x.daLam, x.mucTieu]));
+  const q4 = api(tTT, 'luuQuyDoiFile', { mucTieuFile: 102995, tachFileCu: 102995, ocrFileCu: '' });
+  ok(q4.ok && q4.data.ocrFileCu === null && api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr').tam === true, 'F-FILE-01: để trống OCR → quay lại tạm theo số hiện tại', q4.err);
+  // dọn
+  sh('NhatKy').rows.length = nk0; sh('PhanCa').rows.length = pc0; sh('LogHeThong').rows.length = lg0;
+  ctx.PropertiesService = psCu; vm.runInContext('QDF_ = null', ctx); setNow('2026-11-09 15:30:00');
 }
 
 console.log('\nTỔNG: ' + pass + ' đạt, ' + fail + ' lỗi');
