@@ -6,6 +6,8 @@
 
 ---
 
+> **27/11/2026 11:28 (chủ dự án): ĐÃ ĐẨY TAY phiên bản 37 (`fc40e65`) lên link chính `…MlRA`** – chỉ `Index.html`, bỏ chữ "(= số hồ sơ)" cạnh nhãn Số file (đổi chữ, không đổi logic). Phiên bản trước: 36 (`b45c083`, F-DL-08). Việc dở duy nhất: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs`.
+
 > **27/11/2026 (chủ dự án): thử F-DL-08 (phiên bản 36) trên link thật bằng tài khoản Tổ phó, báo "ok" → F-DL-08 ✅ đã đóng.** Việc còn lại duy nhất: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs` (+ mock) trong commit riêng.
 
 > **27/11/2026 11:18 (chủ dự án): ĐÃ ĐẨY TAY phiên bản 36 (`b45c083`, F-DL-08) lên link chính `…MlRA`; Opus review F-DL-08 ĐẠT.** Việc còn lại: chủ dự án thử trên link thật (Tổ phó thấy tab Dữ liệu, xóa/sửa/khôi phục ngày cũ, không thấy công cụ ADMIN; tổ viên không thấy tab) rồi báo kết quả để đóng F-DL-08. Việc dở cũ vẫn còn: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs`.
