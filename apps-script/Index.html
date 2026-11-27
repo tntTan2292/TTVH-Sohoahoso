@@ -4587,7 +4587,7 @@ function qdfHtml(T) {
   var q = T.quyDoiFile;
   return '<details class="qdf-details noprint"><summary class="qdf-summary">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
     '<div class="qdf-body">' +
-      '<div class="qdf-desc">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file. Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
+      '<div class="qdf-desc">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file. Số Tách file dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. OCR tính thực tế: đầu kỳ + Số file của mọi bản ghi OCR; muốn đổi tổng OCR thì sửa Số file từng bản ghi ở tab Dữ liệu.</div>' +
       '<div class="row num-row qdf-inputs">' +
         '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
         '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
@@ -4601,7 +4601,7 @@ function qdfHtml(T) {
 }
 function qdfLuu() {
   var p = { mucTieuFile: $('qdfMuc').value, tachFileCu: $('qdfTach').value, ocrFileCu: $('qdfOcr').value };
-  hoiXacNhan('Lưu số quy đổi', 'Mục tiêu ' + p.mucTieuFile + ' file · Tách file trước mốc ' + p.tachFileCu + ' file · OCR trước mốc ' + (p.ocrFileCu === '' ? '(tạm tính theo số hiện tại)' : p.ocrFileCu + ' file') + '?').then(function (dongY) {
+  hoiXacNhan('Lưu số quy đổi', 'Mục tiêu ' + p.mucTieuFile + ' file · Tách file trước mốc ' + p.tachFileCu + ' file?').then(function (dongY) {
     if (!dongY) return;
     $('qdfLuuBtn').disabled = true;
     call('luuQuyDoiFile', p).then(function () {

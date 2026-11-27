@@ -2100,7 +2100,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
   const fileMoi = function (B) { return rows.reduce(function (a, r) { return a + ((r.buoc === B && r.laFile && r.ngay <= ngay) ? r.dv : 0); }, 0); };
   const tienDo = { mucTieu: MUC_TIEU_TO, denNgay: ngay, tuNgay: tuNgay, soNgay: soNgay, soCa: soCa, theoFile: theoFile, quyDoiFile: qdf, buoc: buocs.map(function (b) {
     let da = all[b[2]] + dv(dk[b[1]]) + dkSum(b[1], { den: ngay }), muc = MUC_TIEU_TO, donVi = 'tờ', tam = false;
-    if (theoFile && BUOC_FILE_.indexOf(b[1]) >= 0) {
+    if ((theoFile && BUOC_FILE_.indexOf(b[1]) >= 0) || (b[1] === 'OCR' && laBanGhiFile_('OCR', ngay, CA_LIST[0]))) {      // 27/11/2026: OCR mọi ngày tính file nên xem ngày trước mốc cũng ghi file / mục tiêu file
       muc = qdf.mucTieuFile; donVi = 'file';
       if (b[1] === 'TACH') da = Math.min(qdf.mucTieuFile, qdf.tachFileCu + fileMoi('TACH'));      // Q3: Tách file không vượt mục tiêu (100%)
       // OCR: da giữ nguyên = đầu kỳ (DauKy, như đã lưu) + tổng SỐ FILE mọi bản ghi OCR còn hiệu lực; KHÔNG dùng ocrFileCu (số chốt cũ) nữa

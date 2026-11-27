@@ -1952,7 +1952,7 @@ LEGACY_OCR.off();
   const tk = api(tTT, 'thongKeNhanSu', { tu: NG, den: NG }).data.nguoi.find(x => x.ma === 'D1');
   ok(tk && tk.tachDV === 12 && tk.ocrDV === 9, 'F-FILE-01: thống kê nhân sự: D1 Tách 12, OCR 9 (file)', tk);
   const dTruoc = api(tTT, 'dashboard', { ngay: '2026-11-25' }).data.tienDo;
-  ok(dTruoc.theoFile === false && dTruoc.buoc.every(x => x.donVi === 'tờ' && x.mucTieu === 175000), 'F-FILE-01: xem ngày trước mốc (25/11) → vẫn tính tờ như cũ');
+  ok(dTruoc.theoFile === false && dTruoc.buoc.every(x => x.key === 'ocr' ? (x.donVi === 'file' && x.mucTieu === 102995) : (x.donVi === 'tờ' && x.mucTieu === 175000)), 'F-FILE-01: xem ngày trước mốc (25/11) → Scan/Tách vẫn tờ; OCR (27/11/2026: mọi ngày tính file) ghi file, mục tiêu 102.995', dTruoc.buoc.map(x => [x.key, x.donVi, x.mucTieu]));
   // Quản lý chỉnh số quy đổi
   const lgQ = sh('LogHeThong').rows.length;
   const q1 = api(tD, 'luuQuyDoiFile', { mucTieuFile: 1, tachFileCu: 1, ocrFileCu: 1 });
