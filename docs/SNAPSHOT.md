@@ -6,6 +6,8 @@
 
 ---
 
+> **27/11/2026 (Sonnet): sửa lỗi OCR báo "Số liệu bất thường" (chủ dự án báo hộp 2.1.369 = 251 file, 2.1.372).** Nguyên nhân KHÔNG phải Mã hồ sơ (vốn không bắt buộc) mà do ngưỡng `hs > 60` trong `ghi_` (`Code.gs`) từ thời tính theo hồ sơ. Đã nâng 60 → 1000 cho Tách/OCR (Scan giữ 60), mock **652/0** (+1). Chưa triển khai: chủ dự án tự đẩy tay `Code.gs`, rồi nhập lại hai hộp.
+
 > **27/11/2026 11:28 (chủ dự án): ĐÃ ĐẨY TAY phiên bản 37 (`fc40e65`) lên link chính `…MlRA`** – chỉ `Index.html`, bỏ chữ "(= số hồ sơ)" cạnh nhãn Số file (đổi chữ, không đổi logic). Phiên bản trước: 36 (`b45c083`, F-DL-08). Việc dở duy nhất: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs`.
 
 > **27/11/2026 (chủ dự án): thử F-DL-08 (phiên bản 36) trên link thật bằng tài khoản Tổ phó, báo "ok" → F-DL-08 ✅ đã đóng.** Việc còn lại duy nhất: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs` (+ mock) trong commit riêng.

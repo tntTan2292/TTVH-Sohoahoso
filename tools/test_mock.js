@@ -697,6 +697,8 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   r = api(tLD, 'ghiLo', { ca: 'Chiều', idLo: idn(), muc: [mk('LG', 'SCAN', 1, 5)] }); ok(!r.ok && /chỉ được xem/.test(r.err), 'Lãnh đạo không gọi được ghiLo', r);
   r = lo(tA, [mk('LG', 'SCAN', -1, 5), mk('LH', 'SCAN', 0, 5), mk('LI', 'SCAN', 2, 0), mk('LJ', 'SCAN', 2, 99999)]);
   ok(r.ok && r.data.added === 0 && r.data.loi === 4 && /không được âm/.test(r.data.ketQua[0].err) && /số hồ sơ/.test(r.data.ketQua[1].err) && /số trang hoặc số tờ/.test(r.data.ketQua[2].err) && /bất thường/.test(r.data.ketQua[3].err), 'số âm / thiếu số hồ sơ / thiếu số tờ / quá lớn: từng dòng báo lỗi, không ghi', r);
+  r = lo(tA, [mk('LK', 'OCR', 251, 0), mk('LL', 'OCR', 1001, 0)]);
+  ok(r.ok && r.data.ketQua[0].ok && !r.data.ketQua[1].ok && /bất thường/.test(r.data.ketQua[1].err), 'OCR/Tách tính theo file: 251 file/hộp được ghi, trên 1000 file mới báo bất thường', r);
   r = lo(tA, [mk('LK M', 'SCAN', 1, 5)]); ok(r.ok && r.data.added === 0 && !r.data.ketQua[0].ok, 'mã hộp có khoảng trắng bị từ chối', r);
   r = lo(tA, [mk('a,b', 'SCAN', 1, 5)]); ok(r.ok && r.data.added === 0 && /không hợp lệ/.test(r.data.ketQua[0].err), 'mã hộp có dấu phẩy bị từ chối', r);
   r = lo(tTT, [mk('LN', 'SCAN', 2, 9, { hetHop: true }), mk('LN', 'TACH', 2, 9)], { boSung: true, ngay: '2026-11-09', nhom: '', nguoiHo: 'B1' });

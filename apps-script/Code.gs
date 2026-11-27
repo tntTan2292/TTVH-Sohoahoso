@@ -667,7 +667,7 @@ function ghi_(u, p) {      // chạy trong withLock_ ở api()
       const laFile = BUOC_FILE_.indexOf(buoc) >= 0;      // F-FILE-01: Tách file/OCR chỉ báo cáo số file (= số hồ sơ), không bắt trang/tờ
       if (hs < 1) throw laFile ? 'Nhập số file (≥ 1) – khâu Tách file/OCR chỉ báo cáo số file thực hiện' : 'Nhập số hồ sơ (≥ 1)';
       if (!laFile && trang < 1 && to < 1) throw 'Nhập số trang hoặc số tờ';
-      if (hs > 60 || trang > 20000 || to > 10000) throw 'Số liệu bất thường, vui lòng kiểm tra lại';
+      if (hs > (laFile ? 1000 : 60) || trang > 20000 || to > 10000) throw 'Số liệu bất thường, vui lòng kiểm tra lại';
       const het = !!p.hetHop, h = hops[0];
       if (has(buoc, h, true)) throw 'Hộp ' + h + ' đã được báo cáo XONG ở bước này – không nhận thêm báo cáo. Cần chỉnh thì nhờ Quản trị sửa/xóa bản ghi cũ';
       if (!has('NHAN', h) && !has('NHAN_NHOM', h)) { warnings.push('Hộp ' + h + ' chưa có trong danh sách đã nhận'); loai = (loai === 'BỔ SUNG' || loai === 'NHẬP HỘ') ? loai : 'CẢNH BÁO'; }
