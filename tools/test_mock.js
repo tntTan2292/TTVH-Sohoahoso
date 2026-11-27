@@ -274,6 +274,9 @@ ok(api(tAdmin, 'suaBanGhi', { id: idH9, soHoSo: 4, soTrang: 44 }).ok && sh('Nhat
   ok(api(tTT, 'suaBanGhi', { id: idH9, soHoSo: 5 }).ok, 'F-DL-08: Tổ trưởng sửa được bản ghi ngày cũ');
   r = api(tA, 'suaBanGhi', { id: idH9, soHoSo: 6 });
   ok(!r.ok && /Tổ trưởng\/Tổ phó/.test(r.err), 'F-DL-08: tổ viên KHÔNG sửa được bản ghi', r);
+  setNow('2026-11-09 23:30:00');      // ca Chiều 09/11 đã hết giờ → khóa (canInput = false)
+  r = api(tTT, 'huy', { id: idH9 });
+  ok(!r.ok && /Ca đã khóa/.test(r.err), 'F-DL-08: Tổ trưởng xóa ca đã khóa KHÔNG qua tab Dữ liệu vẫn bị chặn', r);
   ok(api(tTT, 'huy', { id: idH9, tuDL: true }).ok, 'F-DL-08: Tổ trưởng xóa được bản ghi ngày cũ từ tab Dữ liệu (kể cả ca đã khóa)');
   ok(api(tTT, 'nhatKy', { ngay: '2026-11-09', includeHuy: true }).data.some(x => x.id === idH9 && x.daXoa), 'F-DL-08: Tổ trưởng thấy bản ghi đã xóa khi includeHuy');
   r = api(tA, 'khoiPhuc', { id: idH9 });
@@ -282,6 +285,7 @@ ok(api(tAdmin, 'suaBanGhi', { id: idH9, soHoSo: 4, soTrang: 44 }).ok && sh('Nhat
   for (const [a2, p2] of [['resetDuLieu', { phamVi: 'THU' }], ['taoMau', { ngay: '2026-11-09', cas: ['Sáng'], soNguoi: 6 }], ['chuanHoaNhom', {}]]) {
     r = api(tTT, a2, p2); ok(!r.ok && /Quản trị/.test(r.err), 'F-DL-08: Tổ trưởng KHÔNG gọi được công cụ ADMIN: ' + a2, r);
   }
+  setNow('2026-11-09 15:30:00');
 }
 
 // ===== 10. Vai trò LANHDAO chỉ xem =====
