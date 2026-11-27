@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-27
+- F-DL-08 · Tổ trưởng/Tổ phó dùng được tab Dữ liệu (xem/sửa/xóa/khôi phục bản ghi ngày cũ, kể cả ca đã khóa); công cụ ADMIN vẫn ẩn và bị chặn; mock 650/0, chưa triển khai
 - F-FILE-01 · chủ dự án thử trên link thật (phiên bản 35) báo ok, mục 36 ✅
 
 ## 2026-11-26

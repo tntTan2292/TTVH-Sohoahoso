@@ -496,8 +496,8 @@ function route_(u, action, p) {
       return thongKeNhanSu_(p, !!p.gomThu && u.vaiTro === 'ADMIN');
     }
     case 'nhatKyHT': needSuper_(u); return nhatKyHT_(p);
-    case 'khoiPhuc': needSuper_(u); return khoiPhuc_(u, p);
-    case 'suaBanGhi': needSuper_(u); return suaBanGhi_(u, p);
+    case 'khoiPhuc': need_(u); return khoiPhuc_(u, p);
+    case 'suaBanGhi': need_(u); return suaBanGhi_(u, p);
     case 'resetDuLieu': needSuper_(u); return resetDuLieu_(u, p);
     case 'taoMau': needSuper_(u); return taoMau_(u, p);
     case 'chuanHoaNhom': needSuper_(u); return chuanHoaNhom_(u, p);
@@ -822,9 +822,9 @@ function huy_(u, p) {
   if (!r) throw 'Không tìm thấy bản ghi';
   if (b_(r.Huy)) throw 'Bản ghi đã được xóa trước đó';
   if (u.vaiTro !== 'ADMIN') {
-    const st = caState_(d_(r.Ngay), s_(r.Ca), t);
     if (!isAdmin_(u)) throw 'Tổ viên không được hủy báo cáo – nhờ Tổ trưởng/Tổ phó hoặc Quản trị hủy để báo cáo lại';
-    if (!st.canInput) throw 'Ca đã khóa – chỉ Quản trị hệ thống được xóa; hoặc mở khóa ca trước';
+    const st = caState_(d_(r.Ngay), s_(r.Ca), t);
+    if (!p.tuDL && !st.canInput) throw 'Ca đã khóa – chỉ Quản trị hệ thống được xóa; hoặc mở khóa ca trước';
   }
   setCell_('NhatKy', r._row, 'Huy', true);
   setCell_('NhatKy', r._row, 'NguoiHuy', u.ma + ' ' + t.ts);
@@ -866,7 +866,7 @@ function nhatKy_(u, p) {
   if (!isAdmin_(u)) read_('PhanNhom').forEach(function (r) { if (d_(r.Ngay) === ngay && s_(r.MaHRM) === u.ma) myNhom[s_(r.Ca)] = s_(r.Nhom); });
   return read_('NhatKy').filter(function (r) {
     if (d_(r.Ngay) !== ngay) return false;
-    if (b_(r.Huy) && !(p.includeHuy && u.vaiTro === 'ADMIN')) return false;
+    if (b_(r.Huy) && !(p.includeHuy && isAdmin_(u))) return false;
     if (ca && s_(r.Ca) !== ca) return false;
     if (isAdmin_(u)) return true;
     // tổ viên chỉ thấy báo cáo của mình và của nhóm mình LÚC BÁO CÁO (theo ThanhVien lưu kèm bản ghi);

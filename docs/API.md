@@ -27,7 +27,7 @@
 | `ghi` | trừ LANHDAO (NHAN/TRA chỉ quản lý); giữ nguyên, `ghiLo` gọi lại hàm này | `{idGui?, buoc, ca, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu, maHoSo, kieuNhan:'CANHAN'|'NHOM'}`; nhập hộ thêm `{boSung:true, ngay, nhom, nguoiHo}` | có `warnings[]`. **QĐ1 (F-BC-20):** người đã có nhóm trong ca → `kieuNhan:"CANHAN"` bị từ chối; nhập hộ `nguoiHo` đã có nhóm mà `nhom` trống/khác bị từ chối |
 | `ghiLo` | trừ LANHDAO (như `ghi`; chỉ khâu SCAN/TACH/OCR) | `{idLo, ca, muc:[{hop, buoc, soHoSo, soTrang, soTo, trangLoi, hetHop, maHoSo}]}`; nhập hộ thêm `{boSung:true, ngay, nhom, nguoiHo}`; `ghiChu` chung. `idLo` bắt buộc (8–64 ký tự chữ/số/`_`/`-`), tối đa **10 hộp**, **30 dòng** | `{idLo, ketQua:[{hop, buoc, ok, added, warnings[], err}], added, loi, warnings[], guiLai?}`. Mỗi mục đi qua `ghi_` (mọi kiểm tra cũ). Lỗi ở một khâu → các khâu sau của **cùng hộp** bị bỏ qua, hộp khác vẫn ghi. Gửi lại cùng `idLo` (10 phút, theo người gửi) trả kết quả cũ kèm `guiLai: true`, không ghi thêm |
 | `hopGoiY` | mọi người (trừ LANHDAO) | `{buoc}` (F-TH-02: `TRA` = hộp Tách xong chưa Trả; `NHAN` = hộp có bản ghi, chưa có Nhận từ TTLT) | danh sách mã hộp |
-| `nhatKy` | mọi người (trừ LANHDAO) | `{ngay, ca, includeHuy}` | bản ghi `{id, gio, buoc, hop, hs, trang, to, loi, het, ghiChu, mine, ...}` |
+| `nhatKy` | mọi người (trừ LANHDAO) | `{ngay, ca, includeHuy}` (`includeHuy`: TT/TP/ADMIN) | bản ghi `{id, gio, buoc, hop, hs, trang, to, loi, het, ghiChu, mine, ...}` |
 | `huy` | TT/TP khi ca còn mở; ADMIN mọi lúc | `{id}` | — |
 | `lichSu` | mọi người | `{tu, den}` | `[{ngay, ca, buoc, hop, dv, phanCuaToi, het}]` |
 | `dashboard` | TT/TP, LANHDAO, ADMIN (**không** TOVIEN) | `{ngay, gomThu, soNgay?}` (`gomThu` chỉ có tác dụng với ADMIN; `soNgay` = số ngày của `series`, mặc định 10, kẹp tối đa 30 — C1) | xem dưới |
@@ -44,8 +44,8 @@
 | `luuQuyDoiFile` (F-FILE-01) | TT/TP/ADMIN | `{mucTieuFile, tachFileCu, ocrFileCu}` (số nguyên; `ocrFileCu` rỗng = tạm tính theo số hiện tại) | `{mucTieuFile, tachFileCu, ocrFileCu (null nếu trống), mocNgay, mocCa}`; log `QUY_DOI_FILE` |
 | `dsNhanSu` | TT/TP/ADMIN (TT/TP: chỉ tổ viên, không email) | — | danh sách nhân sự `{ma,ten,chucVu,donVi,email,vaiTro,hoatDong,khoa,thuTu}` (không có cột PIN; `thuTu` = số hoặc `''`; sắp theo đơn vị → thuTu → tên — B5e) |
 | `luuNhanSu` | ADMIN (đầy đủ, tạo mới được; `donVi` phải thuộc danh mục — B1); TT/TP: sửa **tổ viên có sẵn**, chỉ đổi `ten, chucVu, donVi, hoatDong` (đổi vai trò, sửa quản lý/LĐ/ADMIN → từ chối); **thêm tổ viên mới chỉ khi gửi `taoMoi:true`** (F-NS-12b: luôn vai trò Tổ viên, bỏ qua email/thuTu, mã trùng → "Mã HRM này đã có trong hệ thống"; không có `taoMoi` thì tạo mới vẫn bị từ chối) | `{ma, ten, chucVu, donVi, email, vaiTro, hoatDong, thuTu?, taoMoi?}` (`thuTu`: chỉ ADMIN; số nguyên ≥ 0, `''` = xếp cuối, bỏ qua = giữ nguyên; sai → lỗi, không ghi — B5e) | `{moi, ma, pin?}` |
-| `suaBanGhi` | ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
-| `khoiPhuc` | ADMIN | `{id}` | — |
+| `suaBanGhi` | TT/TP/ADMIN | `{id, ngay, ca, nhom, hop, soHoSo, soTrang, soTo, trangLoi, hetHop, ghiChu}` | — |
+| `khoiPhuc` | TT/TP/ADMIN | `{id}` | — |
 | `taoMau` | ADMIN | `{ngay, cas:[ca], soNguoi}` | `{soBanGhi, soCa, ngay, soNguoi, soThem}` |
 | `resetDuLieu` | ADMIN | `{phamVi:'THU'}`; `{phamVi:'NGAY', ngay, xacNhan:'XOA', caPhanCa}`; `{phamVi:'TATCA', xacNhan:'XOA'}` | có `saoLuu`; `THU` trả thêm `nguoiGia` (số người giả TN-xx đã xóa) |
 | `chuanHoaNhom` | ADMIN | `{ngay, ca, apDung:false}` (xem trước, không ghi); `{ngay, ca, apDung:true, xacNhan:"NHOM"}` (áp dụng) | `{ngay, ca, apDung, tongQuet, boQua, doiNhom:[{id,gio,buoc,hop,hs,trang,to,loi,het,maHoSo,nguoi,nhomCu,nhomMoi,tvCu,tvMoi,ly}], huyTrung:[{...,giuId}], xungDot:[{nhom,buoc,hop,dong:[],ly}], daSua:{doi,huy}, saoLuu}` (`daSua`, `saoLuu` chỉ khi áp dụng) |

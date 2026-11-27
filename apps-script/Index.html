@@ -3349,7 +3349,8 @@ function start() {
     if (m.user.vaiTro !== 'LANHDAO' && m.user.vaiTro !== 'XEM') tabs.push(['pBao', 'Báo cáo']);
     if (m.isAdmin) tabs.push(['pQL', 'Quản lý ca']);
     if (m.isAdmin) tabs.push(['pNS', 'Nhân sự']);      // TT/TP: chỉ quản lý tổ viên (F-NS-04); ADMIN: toàn bộ
-    if (m.isSuper) { tabs.push(['pDL', 'Dữ liệu']); tabs.push(['pLG', 'Nhật ký']); }
+    if (m.isAdmin) tabs.push(['pDL', 'Dữ liệu']);      // TT/TP: chỉ xem/sửa/xóa/khôi phục bản ghi theo ngày; ADMIN: đủ công cụ
+    if (m.isSuper) tabs.push(['pLG', 'Nhật ký']);
     if (m.user.vaiTro !== 'TOVIEN') tabs.push(['pDash', 'Dashboard']);   // tổ viên không xem Dashboard
     var icons = {
       pBao: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>',
@@ -4387,6 +4388,11 @@ function doKhoiTao() {
 }
 function initDL() {
   if (!$('dlNgay').value) $('dlNgay').value = ME.ngay;
+  if (!ME.isSuper) {      // TT/TP: chỉ bảng bản ghi theo ngày (Sửa/Xóa/Khôi phục); ẩn công cụ chỉ dành ADMIN
+    ['doCard', 'chCard', 'dkCard', 'dlMauCa', 'dlMau', 'dlThu', 'dlNgayDel', 'dlAll'].forEach(function (id) { $(id).classList.add('hide'); });
+    $('dlLoad').onclick = loadDL;
+    return;
+  }
   doKhoiTao();
   $('dlLoad').onclick = loadDL; initCH(); $('dkXem').onclick = function () { dkCall(false); };
   $('dlMau').onclick = function () { call('taoMau', { ngay: $('dlNgay').value, cas: $('dlMauCa').value.split(','), soNguoi: 6 }).then(function (r) { msg('dlMsg', 'Đã tạo ' + r.soBanGhi + ' bản ghi mẫu cho ' + r.soCa + ' ca ngày ' + r.ngay + ' (mỗi ca ' + r.soNguoi + ' người, thêm ' + r.soThem + ' người giả TN-xx). Ở Dashboard tick "gồm dữ liệu thử nghiệm" để xem.', 'ok'); loadDL(); }).catch(function (e) { msg('dlMsg', e); }); };
@@ -4517,7 +4523,7 @@ function loadDL() {
       return '<tr' + (r.daXoa ? ' style="opacity:.45;text-decoration:line-through"' : '') + '><td>' + r.gio + '</td><td data-label="Ca">Ca ' + esc(r.ca) + '</td><td data-label="Nhóm">' + esc(r.nhom) + '</td><td data-label="Bước">' + esc(STEP_LABEL[r.buoc] || r.buoc) + '</td><td data-label="Hộp"><b>' + esc(r.hop) + '</b></td><td data-label="Hồ sơ">' + r.hs + '</td><td data-label="Trang">' + (laKhauFile(r.buoc) ? '—' : r.trang) + '</td><td data-label="Tờ">' + (laKhauFile(r.buoc) ? '—' : r.to) + '</td><td data-label="Xong hộp">' + (r.het ? '✔' : '') + '</td><td data-label="Người nhập">' + esc(r.nguoi) + '</td><td data-label="Loại">' + esc(r.loai) + '</td>' +
         '<td data-label="Thao tác">' + (r.daXoa ? '<button class="sm" data-u="' + r.id + '">Khôi phục</button>' : '<button class="sm" data-e="' + i + '">Sửa</button> <button class="sm bad" data-d="' + r.id + '">Xóa</button>') + '</td></tr>';
     }).join('') + '</table>' : '<div class="empty-state"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--mut)" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><div>Không có bản ghi nào trong ngày này.</div></div>';
-    Array.prototype.forEach.call($('dlList').querySelectorAll('[data-d]'), function (b) { b.onclick = function () { hoiXacNhan('Xóa bản ghi', 'Xóa bản ghi này?').then(function (ok) { if (ok) call('huy', { id: b.dataset.d }).then(loadDL).catch(alert); }); }; });
+    Array.prototype.forEach.call($('dlList').querySelectorAll('[data-d]'), function (b) { b.onclick = function () { hoiXacNhan('Xóa bản ghi', 'Xóa bản ghi này?').then(function (ok) { if (ok) call('huy', { id: b.dataset.d, tuDL: true }).then(loadDL).catch(alert); }); }; });
     Array.prototype.forEach.call($('dlList').querySelectorAll('[data-u]'), function (b) { b.onclick = function () { call('khoiPhuc', { id: b.dataset.u }).then(loadDL).catch(alert); }; });
     Array.prototype.forEach.call($('dlList').querySelectorAll('[data-e]'), function (b) { b.onclick = function () { editDL(rs[+b.dataset.e]); }; });
   }).catch(function (e) { $('dlList').innerHTML = '<div class="msg err">' + esc(e) + '</div>'; });

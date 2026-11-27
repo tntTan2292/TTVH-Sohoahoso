@@ -269,6 +269,20 @@ const nhRow = sh('NhatKy').rows.find(x => x[6] === 'H9');
 const idH9 = nhRow[0];
 ok(nhRow[15] === 'NHẬP HỘ', 'bản ghi nhập hộ có Loai = NHẬP HỘ', nhRow[15]);
 ok(api(tAdmin, 'suaBanGhi', { id: idH9, soHoSo: 4, soTrang: 44 }).ok && sh('NhatKy').rows.find(x => x[0] === idH9)[15] === 'NHẬP HỘ', 'sửa bản ghi giữ nguyên Loai cũ');
+// F-DL-08: Tổ trưởng/Tổ phó dùng tab Dữ liệu (sửa/xóa/khôi phục bản ghi ngày cũ), tổ viên và công cụ ADMIN vẫn bị chặn
+{
+  ok(api(tTT, 'suaBanGhi', { id: idH9, soHoSo: 5 }).ok, 'F-DL-08: Tổ trưởng sửa được bản ghi ngày cũ');
+  r = api(tA, 'suaBanGhi', { id: idH9, soHoSo: 6 });
+  ok(!r.ok && /Tổ trưởng\/Tổ phó/.test(r.err), 'F-DL-08: tổ viên KHÔNG sửa được bản ghi', r);
+  ok(api(tTT, 'huy', { id: idH9, tuDL: true }).ok, 'F-DL-08: Tổ trưởng xóa được bản ghi ngày cũ từ tab Dữ liệu (kể cả ca đã khóa)');
+  ok(api(tTT, 'nhatKy', { ngay: '2026-11-09', includeHuy: true }).data.some(x => x.id === idH9 && x.daXoa), 'F-DL-08: Tổ trưởng thấy bản ghi đã xóa khi includeHuy');
+  r = api(tA, 'khoiPhuc', { id: idH9 });
+  ok(!r.ok && /Tổ trưởng\/Tổ phó/.test(r.err), 'F-DL-08: tổ viên KHÔNG khôi phục được', r);
+  ok(api(tTT, 'khoiPhuc', { id: idH9 }).ok, 'F-DL-08: Tổ trưởng khôi phục được bản ghi');
+  for (const [a2, p2] of [['resetDuLieu', { phamVi: 'THU' }], ['taoMau', { ngay: '2026-11-09', cas: ['Sáng'], soNguoi: 6 }], ['chuanHoaNhom', {}]]) {
+    r = api(tTT, a2, p2); ok(!r.ok && /Quản trị/.test(r.err), 'F-DL-08: Tổ trưởng KHÔNG gọi được công cụ ADMIN: ' + a2, r);
+  }
+}
 
 // ===== 10. Vai trò LANHDAO chỉ xem =====
 for (const [a, p] of [['ghi', { buoc: 'NHAN', ca: 'Chiều', hop: 'Z1' }], ['huy', { id: idH9 }], ['vaoCa', { ca: 'Chiều' }], ['luuNhom', {}], ['chot', {}], ['resetPin', { ma: 'A1' }]]) {
