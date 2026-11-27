@@ -3,7 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-27
-- F-FILE-01 · Sửa lỗi "Số liệu bất thường" khi báo OCR/Tách > 60 file/hộp (hộp 251 file bị chặn): ngưỡng `ghi_` nâng 60 → 1000 cho Tách/OCR (tính theo file), Scan giữ 60; mock 652/0; chưa triển khai. Mã hồ sơ đã làm vốn KHÔNG bắt buộc (không đổi)
+- F-FILE-01 · Sửa lỗi "Số liệu bất thường" khi báo OCR/Tách > 60 file/hộp (hộp 251 file bị chặn): ngưỡng `ghi_` nâng 60 → 10.000 (chủ dự án chọn) cho Tách/OCR (tính theo file), Scan giữ 60; mock 652/0; chưa triển khai. Mã hồ sơ đã làm vốn KHÔNG bắt buộc (không đổi)
 - F-FILE-01 · Chữ hiển thị: bỏ phần "(= số hồ sơ)" cạnh nhãn Số file (form báo cáo, nhập hộ, sửa bản ghi, ghi chú Tách/OCR, ô Đồng thời ghi Tách file, mô tả Số quy đổi); chỉ còn "Số file"; chỉ đổi chữ trong Index.html; chủ dự án tự đẩy tay lúc 11:28 → **phiên bản 37** (commit `fc40e65`) lên link chính
 - F-DL-08 · Tổ trưởng/Tổ phó dùng được tab Dữ liệu (xem/sửa/xóa/khôi phục bản ghi ngày cũ, kể cả ca đã khóa); công cụ ADMIN vẫn ẩn và bị chặn; mock 650/0, Opus review ĐẠT; chủ dự án tự đẩy tay lúc 11:18 → **phiên bản 36** (commit `b45c083`) lên link chính, chủ dự án thử trên link thật báo ok (tài khoản Tổ phó), F-DL-08 ✅
 - F-DL-08 · Opus review ĐẠT, GO đẩy tay `Code.gs` + `Index.html`; sửa dòng CHUC_NANG làm kiểm tra giao diện báo lỗi, kiểm tra mock ca khóa dùng ca khóa thật · mock 651/0, giao diện 755/0
