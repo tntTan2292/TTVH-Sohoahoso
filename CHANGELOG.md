@@ -2,6 +2,9 @@
 
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
+## 2026-11-27
+- F-FILE-01 · chủ dự án thử trên link thật (phiên bản 35) báo ok, mục 36 ✅
+
 ## 2026-11-26
 - **Triển khai phiên bản 35** (commit `595d0b6`, Opus ĐẠT/GO `7a51b94`, chủ dự án cho phép Sonnet đẩy) lên link chính, thay phiên bản 34; đối chiếu trước khi đẩy khớp `92f027f`; ID/URL /exec không đổi. Chạy chốt OCR một lần: `xemChotOcrQuyDoi` → 13000 (DauKy 3140 + NhatKy 9860) → `apDungChotOcrQuyDoi` → xem lại: giá trị đang lưu 13000 · F-FILE-01
 - F-FILE-01 · Làm đẹp giao diện Tách file / OCR tính theo file: ô Số file không lệch khi ẩn trang/tờ (.num-row, .lo-row .num-row, sửa bản ghi); ghi chú đỏ nổi bật gọn gàng (.msg-file-hint); ba vòng tiến độ cao bằng nhau, chip và dòng mục tiêu xuống dòng đẹp; khung ⚙ Số quy đổi (.qdf-*); thẻ năng suất TB tính riêng 2 dòng và bảng Nhân sự không tràn ở 360px; tối ưu legend và tiêu đề biểu đồ · Antigravity · mock 641/0, giao diện 747/0 · chưa triển khai
