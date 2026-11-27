@@ -1949,7 +1949,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
   //        dòng không có Ngay = số dư gộp (lũy kế đến hết DAU_KY_DEN). Đừng nhập trùng hai kiểu cho cùng một số liệu.
   const dkLump = { SCAN: 0, TACH: 0, OCR: 0 }, dkNgay = [];
   read_('DauKy').forEach(function (r) {
-    const b = s_(r.Buoc).toUpperCase(); if (dkLump[b] === undefined) return;
+    const b = s_(r.Buoc).toUpperCase(); if (dkLump[b] === undefined || dauKyBoQua_(b)) return;
     const v = n_(r.SoTo) > 0 ? n_(r.SoTo) : n_(r.SoTrang), nd = d_(r.Ngay);
     if (nd) dkNgay.push({ b: b, ngay: nd, ca: s_(r.Ca), dv: v }); else dkLump[b] += v;
   });
@@ -2103,7 +2103,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
     if ((theoFile && BUOC_FILE_.indexOf(b[1]) >= 0) || (b[1] === 'OCR' && laBanGhiFile_('OCR', ngay, CA_LIST[0]))) {      // 27/11/2026: OCR mọi ngày tính file nên xem ngày trước mốc cũng ghi file / mục tiêu file
       muc = qdf.mucTieuFile; donVi = 'file';
       if (b[1] === 'TACH') da = Math.min(qdf.mucTieuFile, qdf.tachFileCu + fileMoi('TACH'));      // Q3: Tách file không vượt mục tiêu (100%)
-      // OCR: da giữ nguyên = đầu kỳ (DauKy, như đã lưu) + tổng SỐ FILE mọi bản ghi OCR còn hiệu lực; KHÔNG dùng ocrFileCu (số chốt cũ) nữa
+      // OCR: da giữ nguyên = tổng SỐ FILE mọi bản ghi OCR còn hiệu lực (KHÔNG cộng đầu kỳ DauKy); KHÔNG dùng ocrFileCu (số chốt cũ) nữa
     }
     const con = Math.max(0, muc - da);
     const tbNgay = soNgay ? da / soNgay : 0, tbCa = soCa ? da / soCa : 0;
@@ -2192,12 +2192,14 @@ function thongKeNhanSu_(p, gomThu) {
   return kq;
 }
 // DK1: các dòng DauKyNguoi trong [tu, den] → [{ngay, ca, buoc, to, tvs:[{ma, ten, gio}]}]; mã so khớp với NhanSu bỏ số 0 đầu; tvs rỗng = "Chưa rõ người"
+// 27/11/2026 (chủ dự án): số đầu kỳ OCR (02–08/11, đơn vị tờ) bỏ hẳn khỏi mọi phép tính; OCR chỉ tính phần Quản lý nhập (Số file từng bản ghi NhatKy)
+function dauKyBoQua_(b) { return b === 'OCR'; }
 function dauKyNguoiRows_(tu, den, ns) {
   const canon = {}; Object.keys(ns).forEach(function (m) { canon[maKhopSo0_(m)] = m; });
   const out = [];
   read_('DauKyNguoi').forEach(function (r) {
     const ngay = d_(r.Ngay), b = s_(r.Buoc).toUpperCase(), to = n_(r.SoTo);
-    if (!ngay || ngay < tu || ngay > den || DK_NGUOI_BUOC_.indexOf(b) < 0 || !(to > 0)) return;
+    if (!ngay || ngay < tu || ngay > den || DK_NGUOI_BUOC_.indexOf(b) < 0 || dauKyBoQua_(b) || !(to > 0)) return;
     const ds = s_(r.ThanhVien) ? s_(r.ThanhVien).split(',').map(s_).filter(Boolean) : [], gio = s_(r.Gio) ? s_(r.Gio).split(',').map(s_) : [];
     const tvs = ds.map(function (m, j) { const ma = canon[maKhopSo0_(m)] || m, g = Number(gio[j]); return { ma: ma, ten: ns[ma] || ma, gio: isFinite(g) && g > 0 ? g : 0 }; });
     out.push({ ngay: ngay, ca: s_(r.Ca), buoc: b, to: to, tvs: tvs });
