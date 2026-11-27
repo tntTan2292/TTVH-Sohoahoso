@@ -3123,7 +3123,7 @@ var nfi = function (n) { return Math.round(Number(n || 0)).toLocaleString('vi-VN
 var STEP_LABEL = { NHAN: 'Nhận từ TT Lưu trữ', NHAN_NHOM: 'Nhận hộp', SCAN: 'Scan', TACH: 'Tách file PDF', OCR: 'OCR (xử lý TT)', TRA: 'Trả hộp' };
 // F-FILE-01: khâu Tách file và OCR báo cáo theo SỐ FILE (= số hồ sơ), không nhập trang/tờ
 function laKhauFile(b) { return b === 'TACH' || b === 'OCR'; }
-var GHI_CHU_FILE_HTML = '<div class="msg warn msg-file-hint" style="margin:8px 0;">⚠ Khâu <b>Tách file</b> và <b>OCR</b> chỉ báo cáo <b>SỐ FILE</b> thực hiện (số file = số hồ sơ). Không nhập số trang/số tờ.</div>';
+var GHI_CHU_FILE_HTML = '<div class="msg warn msg-file-hint" style="margin:8px 0;">⚠ Khâu <b>Tách file</b> và <b>OCR</b> chỉ báo cáo <b>SỐ FILE</b> thực hiện Không nhập số trang/số tờ.</div>';
 function vaiHienThi(vaiTro, chucVu) { return vaiTro === 'LANHDAO' && chucVu ? chucVu : (VAI_LABEL[vaiTro] || chucVu || ''); }      // B5c: Lãnh đạo có Chức vụ thì hiện Chức vụ (vd Trưởng ban · Quyền Giám đốc BĐTP)
 var VAI_LABEL = { TOVIEN: 'Tổ viên', TOTRUONG: 'Tổ trưởng', TOPHO: 'Tổ phó', LANHDAO: 'Lãnh đạo', ADMIN: 'Quản trị' };
 var CA_NAME = ['Sáng', 'Chiều', 'Tối'];
@@ -3532,7 +3532,7 @@ function loRenderBox(prefix, buoc) {
       '<label>Mã hồ sơ đã làm <small class="muted">(VD: 472-476; nên nhập để ca sau biết làm tiếp)</small></label>' +
       '<input data-k="maHs" autocomplete="off" placeholder="VD: 472-476" value="' + esc(r.maHs) + '">' +
       '<div class="row num-row">' +
-        '<div><label>' + (coFile ? (coScan ? 'Số hồ sơ <small class="muted">(= số file Tách/OCR)</small>' : 'Số file <small class="muted">(= số hồ sơ)</small>') : 'Số hồ sơ') + '</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
+        '<div><label>' + (coFile ? (coScan ? 'Số hồ sơ' : 'Số file') : 'Số hồ sơ') + '</label><input data-k="hs" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.hs) + '"></div>' +
         '<div' + (coFile && !coScan ? ' style="display:none"' : '') + '><label>Số tờ' + (coFile ? ' <small class="muted">(Scan)</small>' : '') + '</label><input data-k="to" type="number" inputmode="numeric" min="1" placeholder="0" value="' + esc(r.to) + '"></div>' +
         (coScan ? '<div><label>Trang lỗi / scan lại</label><input data-k="loi" type="number" inputmode="numeric" min="0" placeholder="0" value="' + esc(r.loi) + '"></div>' : '') +
       '</div>' +
@@ -3726,14 +3726,14 @@ function buildForm(open, m) {
   } else if (laBaoCao) {
     f += '<label>Mã hộp hồ sơ</label><input id="fHop" list="dlHop" placeholder="VD: 208.18.17" autocomplete="off"><datalist id="dlHop"></datalist>' +
       '<div class="row num-row">' +
-        '<div><label>' + (laKhauFile(STEP) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="fHs" type="number" inputmode="numeric" min="1" placeholder="0"></div>' +
+        '<div><label>' + (laKhauFile(STEP) ? 'Số file' : 'Số hồ sơ') + '</label><input id="fHs" type="number" inputmode="numeric" min="1" placeholder="0"></div>' +
         '<div' + (laKhauFile(STEP) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="fTrang" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
         '<div' + (laKhauFile(STEP) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="fTo" type="number" inputmode="numeric" min="0" placeholder="0"></div>' +
         (STEP === 'SCAN' ? '<div><label>Trang lỗi / scan lại</label><input id="fLoi" type="number" inputmode="numeric" min="0" value="0"></div>' : '') +
       '</div>' +
       (laKhauFile(STEP) ? GHI_CHU_FILE_HTML : '<div class="muted helper-text">💡 Nhập số trang hoặc số tờ (một trong hai).</div>') +
       '<div class="check-card"><label class="check-label"><input type="checkbox" id="fHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
-      (STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="fKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b>: số file = số hồ sơ đã nhập</span></label></div>' : '') +
+      (STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="fKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b></span></label></div>' : '') +
       '<label>Mã hồ sơ <small class="muted">(không bắt buộc)</small></label><input id="fMaHs" placeholder="VD: HS-01">';
   } else {
     if (STEP === 'NHAN_NHOM') f += '<label>Nhận hộp cho</label><div class="steps kieu-nhan" id="kieuNhan">' +
@@ -4035,11 +4035,11 @@ function renderHo(d) {
     h += loModeHtml('ho');
     if (LO_MODE === 'LO') h += '<div id="hoLoBox"></div><div id="hoLoRes"></div>';
     else h += '<label>Mã hộp hồ sơ</label><input id="hoHop" autocomplete="off">' +
-      '<div class="row num-row"><div><label>' + (laKhauFile(HO_STEP) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div' + (laKhauFile(HO_STEP) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
+      '<div class="row num-row"><div><label>' + (laKhauFile(HO_STEP) ? 'Số file' : 'Số hồ sơ') + '</label><input id="hoHs" type="number" min="1" placeholder="0"></div><div' + (laKhauFile(HO_STEP) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="hoTrang" type="number" min="0" placeholder="0"></div>' +
       '<div' + (laKhauFile(HO_STEP) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="hoTo" type="number" min="0" placeholder="0"></div>' + (HO_STEP === 'SCAN' ? '<div><label>Trang lỗi</label><input id="hoLoi" type="number" min="0" value="0"></div>' : '') + '</div>' +
       (laKhauFile(HO_STEP) ? GHI_CHU_FILE_HTML : '') +      // F-FILE-01
       '<div class="check-card"><label class="check-label"><input type="checkbox" id="hoHet"> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
-      (HO_STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="hoKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b>: số file = số hồ sơ đã nhập</span></label></div>' : '');
+      (HO_STEP === 'SCAN' ? '<div class="check-card check-tach"><label class="check-label"><input type="checkbox" id="hoKemTach"> <span>Đồng thời ghi <b>Tách file PDF</b></span></label></div>' : '');
   }
   h += '<label>Ghi chú</label><input id="hoNote" placeholder="Ghi chú thêm nếu cần"><div id="hoMsg"></div><p style="margin-top:16px;"><button class="pri btn-large" id="hoSend">Gửi báo cáo hộ</button></p></div>';
   $('qlBody').insertAdjacentHTML('beforeend', h);
@@ -4536,7 +4536,7 @@ function editDL(r) {
     '<div><label>Nhóm</label><input id="eNhom" value="' + esc(r.nhom) + '"></div><div><label>Mã hộp</label><input id="eHop" value="' + esc(r.hop) + '"></div>' +
     '</div>' +
     '<div class="row num-row">' +
-    '<div><label>' + (laKhauFile(r.buoc) ? 'Số file <small class="muted">(= số hồ sơ)</small>' : 'Số hồ sơ') + '</label><input id="eHs" type="number" value="' + r.hs + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="eTrang" type="number" value="' + r.trang + '"></div>' +
+    '<div><label>' + (laKhauFile(r.buoc) ? 'Số file' : 'Số hồ sơ') + '</label><input id="eHs" type="number" value="' + r.hs + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số trang</label><input id="eTrang" type="number" value="' + r.trang + '"></div>' +
     '<div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Số tờ</label><input id="eTo" type="number" value="' + r.to + '"></div><div' + (laKhauFile(r.buoc) ? ' style="display:none"' : '') + '><label>Trang lỗi</label><input id="eLoi" type="number" value="' + r.loi + '"></div></div>' +      // F-FILE-01: Tách/OCR chỉ sửa Số file
     '<div class="check-card"><label class="check-label"><input type="checkbox" id="eHet"' + (r.het ? ' checked' : '') + '> <span>Đã hoàn thành toàn bộ hộp này</span></label></div>' +
     '<div id="eMsg"></div><p style="margin-top:14px;"><button class="pri" id="eSave">Lưu thay đổi</button> <button id="eCancel">Đóng</button></p>';
@@ -4587,7 +4587,7 @@ function qdfHtml(T) {
   var q = T.quyDoiFile;
   return '<details class="qdf-details noprint"><summary class="qdf-summary">⚙ Số quy đổi Tách file / OCR (Quản lý chỉnh)</summary>' +
     '<div class="qdf-body">' +
-      '<div class="qdf-desc">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file (= số hồ sơ báo cáo). Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
+      '<div class="qdf-desc">Từ ca ' + esc(q.mocCa) + ' ' + esc(String(q.mocNgay).split('-').reverse().join('/')) + ', Tách file và OCR tính theo số file. Số dưới đây là phần đã làm TRƯỚC mốc đó, quy đổi sang file. Số OCR trước mốc thường đã được chủ dự án chốt cố định bằng tập lệnh một lần; để trống ô OCR = chưa chốt (tạm lấy số hiện tại).</div>' +
       '<div class="row num-row qdf-inputs">' +
         '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
         '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
