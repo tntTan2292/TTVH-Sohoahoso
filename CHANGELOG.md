@@ -3,7 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-27
-- F-DL-08 · Tổ trưởng/Tổ phó dùng được tab Dữ liệu (xem/sửa/xóa/khôi phục bản ghi ngày cũ, kể cả ca đã khóa); công cụ ADMIN vẫn ẩn và bị chặn; mock 650/0, Opus review ĐẠT; chủ dự án tự đẩy tay lúc 11:18 → **phiên bản 36** (commit `b45c083`) lên link chính, chờ thử trên link thật
+- F-DL-08 · Tổ trưởng/Tổ phó dùng được tab Dữ liệu (xem/sửa/xóa/khôi phục bản ghi ngày cũ, kể cả ca đã khóa); công cụ ADMIN vẫn ẩn và bị chặn; mock 650/0, Opus review ĐẠT; chủ dự án tự đẩy tay lúc 11:18 → **phiên bản 36** (commit `b45c083`) lên link chính, chủ dự án thử trên link thật báo ok (tài khoản Tổ phó), F-DL-08 ✅
 - F-DL-08 · Opus review ĐẠT, GO đẩy tay `Code.gs` + `Index.html`; sửa dòng CHUC_NANG làm kiểm tra giao diện báo lỗi, kiểm tra mock ca khóa dùng ca khóa thật · mock 651/0, giao diện 755/0
 - F-FILE-01 · chủ dự án thử trên link thật (phiên bản 35) báo ok, mục 36 ✅
 

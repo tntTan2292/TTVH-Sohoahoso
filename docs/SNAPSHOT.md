@@ -6,6 +6,8 @@
 
 ---
 
+> **27/11/2026 (chủ dự án): thử F-DL-08 (phiên bản 36) trên link thật bằng tài khoản Tổ phó, báo "ok" → F-DL-08 ✅ đã đóng.** Việc còn lại duy nhất: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs` (+ mock) trong commit riêng.
+
 > **27/11/2026 11:18 (chủ dự án): ĐÃ ĐẨY TAY phiên bản 36 (`b45c083`, F-DL-08) lên link chính `…MlRA`; Opus review F-DL-08 ĐẠT.** Việc còn lại: chủ dự án thử trên link thật (Tổ phó thấy tab Dữ liệu, xóa/sửa/khôi phục ngày cũ, không thấy công cụ ADMIN; tổ viên không thấy tab) rồi báo kết quả để đóng F-DL-08. Việc dở cũ vẫn còn: dọn `xemChotOcrQuyDoi`, `apDungChotOcrQuyDoi`, `tinhOcrTruocMoc_` khỏi `Code.gs`.
 
 > **27/11/2026 (Opus): REVIEW F-DL-08 ĐẠT → GO, chủ dự án tự đẩy tay `apps-script/Code.gs` + `apps-script/Index.html` ở `main` (mã không đổi so với `b45c083`).** Phân quyền đúng: `suaBanGhi`/`khoiPhuc` → `need_` (TT/TP/ADMIN), `huy` bỏ chặn ca khóa chỉ khi `tuDL` và vẫn chặn tổ viên; `includeHuy` chỉ quản lý; `resetDuLieu`, `taoMau`, `chuanHoaNhom`, `nhapDauKyNguoi`, `nhatKyHT` vẫn `needSuper_`; đo tốc độ chỉ ADMIN (`PERF_`). Opus sửa trong commit review: (1) kiểm tra giao diện thực tế 755/1 (không phải 747/0) do dòng F-DL-08 trong CHUC_NANG ghi `` `tuDL` `` như tên hàm → sửa chữ, nay **755/0**; (2) kiểm tra mock "xóa kể cả ca đã khóa" chạy trên ca CÒN MỞ nên không chứng minh gì → đặt giờ 23:30 cho ca khóa thật + thêm kiểm tra xóa không có `tuDL` vẫn bị chặn: mock **651/0**. Chấp nhận: `tuDL` là cờ phía máy khách (TT/TP vốn được xóa ca khóa qua tab Dữ liệu, có ghi nhật ký). Việc sau khi đẩy: chủ dự án báo số phiên bản, thử bằng tài khoản Tổ phó (thấy tab Dữ liệu, không thấy công cụ ADMIN, xóa một bản ghi ca khóa rồi nhập lại).
