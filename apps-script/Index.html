@@ -4591,7 +4591,7 @@ function qdfHtml(T) {
       '<div class="row num-row qdf-inputs">' +
         '<div><label>Mục tiêu (file)</label><input id="qdfMuc" type="number" min="1" value="' + esc(q.mucTieuFile) + '"></div>' +
         '<div><label>Tách file trước mốc (file)</label><input id="qdfTach" type="number" min="0" value="' + esc(q.tachFileCu) + '"></div>' +
-        '<div><label>OCR trước mốc (file)</label><input id="qdfOcr" type="number" min="0" placeholder="Để trống = tạm tính" value="' + (q.ocrFileCu === null || q.ocrFileCu === undefined ? '' : esc(q.ocrFileCu)) + '"></div>' +
+        '<div style="display:none"><label>OCR trước mốc (file)</label><input id="qdfOcr" type="number" min="0" placeholder="Để trống = tạm tính" value="' + (q.ocrFileCu === null || q.ocrFileCu === undefined ? '' : esc(q.ocrFileCu)) + '"></div>' +
       '</div>' +
       '<div class="qdf-actions">' +
         '<button type="button" class="pri sm" id="qdfLuuBtn" onclick="qdfLuu()">Lưu số quy đổi</button>' +

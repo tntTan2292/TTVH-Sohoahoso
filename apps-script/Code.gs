@@ -257,6 +257,7 @@ function quyDoiFile_() {
 // Bản ghi (khâu, ngày, ca) có tính theo file không: khâu Tách/OCR và từ mốc ca trở đi
 function laBanGhiFile_(buoc, ngay, ca) {
   if (BUOC_FILE_.indexOf(buoc) < 0 || !CA[ca]) return false;
+  if (buoc === 'OCR') return true;      // 27/11/2026 (chủ dự án): OCR mọi ngày tính theo SỐ FILE (SoHoSo) thực tế, Quản lý sửa lại từng bản ghi; không còn số chốt cố định
   const q = quyDoiFile_();
   return (ngay + '|' + CA[ca].o) >= (q.mocNgay + '|' + CA[q.mocCa].o);
 }
@@ -2102,8 +2103,7 @@ function dash_(ngayIn, gomThu, soNgayIn) {
     if (theoFile && BUOC_FILE_.indexOf(b[1]) >= 0) {
       muc = qdf.mucTieuFile; donVi = 'file';
       if (b[1] === 'TACH') da = Math.min(qdf.mucTieuFile, qdf.tachFileCu + fileMoi('TACH'));      // Q3: Tách file không vượt mục tiêu (100%)
-      else if (qdf.ocrFileCu === null) tam = true;      // OCR chưa có số quy đổi: TẠM giữ số hiện tại (tờ cũ + file mới) chia mục tiêu file
-      else da = qdf.ocrFileCu + fileMoi('OCR');
+      // OCR: da giữ nguyên = đầu kỳ (DauKy, như đã lưu) + tổng SỐ FILE mọi bản ghi OCR còn hiệu lực; KHÔNG dùng ocrFileCu (số chốt cũ) nữa
     }
     const con = Math.max(0, muc - da);
     const tbNgay = soNgay ? da / soNgay : 0, tbCa = soCa ? da / soCa : 0;

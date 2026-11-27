@@ -1370,6 +1370,9 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhanSu').rows.length = n0; ctx.memoClear_();
 }
 
+// Các khối H1…CC1 so kết quả với bản Code.gs CŨ (trước F-FILE-01, OCR luôn tính tờ trước mốc). 27/11/2026: OCR mọi ngày tính theo file nên TẠM trả hàm về quy tắc cũ (mốc) để các phép so này chỉ kiểm tính trung lập của việc tách hàm; quy tắc OCR mới được kiểm riêng ở khối F-FILE-01.
+const LEGACY_OCR = vm.runInContext('(function () { const nu = laBanGhiFile_; return { on: function () { laBanGhiFile_ = function (buoc, ngay, ca) { if (BUOC_FILE_.indexOf(buoc) < 0 || !CA[ca]) return false; const q = quyDoiFile_(); return (ngay + "|" + CA[ca].o) >= (q.mocNgay + "|" + CA[q.mocCa].o); }; }, off: function () { laBanGhiFile_ = nu; } }; })()', ctx);
+LEGACY_OCR.on();
 // ===== H1: khóa mã hộp (maHopKhoa_ / maHopChuan_) =====
 {
   const { execSync } = require('child_process');
@@ -1911,6 +1914,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   sh('NhatKy').rows.length = nk0; sh('PhanNhom').rows.length = pn0; sh('PhanCa').rows.length = pc0; sh('LogHeThong').rows.length = lg0; if (sh('SaoLuuXoa')) sh('SaoLuuXoa').rows.length = sl0; ctx.memoClear_();
 }
 
+LEGACY_OCR.off();
 // ===== F-FILE-01: Tách file và OCR tính theo SỐ FILE (= Số hồ sơ) từ mốc ca Tối 26/11/2026; Quản lý chỉnh số quy đổi =====
 {
   const NG = '2026-11-26', CAX = 'Tối', props = {};
@@ -1922,8 +1926,8 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   setNow(NG + ' 19:00:00');
   const qd = ctx.quyDoiFile_();
   ok(qd.mucTieuFile === 102995 && qd.tachFileCu === 102995 && qd.ocrFileCu === null && qd.mocNgay === NG && qd.mocCa === 'Tối', 'F-FILE-01: mặc định mục tiêu 102.995 file, Tách cũ 102.995, OCR cũ trống (tạm theo tờ), mốc ca Tối 26/11', qd);
-  ok(ctx.laBanGhiFile_('TACH', NG, 'Tối') && ctx.laBanGhiFile_('OCR', '2026-11-27', 'Sáng') && !ctx.laBanGhiFile_('OCR', NG, 'Chiều') && !ctx.laBanGhiFile_('SCAN', NG, 'Tối'), 'F-FILE-01: chỉ Tách/OCR từ ca Tối 26/11 tính file; ca Chiều 26/11 và Scan vẫn tờ');
-  ok(ctx.dvBanGhi_('OCR', NG, 'Tối', 7, 300, 150) === 7 && ctx.dvBanGhi_('OCR', NG, 'Chiều', 7, 300, 150) === 150 && ctx.dvBanGhi_('SCAN', NG, 'Tối', 7, 300, 0) === 300, 'F-FILE-01: đơn vị bản ghi = số hồ sơ (file) / tờ / trang đúng khâu, đúng mốc');
+  ok(ctx.laBanGhiFile_('TACH', NG, 'Tối') && ctx.laBanGhiFile_('OCR', '2026-11-27', 'Sáng') && !ctx.laBanGhiFile_('TACH', NG, 'Chiều') && ctx.laBanGhiFile_('OCR', NG, 'Chiều') && ctx.laBanGhiFile_('OCR', '2026-11-05', 'Sáng') && !ctx.laBanGhiFile_('SCAN', NG, 'Tối'), 'F-FILE-01: Tách tính file từ ca Tối 26/11; OCR tính file MỌI ngày (27/11); Scan vẫn tờ');
+  ok(ctx.dvBanGhi_('OCR', NG, 'Tối', 7, 300, 150) === 7 && ctx.dvBanGhi_('OCR', NG, 'Chiều', 7, 300, 150) === 7 && ctx.dvBanGhi_('TACH', NG, 'Chiều', 7, 300, 150) === 150 && ctx.dvBanGhi_('SCAN', NG, 'Tối', 7, 300, 0) === 300, 'F-FILE-01: đơn vị bản ghi = số hồ sơ (file) với OCR mọi ngày và Tách từ mốc; tờ/trang với Scan và Tách trước mốc');
   const d0 = api(tTT, 'dashboard', { ngay: NG }).data.tienDo, b0 = k => d0.buoc.find(x => x.key === k);
   // ghi báo cáo: Tách/OCR chỉ cần số file; Scan vẫn bắt trang/tờ
   const g1 = api(tD, 'ghi', { buoc: 'TACH', ca: CAX, hop: 'FF-1', soHoSo: 12, hetHop: true });
@@ -1938,7 +1942,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const d1 = api(tTT, 'dashboard', { ngay: NG }).data, t1 = d1.tienDo, b1 = k => t1.buoc.find(x => x.key === k);
   ok(t1.theoFile === true && b1('tach').donVi === 'file' && b1('ocr').donVi === 'file' && b1('scan').donVi === 'tờ' && b1('scan').mucTieu === 175000 && b1('tach').mucTieu === 102995, 'F-FILE-01: tiến độ Tách/OCR đơn vị file, mục tiêu 102.995; Scan giữ tờ / 175.000', t1.buoc.map(x => [x.key, x.donVi, x.mucTieu]));
   ok(b1('tach').daLam === 102995 && b1('tach').tyLe === 100 && b1('tach').conLai === 0 && b1('tach').xong === true && b1('tach').ngayConLai === null, 'F-FILE-01 (Q3): Tách = 102.995 quy đổi + 12 file mới → chặn ở mục tiêu 102.995 = 100%, còn lại 0, không có dự kiến xong', b1('tach'));
-  ok(b1('ocr').tam === true && b1('ocr').daLam === b0('ocr').daLam + 9 && Math.abs(b1('ocr').tyLe - b1('ocr').daLam / 102995 * 100) < 1e-9, 'F-FILE-01: OCR chưa có số quy đổi → TẠM lấy số hiện tại (+9 file mới) chia 102.995', [b0('ocr').daLam, b1('ocr').daLam]);
+  ok(b1('ocr').tam === false && b1('ocr').daLam === b0('ocr').daLam + 9 && Math.abs(b1('ocr').tyLe - b1('ocr').daLam / 102995 * 100) < 1e-9, 'F-FILE-01: OCR = đầu kỳ + số file mọi bản ghi (+9 file mới), không còn "tạm tính", chia 102.995', [b0('ocr').daLam, b1('ocr').daLam]);
   ok(b1('scan').daLam === b0('scan').daLam, 'F-FILE-01: Scan không đổi');
   const cT = d1.cas.find(c => c.ca === CAX);
   ok(cT && cT.tachDV === 12 && cT.ocrDV === 9, 'F-FILE-01: số ca Tối 26/11: Tách 12, OCR 9 (file)', cT && [cT.tachDV, cT.ocrDV]);
@@ -1959,9 +1963,9 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   ok(q3.ok && q3.data.mucTieuFile === 103000 && q3.data.ocrFileCu === 5000 && q3.data.mocNgay === NG, 'F-FILE-01: Tổ trưởng lưu số quy đổi (mốc giữ nguyên)', q3.err || q3.data);
   ok(sh('LogHeThong').rows.slice(lgQ).filter(x => String(x.join('|')).indexOf('QUY_DOI_FILE') >= 0).length === 1, 'F-FILE-01: ghi 1 dòng log QUY_DOI_FILE');
   const t2 = api(tTT, 'dashboard', { ngay: NG }).data.tienDo, b2 = k => t2.buoc.find(x => x.key === k);
-  ok(b2('tach').daLam === 103000 && b2('ocr').daLam === 5000 + 9 && b2('ocr').tam === false && b2('ocr').mucTieu === 103000 && t2.quyDoiFile.ocrFileCu === 5000, 'F-FILE-01: sau khi chỉnh: Tách 102.990+12 chặn ở mục tiêu 103.000, OCR 5.000+9', t2.buoc.map(x => [x.key, x.daLam, x.mucTieu]));
+  ok(b2('tach').daLam === 103000 && b2('ocr').daLam === b1('ocr').daLam && b2('ocr').tam === false && b2('ocr').mucTieu === 103000 && t2.quyDoiFile.ocrFileCu === 5000, 'F-FILE-01: sau khi chỉnh: Tách 102.990+12 chặn ở mục tiêu 103.000; số OCR cũ nhập (5.000) KHÔNG ảnh hưởng tổng OCR', t2.buoc.map(x => [x.key, x.daLam, x.mucTieu]));
   const q4 = api(tTT, 'luuQuyDoiFile', { mucTieuFile: 102995, tachFileCu: 102995, ocrFileCu: '' });
-  ok(q4.ok && q4.data.ocrFileCu === null && api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr').tam === true, 'F-FILE-01: để trống OCR → quay lại tạm theo số hiện tại', q4.err);
+  ok(q4.ok && q4.data.ocrFileCu === null && api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr').tam === false, 'F-FILE-01: để trống OCR → OCR vẫn tính thực tế, không tạm tính', q4.err);
   // dọn
   // Q3: Tách chưa đủ thì cộng bình thường, đủ thì chặn đúng 100%
   api(tTT, 'luuQuyDoiFile', { mucTieuFile: 102995, tachFileCu: 102980, ocrFileCu: '' });
@@ -1980,6 +1984,13 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const sb = api(tAdmin, 'suaBanGhi', { id: rTach[0], soHoSo: 15, soTrang: 88, soTo: 99 });
   ok(sb.ok && Number(rTach[NKC.indexOf('SoHoSo')]) === 15 && !Number(rTach[NKC.indexOf('SoTrang')]) && !Number(rTach[NKC.indexOf('SoTo')]), 'F-FILE-01: sửa bản ghi Tách từ mốc chỉ ghi số file; số trang/tờ gửi kèm bị bỏ qua', sb.err || [rTach[NKC.indexOf('SoHoSo')], rTach[NKC.indexOf('SoTrang')], rTach[NKC.indexOf('SoTo')]]);
   api(tAdmin, 'suaBanGhi', { id: rTach[0], soHoSo: 12 });
+  // 27/11/2026: Quản lý sửa Số file của bản ghi OCR TRƯỚC mốc → tổng OCR đổi đúng phần chênh (không còn số chốt cố định)
+  {
+    const rM1 = sh('NhatKy').rows.find(x => x[5] === 'OCR' && x[6] === 'M1' && String(x[16]) !== 'true'), iHs = NKC.indexOf('SoHoSo');
+    const o0 = api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr').daLam, hs0 = Number(rM1[iHs]);
+    ok(api(tTT, 'suaBanGhi', { id: rM1[0], soHoSo: hs0 + 10 }).ok && api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr').daLam === o0 + 10, 'F-FILE-01: sửa Số file bản ghi OCR trước mốc (+10) → tổng OCR đổi đúng +10');
+    api(tTT, 'suaBanGhi', { id: rM1[0], soHoSo: hs0 });
+  }
   // A (Q4): tập lệnh chốt OCR trước mốc (xem trước không ghi; áp dụng ghi đúng số; chạy lại cùng số)
   const eMail = ctx.__active; ctx.__active = '';
   let chan = 0; try { ctx.xemChotOcrQuyDoi(); } catch (e) { chan++; } try { ctx.apDungChotOcrQuyDoi(); } catch (e) { chan++; }
@@ -1987,12 +1998,12 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
   const truocProps = props.QUY_DOI_FILE, lgA = sh('LogHeThong').rows.length;
   const xem = ctx.xemChotOcrQuyDoi();
   ok(chan === 2 && props.QUY_DOI_FILE === truocProps && sh('LogHeThong').rows.length === lgA, 'F-FILE-01 (A): người không phải chủ Sheet bị chặn; xem trước KHÔNG ghi gì (không đổi số quy đổi, không log)');
-  ok(xem.gia === b0('ocr').daLam && xem.gia > 0, 'F-FILE-01 (A): số chốt = đúng số OCR đang hiện ở chế độ tạm tính trước ca Tối 26/11 (không tính 9 file mới)', [xem.gia, b0('ocr').daLam]);
+  ok(xem.nhatKy === 0 && xem.gia === xem.dauKy && xem.gia > 0, 'F-FILE-01 (A): tập lệnh chốt cũ (sắp dọn): mọi bản ghi OCR tính file nên số chốt chỉ còn đầu kỳ', [xem.gia, xem.nhatKy, xem.dauKy]);
   const ap = ctx.apDungChotOcrQuyDoi(), pq = JSON.parse(props.QUY_DOI_FILE);
   ok(ap.gia === xem.gia && pq.ocrFileCu === xem.gia && pq.tachFileCu === 102995 && pq.mucTieuFile === 102995, 'F-FILE-01 (A): áp dụng ghi đúng ocrFileCu, giữ nguyên mục tiêu và Tách cũ');
   ok(sh('LogHeThong').rows.slice(lgA).filter(x => String(x.join('|')).indexOf('QUY_DOI_FILE') >= 0).length === 1, 'F-FILE-01 (A): ghi 1 dòng log QUY_DOI_FILE');
   const dA = api(tTT, 'dashboard', { ngay: NG }).data.tienDo.buoc.find(x => x.key === 'ocr');
-  ok(dA.tam === false && dA.daLam === xem.gia + 9, 'F-FILE-01 (A): sau chốt OCR hết "tạm tính", = số chốt + 9 file mới', dA);
+  ok(dA.tam === false && dA.daLam === b1('ocr').daLam, 'F-FILE-01 (A): số chốt OCR không còn ảnh hưởng tổng OCR (tính thực tế)', dA);
   const ap2 = ctx.apDungChotOcrQuyDoi();
   ok(ap2.gia === xem.gia && JSON.parse(props.QUY_DOI_FILE).ocrFileCu === xem.gia, 'F-FILE-01 (A): chạy lại cho cùng số (không cộng dồn)');
   ctx.__active = eMail;
