@@ -3,6 +3,7 @@
 Mỗi dòng: ngày · mã chức năng (xem `docs/CHUC_NANG.md`) · thay đổi · commit · phiên bản Apps Script đã triển khai (nếu có).
 
 ## 2026-11-27
+- **Triển khai phiên bản 40** (`main` `f2928cf`, chủ dự án yêu cầu rõ đẩy ngay, không chờ review Opus) lên link chính bằng skill `update-code-sohoa`, thay phiên bản 39 (`Code.gs` `5347e87` do chủ dự án đẩy tay); gồm tổng OCR thực tế (đầu kỳ + Số file mọi bản ghi), ẩn ô OCR trước mốc, ngưỡng 10.000 file, F-DL-08; băm sau khi tải lại khớp main
 - F-FILE-01 · Chủ dự án đổi ý: GIỮ tính đầu kỳ 02–08/11 trong tổng OCR (hoàn lại commit 5347e87); tổng OCR = đầu kỳ DauKy (như đã lưu) + Số file mọi bản ghi NhatKy ≈ 14.765 theo Sheet lúc đọc; mock 653/0; chưa triển khai
 - F-FILE-01 · Opus review OCR tính thực tế ĐẠT, GO đẩy tay; sửa đơn vị OCR khi xem Dashboard ngày trước mốc, chữ khung Số quy đổi, tài liệu CHUC_NANG/API · mock 653/0, giao diện 763/0
 - F-FILE-01 · Tổng OCR tính THỰC TẾ (chủ dự án yêu cầu): bỏ số chốt cố định 13.000; OCR mọi ngày tính theo Số file (SoHoSo) từng bản ghi (`laBanGhiFile_` OCR luôn true) + đầu kỳ DauKy như đã lưu; Quản lý sửa Số file bản ghi cũ thì tổng đổi; ẩn ô "OCR trước mốc" ở khung Số quy đổi; mock 653/0; chưa triển khai
