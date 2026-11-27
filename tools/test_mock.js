@@ -598,8 +598,8 @@ const dlt = (n, f) => f(sau[n]) - f(truoc[n]);
 ok(dlt('2026-11-05', d => d.day.scanDV) === 2500 && dlt('2026-11-05', d => d.cas[2].scanDV) === 500 && sau['2026-11-05'].caGop.scanDV === 2000 && dlt('2026-11-05', d => d.cas[0].scanDV) === 0, 'ngày 05/11: số ngày = 2.000 (ca ngày gộp) + 500 (ca Tối); Sáng/Chiều không bị cộng', { day: dlt('2026-11-05', d => d.day.scanDV), toi: dlt('2026-11-05', d => d.cas[2].scanDV), gop: sau['2026-11-05'].caGop });
 ok(dlt('2026-11-04', d => d.day.scanDV) === 0 && dlt('2026-11-04', d => d.tienDo.buoc[0].daLam) === 0, 'ngày 04/11 (trước dòng 05/11): không đổi số');
 ok(dlt('2026-11-05', d => d.tienDo.buoc[0].daLam) === 2500 && dlt('2026-11-06', d => d.tienDo.buoc[0].daLam) === 2500 && dlt('2026-11-09', d => d.tienDo.buoc[0].daLam) === 2500, 'tiến độ Scan lũy kế tới hết ngày: cộng từng ngày đến ngày đang xem (05/11, 06/11, 09/11 đều +2.500)');
-ok(dlt('2026-11-05', d => d.tienDo.buoc[1].daLam) === 0 && dlt('2026-11-06', d => d.tienDo.buoc[1].daLam) === 300 && dlt('2026-11-06', d => d.tienDo.buoc[2].daLam) === 0 && dlt('2026-11-05', d => d.tienDo.buoc[2].daLam) === 0, 'Tách cộng từ đúng ngày của nó (06/11); đầu kỳ OCR bị bỏ khỏi tính toán (27/11/2026)');
-ok(dlt('2026-11-06', d => d.day.tachDV) === 300 && dlt('2026-11-06', d => d.day.ocrDV) === 0 && dlt('2026-11-06', d => d.cas[2].ocrDV) === 0 && sau['2026-11-06'].caGop.tachDV === 300, 'ngày 06/11: Tách 300 (ca ngày gộp), OCR đầu kỳ bỏ (= 0)');
+ok(dlt('2026-11-05', d => d.tienDo.buoc[1].daLam) === 0 && dlt('2026-11-06', d => d.tienDo.buoc[1].daLam) === 300 && dlt('2026-11-06', d => d.tienDo.buoc[2].daLam) === 200 && dlt('2026-11-05', d => d.tienDo.buoc[2].daLam) === 0, 'Tách và OCR chỉ cộng từ đúng ngày của chúng (06/11)');
+ok(dlt('2026-11-06', d => d.day.tachDV) === 300 && dlt('2026-11-06', d => d.day.ocrDV) === 200 && dlt('2026-11-06', d => d.cas[2].ocrDV) === 200 && sau['2026-11-06'].caGop.tachDV === 300, 'ngày 06/11: Tách 300 (ca ngày gộp), OCR 200 (ca Tối)');
 const se = sau['2026-11-09'].series.find(x => x.ngay === '2026-11-05'), se0 = truoc['2026-11-09'].series.find(x => x.ngay === '2026-11-05');
 ok(se && (se.scanDV - (se0 ? se0.scanDV : 0)) === 2500, 'biểu đồ 10 ngày có cột ngày 05/11 với số đầu kỳ từng ngày', { se, se0 });
 ok(sau['2026-11-09'].series.some(x => x.ngay === '2026-11-06' && x.tachDV >= 300) && sau['2026-11-09'].luyKe.dauKyDen.scanDV === 1000 + 2500, 'series gồm ngày 06/11; luyKe.dauKyDen = số dư gộp + từng ngày tới hết ngày xem');
@@ -1371,7 +1371,7 @@ setNow('2026-11-09 15:30:00'); ctx.memoClear_();
 }
 
 // Các khối H1…CC1 so kết quả với bản Code.gs CŨ (trước F-FILE-01, OCR luôn tính tờ trước mốc). 27/11/2026: OCR mọi ngày tính theo file nên TẠM trả hàm về quy tắc cũ (mốc) để các phép so này chỉ kiểm tính trung lập của việc tách hàm; quy tắc OCR mới được kiểm riêng ở khối F-FILE-01.
-const LEGACY_OCR = vm.runInContext('(function () { const nu = laBanGhiFile_, nuDk = dauKyBoQua_; return { on: function () { dauKyBoQua_ = function () { return false; }; laBanGhiFile_ = function (buoc, ngay, ca) { if (BUOC_FILE_.indexOf(buoc) < 0 || !CA[ca]) return false; const q = quyDoiFile_(); return (ngay + "|" + CA[ca].o) >= (q.mocNgay + "|" + CA[q.mocCa].o); }; }, off: function () { laBanGhiFile_ = nu; dauKyBoQua_ = nuDk; } }; })()', ctx);
+const LEGACY_OCR = vm.runInContext('(function () { const nu = laBanGhiFile_; return { on: function () { laBanGhiFile_ = function (buoc, ngay, ca) { if (BUOC_FILE_.indexOf(buoc) < 0 || !CA[ca]) return false; const q = quyDoiFile_(); return (ngay + "|" + CA[ca].o) >= (q.mocNgay + "|" + CA[q.mocCa].o); }; }, off: function () { laBanGhiFile_ = nu; } }; })()', ctx);
 LEGACY_OCR.on();
 // ===== H1: khóa mã hộp (maHopKhoa_ / maHopChuan_) =====
 {
